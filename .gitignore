@@ -1,0 +1,11 @@
+.vscode
+.ignoreme
+
+thirdparty
+
+objects
+/LPPShow*
+
+*.mtl
+*.old
+imgui.ini
