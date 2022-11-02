@@ -2,6 +2,8 @@ import sys as sus
 import pathlib
 import re
 
+from tools import collect_args, print_err
+
 UNSAFE = re.compile(r"^[\d]+|[^\w]")
 
 
@@ -14,20 +16,6 @@ def write_shaders(out, struct_name, shaders):
             out.write(shader.read())
         out.write('\n        )";\n\n')
     out.write(f"    }} {struct_name};\n")
-
-def print_err(*messages):
-    print("Err:", *messages, file=sus.stderr)
-
-def collect_args(custom_args=None):
-    default_args = sus.argv.copy()[1:]
-    argument_line = custom_args or default_args
-    if not argument_line:
-        print_err("Please specify at least one infile and one outfile")
-        return None
-
-    infiles = argument_line[:-1]
-    outfile = argument_line[-1]
-    return infiles, outfile
 
 def collect_shaders(file_list):
     for shader in filter(lambda file: file.endswith((".frag", ".vert")), file_list):

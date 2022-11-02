@@ -74,10 +74,15 @@ bool fromVertexData(
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
     glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object->indices);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(*indices) * indexCount, indices, GL_STATIC_DRAW);
+    object->vertexCount = vertexCount;
 
-    object->vertexCount = indexCount;
+    // FIXME: Refactor this
+    if (indices != nullptr) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object->indices);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(*indices) * indexCount, indices, GL_STATIC_DRAW);
+        object->vertexCount = indexCount;
+    }
+
     return true;
 };
 bool fromVertexData(Object* object, VertexAttributePositionUV* vertexData, int indices){ return false; };

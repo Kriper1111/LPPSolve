@@ -111,7 +111,6 @@ void LinearProgrammingProblemDisplay::removeLimitPlane() {
     planeTransforms.pop_back();
     rebindAttributes();
 }
-
 void LinearProgrammingProblemDisplay::removeLimitPlane(int planeIndex) {
     if (planeIndex < 0 || planeIndex >= planeTransforms.size()) return;
     planeEquations.erase(planeEquations.begin() + planeIndex);
@@ -126,13 +125,23 @@ void LinearProgrammingProblemDisplay::renderLimitPlanes(glm::mat4 view, glm::mat
     glBindVertexArray(planeObject->objectData);
     planeShader->activate();
     planeShader->setTransform(projection, view);
-    // Instanced drawing will require:
-    // * The plane transformation buffer
-    //   Which should have ability to resize itself
-    // * Updating this buffer with the streaming thing
-    // * Re-binding attribute pointers each time the buffer is updated
-    // * Just bind plane's objectData VAO and plane transformation buffer
-    //   And set attributes as usual
+    /** TODO: Instanced rendering of plane limits
+     * This will require:
+     * - The plane transformation buffer [GL]
+     *   All the mat3s are collected there
+     * - Said buffer to be resizeable and dynamically updateable
+     *   Not every frame, but could be often
+     * - Meaning we should somehow rebind it
+     *   OpenGL allows for linking *side*("unrelated") buffers to the VAO
+     *   So we could have the vertex data buffer with our glorious four vertices
+     *   And another one, with the matrix transforms
+     * - Passing matrix transforms via vertex attributes
+     *   Which isn't that bad, as they're involved in vertex stage, which uses them either way
+     * 
+     * I'm mostly concerned about re-creating the MBO (matrix buffer object)
+     * Like, do we have to re-link it to the VAO? What happens to the old link?
+     * Do we have to re-link the whole object?
+     */
     // glDrawElementsInstanced(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0, planeTransforms.size());
     for (glm::mat3 planeTransform : planeTransforms) {
         planeShader->setUniform("planeTransform", planeTransform);
@@ -150,14 +159,107 @@ LinearProgrammingProblemDisplay::~LinearProgrammingProblemDisplay() {
 
 // class WorldGridDisplay {
 //     private:
+std::shared_ptr<Object> WorldGridDisplay::gridObject;
+std::shared_ptr<Object> WorldGridDisplay::axisObject;
+std::shared_ptr<Shader> WorldGridDisplay::gridShader;
+std::shared_ptr<Shader> WorldGridDisplay::axisShader;
+
+void WorldGridDisplay::createObjects() {
+    WorldGridDisplay::gridObject.reset(new Object());
+
+    // 11 vertices per side, 4 sides
+    // Yes those 4 extra could get reduced
+    // But, for your consideration: I can't be assed
+    // XXX: Let me know if precisely *this* allocation will be the cause of an OOM
+    VertexAttributePosition gridVertexData[44];
+    int gridIndices[44];
+    for (int x = 0; x <= 10; x++) {
+        gridIndices[2 * x] = x;
+        gridIndices[2 * x + 1] = 11 + x;
+        gridVertexData[ 0 + x] = { x - 5.0f, -5.0f, 0.0f };
+        gridVertexData[11 + x] = { x - 5.0f,  5.0f, 0.0f };
+    }
+    for (int y = 0; y <= 10; y++) {
+        gridIndices[22 + (2 * y)] = 22 + y;
+        gridIndices[22 + (2 * y) + 1] = 33 + y;
+        gridVertexData[22 + y] = { -5.0f, y - 5.0f, 0.0f };
+        gridVertexData[33 + y] = {  5.0f, y - 5.0f, 0.0f };
+    }
+
+    fromVertexData(WorldGridDisplay::gridObject.get(), gridVertexData, 44, gridIndices, 44);
+
+    /** FIXME: Compact either manual object creation or shaders into less *objects*
+     * Right now I have to use two different shaders for basically the same generic object
+     * So I would avoid creating and mainly repeating the same operation with loading
+     * VertexAttributePositionUV
+     * 
+     * This needs to be redone, probably via multiple data buffers or appending to the end of one
+     * while collecting the offsets/strides from previous steps
+     * so .addVertexAttribute3D() -> strides: [3]
+     *    .addVertexAttribute2D() -> strides: [3, 2]
+     *    .addVertexAttribute3D() -> strides: [3, 2, 3]
+     * and during finalization phase, iterate over $strides and do something like
+     *    glVertexAttribPointer(i, stride, attribute_type, normalized, $stride * sizeof(attribute_type), (void *) rolling_sum_of_sizes );
+     * This does have flaws, already visible. Mainly, attribute_type is not considered, and it's very important
+     */
+    WorldGridDisplay::axisObject.reset(new Object());
+    VertexAttributePosition axisVertexData[] = {
+        {0, 0, 0},
+        {2, 0, 0},
+        {0, 2, 0},
+        {0, 0, 2}
+    };
+    int axisIndices[8] = {
+        0, 1,
+        0, 2,
+        0, 3
+    };
+
+    fromVertexData(WorldGridDisplay::axisObject.get(), axisVertexData, 4, axisIndices, 6);
+}
+
+void WorldGridDisplay::createShaders() {
+    #ifdef USE_BAKED_SHADERS
+    WorldGridDisplay::gridShader.reset(Shader::fromSource(shaders::vertex.grid_vert, shaders::fragment.grid_frag));
+    // WorldGridDisplay::axisShader.reset(Shader::fromSource(shaders::vertex.default_vert, shaders::fragment.default_frag));
+    #else
+    WorldGridDisplay::gridShader.reset(new Shader("assets/grid.vert", "assets/grid.frag"));
+    // WorldGridDisplay::axisShader.reset(new Shader("assets/default.vert", "assets/default.frag"));
+    #endif
+}
+
+// class WorldGridDisplay
 //     public:
-//     WorldGridDisplay();
 
-//     void toggleGrid();
-//     void toggleWorldOrigin();
+WorldGridDisplay::WorldGridDisplay() {
+    if (!WorldGridDisplay::gridObject || !WorldGridDisplay::axisObject) WorldGridDisplay::createObjects();
+    if (!WorldGridDisplay::gridShader || !WorldGridDisplay::axisShader) WorldGridDisplay::createShaders();
+}
 
-//     void zoom(float amount);
-//     void render();
+void WorldGridDisplay::render(glm::mat4 view, glm::mat4 projection) {
+    if (gridEnabled) {
+        gridShader->activate();
+        gridShader->setTransform(projection, view);
+        gridShader->setUniform("gridScale", zoomScale);
 
-//     ~WorldGridDisplay();
+        glBindVertexArray(gridObject->objectData);
+        // XXX: count in scale and some kind of threshold system
+        glDrawElements(GL_LINES, gridObject->vertexCount, GL_UNSIGNED_INT, 0);
+    }
+    if (axisEnabled) {
+        gridShader->activate();
+        gridShader->setTransform(projection, view);
+        // axisShader->activate();
+        // axisShader->setTransform(projection, view);
+        glBindVertexArray(axisObject->objectData);
+        glDrawElements(GL_LINES, axisObject->vertexCount, GL_UNSIGNED_INT, 0);
+    }
+}
+
+WorldGridDisplay::~WorldGridDisplay() {
+    WorldGridDisplay::gridObject.reset();
+    WorldGridDisplay::axisObject.reset();
+    WorldGridDisplay::gridShader.reset();
+    WorldGridDisplay::axisShader.reset();
+}
 // };

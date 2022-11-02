@@ -27,6 +27,10 @@ void Camera::recalcProjection() {
     this->projectionMatrix = glm::perspective(glm::radians(fieldOfView), aspectRatio, nearPlane, farPlane);
 }
 
+void Camera::updateOrbitDepth() {
+    this->lookDepth = glm::length(this->mLocation);
+}
+
 Camera::Camera(int viewWidth, int viewHeight, float fov, float nearplane, float farplane) {
     fieldOfView = fov;
     aspectRatio = (float)viewWidth/(float)viewHeight;
@@ -80,12 +84,14 @@ void Camera::teleportTo(float positionX, float positionY, float positionZ) {
     this->mLocation.x = positionX;
     this->mLocation.y = positionY;
     this->mLocation.z = positionZ;
+    updateOrbitDepth();
 }
 
 void Camera::moveBy(float positionX, float positionY, float positionZ) {
     this->mLocation.x += positionX;
     this->mLocation.y += positionY;
     this->mLocation.z += positionZ;
+    updateOrbitDepth();
 }
 
 void Camera::walk(float forwards, float sideways, float ascend) {

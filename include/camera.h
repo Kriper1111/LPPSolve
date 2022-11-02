@@ -15,6 +15,7 @@ class Camera {
     float farPlane;
     void applyRotation();
     void recalcProjection();
+    void updateOrbitDepth();
 
     public:
     float lookInSensitivity = 15.0f;

@@ -3,7 +3,10 @@
 
 __pycache__
 
-thirdparty
+thirdparty/*
+# thirdparty/
+!thirdparty/glad*
+!thirdparty/KHR/
 
 include/baked_shaders.h
 

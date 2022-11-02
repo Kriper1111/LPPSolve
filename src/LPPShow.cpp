@@ -8,15 +8,12 @@
 #include <imgui/backends/imgui_impl_opengl3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
-// #include <cddlib/cdd.h>
-
 #include "assets.h"
 #include "camera.h"
 #include "solver.h"
 
 
-const glm::vec3 zeroVector({0, 0, 0});
-const glm::vec3 upVector({0, 0, 1});
+const float movementSpeed = 2.5f;
 
 struct MouseState {
     bool leftMouseButton;
@@ -29,64 +26,12 @@ struct MouseState {
     double deltaY;
 } mouseState;
 
-// class WorldOrigin {
-//     private:
-//     static Object* worldObject;
-
-//     void buildWorldOrigin() {
-//         WorldOrigin::worldObject = new Object();
-//         float worldOriginData[] = {
-//             0.0, 0.0, 0.0, 0.0, 0.0,
-//             0.0, 0.0, 1.0, 0.0, 0.0,
-//             0.0, 1.0, 0.0, 0.0, 0.0,
-//             1.0, 0.0, 0.0, 0.0, 0.0
-//         };
-//         int worldOriginIndices[] = {
-//             0, 1,
-//             0, 2,
-//             0, 3
-//         };
-
-//         glGenVertexArrays(1, &worldObject->objectData);
-//         glGenBuffers(1, &worldObject->vertexData);
-//         glGenBuffers(1, &worldObject->indices);
-
-//         glBindVertexArray(worldObject->objectData);
-//         glBindBuffer(GL_ARRAY_BUFFER, worldObject->vertexData);
-//         glBufferData(GL_ARRAY_BUFFER, sizeof(worldOriginData), worldOriginData, GL_STATIC_DRAW);
-//         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*) 0);
-//         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-//         glEnableVertexAttribArray(0);
-//         glEnableVertexAttribArray(1);
-
-//         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, worldObject->indices);
-//         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(worldOriginIndices), worldOriginIndices, GL_STATIC_DRAW);
-
-//         worldObject->vertexCount = 4;
-//     }
-
-//     public:
-//     WorldOrigin() {
-//         if (WorldOrigin::worldObject == nullptr) buildWorldOrigin();
-//     }
-
-//     void render() {
-//         glUseProgram(0);
-//         glBindVertexArray(WorldOrigin::worldObject->objectData);
-//         glDrawElements(GL_LINE, WorldOrigin::worldObject->vertexCount, GL_UNSIGNED_INT, 0);
-//     }
-
-// };
-
-// Object* WorldOrigin::worldObject = nullptr;
-
-namespace runtime {
-    bool canMoveCamera;
-    bool showDebugOverlay;
+namespace SceneData {
+    bool canMoveCamera = true;
+    bool showDebugOverlay = false;
     LinearProgrammingProblemDisplay* limits;
+    WorldGridDisplay* worldOrigin;
     Camera *sceneCamera;
-    Object *cube;
-    Shader *cubeShader;
 }
 
 void glfwErrorCallback(int error, const char* description) {
@@ -100,6 +45,7 @@ int logCriticalError(const char* description) {
 
 void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
     float speedMod = (glfwGetKey(inputWindow, GLFW_KEY_LEFT_SHIFT) | glfwGetKey(inputWindow, GLFW_KEY_RIGHT_SHIFT)) ? 4.0f : 1.0f;
+    speedMod *= timeStep * 1000.0f;
 
     float horizontal = (glfwGetKey(inputWindow, GLFW_KEY_D) - glfwGetKey(inputWindow, GLFW_KEY_A))
                      + (glfwGetKey(inputWindow, GLFW_KEY_LEFT) - glfwGetKey(inputWindow, GLFW_KEY_RIGHT));
@@ -107,7 +53,7 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
                      + (glfwGetKey(inputWindow, GLFW_KEY_UP) - glfwGetKey(inputWindow, GLFW_KEY_DOWN));
 
     if (horizontal || vertical) {
-        camera->orbit(horizontal * 5 * speedMod, vertical * 5 * speedMod);
+        camera->orbit(horizontal * movementSpeed * speedMod, -vertical * movementSpeed * speedMod);
     }
 }
 
@@ -119,95 +65,59 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui::Begin("Planes");
 
     if (ImGui::CollapsingHeader("Camera controls")) {
+        // auto cameraLocation = camera->getCameraLocation();
+        // auto cameraRotation = camera->getCameraRotation();
+        // ImGui::InputFloat3("CameraPos:", &cameraLocation[0]);
+        // if (ImGui::IsItemEdited())
+        //     camera->teleportTo(cameraLocation.x, cameraLocation.y, cameraLocation.z);
+        // ImGui::InputFloat3("CameraLook:", &cameraRotation[0]);
+        // if (ImGui::IsItemEdited())
+        //     camera->rotate(cameraRotation.x, cameraRotation.y, cameraRotation.z);
         ImGui::Text("CameraPos: %s", glx_toString(camera->getCameraLocation()).c_str());
         ImGui::Text("CameraLook: %s", glx_toString(camera->getCameraRotation()).c_str());
         ImGui::Text("CameraDirect: %s", glx_toString(camera->getCameraDirection()).c_str());
+        ImGui::Text("Movement speed: %.3f", movementSpeed);
         ImGui::SliderFloat("Look insensitivity", &camera->lookInSensitivity, 1.0f, 50.0f);
         ImGui::SliderFloat("Look depth", &camera->lookDepth, 0.0f, 100.0f);
     }
 
-    // bool dirty = false;
-    // if (ImGui::CollapsingHeader("Orientation master")) {
-    //     ImGui::Text("Target Axis");
-    //     if (ImGui::BeginTable("tar", 6, ImGuiTableFlags_NoSavedSettings)) {
-    //         int targetAxis = LimitPlane::getTargetAxis();
-    //         for (int axis = 0; axis < 6; axis++) {
-    //             ImGui::TableNextColumn();
-    //             if (ImGui::Selectable(LimitPlane::targetAxies[axis].label, targetAxis == axis)) {
-    //                 LimitPlane::setTargetAxis(axis);
-    //                 dirty = true;
-    //             }
-    //         }
-    //         ImGui::EndTable();
-    //     }
-    //     ImGui::Text("Track Axis");
-    //     if (ImGui::BeginTable("tra", 3, ImGuiTableFlags_NoSavedSettings)) {
-    //         int trackAxis = LimitPlane::getTrackAxis();
-    //         for (int axis = 0; axis < 3; axis++) {
-    //             ImGui::TableNextColumn();
-    //             if (ImGui::Selectable(LimitPlane::trackAxies[axis].label, trackAxis == axis)) {
-    //                 LimitPlane::setTrackAxis(axis);
-    //                 dirty = true;
-    //             }
-    //         }
-    //         ImGui::EndTable();
-    //     }
-    // }
+    if (ImGui::CollapsingHeader("World Origin")) {
+        ImGui::Checkbox("Show grid", &SceneData::worldOrigin->gridEnabled);
+        ImGui::Checkbox("Show world axis", &SceneData::worldOrigin->axisEnabled);
+        ImGui::SliderFloat("Grid scale", &SceneData::worldOrigin->zoomScale, 0.1f, 10.0f);
+    }
 
-    ImGui::Text("Total planes: %d", runtime::limits->getEquationCount());
-    if (ImGui::Button("Add plane") && runtime::limits->getEquationCount() < 256) {
-        runtime::limits->addLimitPlane({0, 0, 1, 0});
-        // runtime::limits->push_back(new LimitPlane(0, 0, 1, 0));
+    ImGui::Text("Total planes: %d", SceneData::limits->getEquationCount());
+    if (ImGui::Button("Add plane") && SceneData::limits->getEquationCount() < 256) {
+        SceneData::limits->addLimitPlane({0, 0, 1, 0});
     }
     ImGui::SameLine();
-    if (ImGui::Button("Remove plane") && runtime::limits->getEquationCount() > 0) {
-        runtime::limits->removeLimitPlane();
-        // runtime::limits->pop_back();
+    if (ImGui::Button("Remove plane") && SceneData::limits->getEquationCount() > 0) {
+        SceneData::limits->removeLimitPlane();
     }
     ImGui::Separator();
 
-    for (int planeIndex = 0; planeIndex < runtime::limits->getEquationCount(); planeIndex++) {
-        glm::vec4 planeEquationOrigin = runtime::limits->getLimitPlane(planeIndex);
-        // glm::vec4 planeEquationNew = glm::vec4(planeEquationOrigin);
+    for (int planeIndex = 0; planeIndex < SceneData::limits->getEquationCount(); planeIndex++) {
+        glm::vec4 planeEquationOrigin = SceneData::limits->getLimitPlane(planeIndex);
         ImGui::Text("Plane: ");
         ImGui::PushID(planeIndex);
         ImGui::InputFloat4("Equation", &planeEquationOrigin[0]);
         ImGui::PopID();
         if (ImGui::IsItemEdited()) {
-            runtime::limits->editLimitPlane(planeIndex, planeEquationOrigin);
-            // runtime::limits[planeIndex]->recalculateEquation(planeEquationOrigin);
+            SceneData::limits->editLimitPlane(planeIndex, planeEquationOrigin);
         }
     }
 
-    ImGui::Checkbox("Show debug overlay (imgui)", &runtime::showDebugOverlay);
-    ImGui::Checkbox("Toggle freecam", &runtime::canMoveCamera);
+    ImGui::Checkbox("Show debug overlay (imgui)", &SceneData::showDebugOverlay);
+    ImGui::Checkbox("Toggle freecam", &SceneData::canMoveCamera);
 
-    if (runtime::showDebugOverlay) ImGui::ShowMetricsWindow(&runtime::showDebugOverlay);
+    if (SceneData::showDebugOverlay) ImGui::ShowMetricsWindow(&SceneData::showDebugOverlay);
 
     ImGui::End();
 
-    if (runtime::canMoveCamera) moveCamera(camera, window, timeStep);
-    runtime::limits->renderLimitPlanes(camera->getView(), camera->getProjection());
-    // for (LimitPlane* plane : runtime::limits) { plane->render(camera); }
-    // runtime::worldOrigin->render();
-
-    // double currentX; // = mouseState.positionX;
-    // double currentY; // = mouseState.positionY;
-    // glfwGetCursorPos(window, &currentX, &currentY);
-    // mouseState.deltaX = previousX - mouseState.positionX;
-    // mouseState.deltaY = previousY - mouseState.positionY;
-
-    // mouseState.positionX = mouseState.positionX;
-    // mouseState.positionY = mouseState.positionY;
-
-    // mouseState.leftMouseButton = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
-    // mouseState.rightMouseButton = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
-    // mouseState.middleMouseButton = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
-
-    runtime::cubeShader->activate();
-    runtime::cubeShader->setTransform(camera->getProjection(), camera->getView());
-    glBindVertexArray(runtime::cube->objectData);
-    glDrawElements(GL_TRIANGLES, runtime::cube->vertexCount, GL_UNSIGNED_INT, 0);
+    if (SceneData::canMoveCamera) moveCamera(camera, window, timeStep);
+    SceneData::limits->renderLimitPlanes(camera->getView(), camera->getProjection());
+    SceneData::worldOrigin->render(camera->getView(), camera->getProjection());
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -245,13 +155,12 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     // OpenGL 3.3 core
 
-    int windowWidth = 640;
-    int windowHeight = 480;
+    int windowWidth = 960;
+    int windowHeight = 720;
 
     GLFWwindow* mainWindow = glfwCreateWindow(windowWidth, windowHeight, "Linear Programming Problem: Show", NULL, NULL);
     if (mainWindow == nullptr) return logCriticalError("Failed to create a window");
     // ...
-    // glfwSetInputMode(mainWindow, GLFW_STICKY_MOUSE_BUTTONS, GLFW_FALSE);
     // glfwSetCursorPosCallback(mainWindow, glfwMouseCallback);
     // ...
     glfwMakeContextCurrent(mainWindow);
@@ -274,22 +183,28 @@ int main() {
 
     ImGui_ImplGlfw_InitForOpenGL(mainWindow, true);
     ImGui_ImplOpenGL3_Init("#version 130");
-    ImGuiIO& iio = ImGui::GetIO(); (void) iio; // what does that do?
+    // ImGuiIO& iio = ImGui::GetIO(); (void) iio;
+    // No need for custom fonts, for now
 
+    ////////////
+    //// SCENE SETUP
+    ////////////
     Camera* camera = new Camera(windowWidth, windowHeight);
-    camera->teleportTo(7.35889, -6.92579, 4.95831);
-    camera->rotate(-26.4407, 0.0, -46.6919);// 46.6919);
+    camera->teleportTo(7.35889, 6.92579, 4.95831);
+    camera->rotate(-26.4407, 0.0, -133.3081);
+    // 7.35889 m, -6.92579 m, 4.95831 m // X, -Y, Z
+    // 63.5593°, 0°, 46.6919° // pitch - 90, 0, yaw - 180
     camera->lookDepth = glm::length(camera->getCameraLocation());
-    runtime::sceneCamera = camera;
-    Object* cube = new Object();
-    fromWavefront(cube, "assets/the world.obj");
+    SceneData::sceneCamera = camera;
+    // Object* cube = new Object();
+    // fromWavefront(cube, "assets/the world.obj");
 
-    runtime::cubeShader = new Shader("assets/default.vert", "assets/default.frag");
-    runtime::cube = cube;
-    runtime::limits = new LinearProgrammingProblemDisplay();
+    // SceneData::cubeShader = new Shader("assets/default.vert", "assets/default.frag");
+    // SceneData::cube = cube;
+    SceneData::limits = new LinearProgrammingProblemDisplay();
+    SceneData::worldOrigin = new WorldGridDisplay();
 
     float lastFrame, deltaTime = 0;
-    // runtime::worldOrigin = new WorldOrigin();
 
     while (!glfwWindowShouldClose(mainWindow)) {
         float time = glfwGetTime();
@@ -306,8 +221,9 @@ int main() {
         glfwPollEvents();
     }
 
-    delete runtime::limits;
-    // LimitPlane::deallocate();
-    // std::cout << "GLFW terminated" << std::endl;
+    // We have to delete them before we deinit glfw and exit the program scope (and consequently opengl)
+    // As otherwise we attempt to asl now unloaded GL context to deallocate the object and shader buffers
+    delete SceneData::limits;
+    delete SceneData::worldOrigin;
     glfwTerminate();
 }

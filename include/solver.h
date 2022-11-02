@@ -40,14 +40,23 @@ class LinearProgrammingProblemDisplay {
 
 class WorldGridDisplay {
     private:
+    static std::shared_ptr<Object> gridObject;
+    static std::shared_ptr<Object> axisObject;
+    static std::shared_ptr<Shader> gridShader;
+    static std::shared_ptr<Shader> axisShader;
+
+    static void createObjects();
+    static void createShaders();
+
     public:
+    bool gridEnabled = false;
+    bool axisEnabled = true;
+
+    float zoomScale = 1.0;
+
     WorldGridDisplay();
 
-    void toggleGrid();
-    void toggleWorldOrigin();
-
-    void zoom(float amount);
-    void render();
+    void render(glm::mat4 view, glm::mat4 projection);
 
     ~WorldGridDisplay();
 };
