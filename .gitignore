@@ -1,7 +1,11 @@
 .vscode
 .ignoreme
 
+__pycache__
+
 thirdparty
+
+include/baked_shaders.h
 
 objects
 /LPPShow*

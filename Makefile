@@ -11,7 +11,7 @@ INCLUDE_DIR = include
 THIRDPARTY_INCLUDE = thirdparty
 IMGUI_DIR = $(THIRDPARTY_INCLUDE)/imgui
 
-SOURCES = $(SOURCES_DIR)/assets.cpp $(SOURCES_DIR)/camera.cpp $(SOURCES_DIR)/LPPShow.cpp
+SOURCES = $(SOURCES_DIR)/assets.cpp $(SOURCES_DIR)/camera.cpp $(SOURCES_DIR)/LPPShow.cpp $(SOURCES_DIR)/solver.cpp
 SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
 SOURCES += $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
 SOURCES += $(THIRDPARTY_INCLUDE)/glad.c
@@ -19,7 +19,7 @@ SOURCES += $(THIRDPARTY_INCLUDE)/glad.c
 OBJS = $(addprefix objects/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 
 CXXFLAGS = -I$(INCLUDE_DIR) -I$(THIRDPARTY_INCLUDE)
-CXXFLAGS += -I$(IMGUI_DIR) -DDEBUG
+CXXFLAGS += -I$(IMGUI_DIR) -DDEBUG -DUSE_OBJ_LOADER -g
 LIBS = -lfmt
 
 ############################
@@ -50,13 +50,16 @@ CFLAGS = $(CXXFLAGS) # I think after?
 ############################
 # CONFIGURATIONS
 ############################
+configuration:=debug
 ifeq ($(configuration),debug)
-	SOURCES_DEBUG = 
+	SOURCES_DEBUG =
 	OBJS += $(addprefix objects/, $(addsuffix .o, $(basename $(notdir $(SOURCES_DEBUG)))))
-	
-	CXXFLAGS += -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends
-	CXXFLAGS += -DDEBUG -DOBJL_CONSOLE_OUTPUT
-	CXXFLAGS += -g -v
+
+	CXXFLAGS += -DDEBUG -DUSE_OBJ_LOADER -g
+endif
+
+ifeq ($(configuration),optimized)
+	CXXFLAGS += -DUSE_BAKED_SHADERS -O3
 endif
 
 ############################
@@ -73,6 +76,9 @@ objects/%.o:$(IMGUI_DIR)/backends/%.cpp
 
 all: object-folder $(EXECUTABLE_NAME)
 	@echo "Build done for $(EXECUTABLE_NAME) v$(EXECUTABLE_VERSION)"
+
+bake: assets/*.vert assets/*.frag include/baked_shaders.h
+	python preconfigure/bake_shaders.py assets/* include/baked_shaders.h
 
 object-folder:
 	@mkdir -p objects

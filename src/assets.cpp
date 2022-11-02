@@ -1,36 +1,11 @@
-#include <assets.h>
+#include "assets.h"
 #include <glad/glad.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "OBJ_Loader.h"
 
-objl::Loader* loader = new objl::Loader();
-
-/**
- * XXX:
- * This method now throws, so it might get a bit fucky-wucky™ with opengl during initialization.
- */
-std::string readFileDry(const char* filename) {
-    std::string fileBuffer;
-    std::ifstream file;
-    file.exceptions( std::ifstream::failbit | std::ifstream::badbit );
-    try {
-        file.open(filename);
-        std::stringstream reader;
-        reader << file.rdbuf();
-        file.close();
-
-        fileBuffer = reader.str();
-    }
-    catch (std::ifstream::failure err) {
-        std::cout << "Failed to read text file " << filename << std::endl;
-        throw err;
-    }
-    return fileBuffer;
-};
 
 Object::~Object() {
     glDeleteBuffers(1, &this->vertexData);
@@ -38,7 +13,12 @@ Object::~Object() {
     glDeleteBuffers(1, &this->objectData);
 }
 
-bool loadObject(Object* target, const char* objectLocation) {
+#ifdef USE_OBJ_LOADER
+#include "OBJ_Loader.h"
+
+objl::Loader* loader = new objl::Loader();
+
+bool fromWavefront(Object* target, const char* objectLocation) {
     if (!loader->LoadFile(objectLocation)) {
         return false;
     }
@@ -73,6 +53,57 @@ bool loadObject(Object* target, const char* objectLocation) {
 
     return true;
 }
+#else
+bool legl::fromWavefront(Object* target, const char* objectLocation) { return false; }
+#endif
+
+bool fromVertexData(
+    Object* object,
+    VertexAttributePosition* vertexData,
+    int vertexCount,
+    int* indices,
+    int indexCount
+){
+    glGenVertexArrays(1, &object->objectData);
+    glGenBuffers(1, &object->vertexData);
+    glGenBuffers(1, &object->indices);
+
+    glBindVertexArray(object->objectData);
+    glBindBuffer(GL_ARRAY_BUFFER, object->vertexData);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(*vertexData) * vertexCount, vertexData, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object->indices);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(*indices) * indexCount, indices, GL_STATIC_DRAW);
+
+    object->vertexCount = indexCount;
+    return true;
+};
+bool fromVertexData(Object* object, VertexAttributePositionUV* vertexData, int indices){ return false; };
+
+/**
+ * XXX:
+ * This method now throws, so it might get a bit fucky-wucky™ with opengl during initialization.
+ */
+std::string readFileDry(const char* filename) {
+    std::string fileBuffer;
+    std::ifstream file;
+    file.exceptions( std::ifstream::failbit | std::ifstream::badbit );
+    try {
+        file.open(filename);
+        std::stringstream reader;
+        reader << file.rdbuf();
+        file.close();
+
+        fileBuffer = reader.str();
+    }
+    catch (std::ifstream::failure err) {
+        std::cout << "Failed to read text file " << filename << std::endl;
+        throw err;
+    }
+    return fileBuffer;
+};
 
 char Shader::sCompileLog[512];
 

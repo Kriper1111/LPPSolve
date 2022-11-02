@@ -3,6 +3,16 @@
 #include <iostream>
 #include <glm/glm.hpp>
 
+// namespace kegl {
+
+struct VertexAttributePosition {
+    float position[3];
+};
+struct VertexAttributePositionUV {
+    float position[3];
+    float uv[2];
+};
+
 class Object {
     public:
     unsigned int vertexData;
@@ -14,7 +24,9 @@ class Object {
     ~Object();
 };
 
-bool loadObject(Object* target, const char* objectLocation);
+bool fromVertexData(Object* object, VertexAttributePosition* vertexData, int vertexCount, int* indices, int indexCount);
+bool fromVertexData(Object* object, VertexAttributePositionUV* vertexData, int vertexCount, int* indices, int indexCount);
+bool fromWavefront(Object* target, const char* objectLocation);
 
 class Shader {
     private:
@@ -36,3 +48,5 @@ class Shader {
     template <class T>
     void setUniform(const char* name, T value);
 };
+
+// } // namespace: kegl
