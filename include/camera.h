@@ -9,6 +9,10 @@ class Camera {
     glm::vec3 mRotation;
     glm::vec3 mUp;
 
+    bool isOrthographic;
+
+    int viewHeight; // XXX: Will cause problems with orthographic view and resizing
+    int viewWidth;
     float fieldOfView;
     float aspectRatio;
     float nearPlane;
@@ -22,6 +26,11 @@ class Camera {
     float lookDepth = 25.0f;
     Camera(int viewWidth, int viewHeight, float fov = 45.5f, float nearplane = 0.01f, float farplane = 100.0f);
     void changeFOV(float newFOV);
+    void setOrtography();
+    void setPerspective();
+    void useOrthography(bool useOrthography);
+    bool useOrthography();
+
     void rotate(float rotation);
     void rotate(float pitch, float roll, float yaw);
 

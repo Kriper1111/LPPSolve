@@ -1,27 +1,39 @@
-[ ] Actual zoom in support
-    --  requires some clever thinks with grid scaling
+!! DANGER ZONE AHEAD !!
+  Don't think of this file as a properly documented list of features pending
+implementation. It's main goal is to be a post-it note for myself.
+I'll remove the descriptions of targets once they're done.
+
 [ ] Actual solution support
     --  the groundwork is kind of there, but needs proper
-        implementation. We could also support cddlib's .ine/.ext
-        files, those are pretty humanly readable.
+          implementation. We could also support cddlib's .ine/.ext
+          files, those are pretty humanly readable.
     --  Some caveats to consider - the library accepts matrices in
-        form of [b a1 a2 a3], fit into x1a1 + x2a2 + x3a3 + b >= 0
+          form of [b a1 a2 a3], fit into x1a1 + x2a2 + x3a3 + b >= 0
         So, coming from our "expected" x1a1 + x2a2 + x3a3 <= b
-        form, we'll have to shuffle some values around.
+          form, we'll have to shuffle some values around.
         Additionally, we have to include x1, x2, x3 >= 0
         This could be done by appending last three rows of an 
-        eye-matrix to the LP matrix.
+          eye-matrix to the LP matrix.
     --  At some point, we should think of dynamic signs
-        and quite possibly UI simplifications: hide zeroed out
-        variables and remove equations.
+          and quite possibly UI simplifications: hide zeroed out
+          variables and remove equations.
         For latter, it's best if we collect them into a list,
-        and run over it after we finish editing.
+          and run over it after we finish editing.
+[ ] Actual zoom in support
+    --  requires some clever thinks with grid scaling
+[ ] Orthographic camera snapping
+    --  Think Blender, but worse in UI and UX.
+          So there's probably a button, best case scenario a UI button
+          that snaps your camera to a top-down view and switches it to orthographic
+          projection.
+    --  It's somewhat implemented right now, except I can't get ortho to work
+          properly. Really no ideas.
 [ ] GitHub Actions workflow for crossplatform builds
     --  Probably requires movement towards the likes of CMake
     --  Definitely will hit the rate limit implementing
 [ ] "Optimized" limit plane rendering
     Meaning we'll collect the transform matrices into one buffer
-    and use that for rendering the planes, instanced.
+      and use that for rendering the planes, instanced.
     Further reading:
     - solver.cpp#L128
     - https://www.khronos.org/opengl/wiki/Buffer_Object_Streaming
@@ -29,6 +41,23 @@
 [ ] Updated manual Object generation from vertex data:
     Follow FIXME in solver.cpp#L191
 [ ] Object file bake script
+    --  And either `make baked` or include it into `make build`/`make release` targets
+[ ] CMake or just some tweaks to the Makefile.
+    --  The Makefile is not quite release-ready. Best used by noone.
+          I think the following "main" targets should be enough:
+        - `make build` or `make release` for the release configuration
+        - `make debug` for the debug configuration
+          of course I can't not have `make bake` as a target, but it's an aux one.
+        The debug target should somehow update the target objects/definitions when specified
+          in a way that's compatible with the main compile workflow. Or just don't use extra
+          objects in a debug build. Which is kind of a thing either way right now.
+    --  Or as a remedy to the problems with multiconfigurations, I could *just* switch to
+          CMake. But I'd like to keep the Makefile regardless. The fact that I am thinking of
+          using CMake is not going to stop me from using the original Makefile for builds.
 [ ] Quickhull via https://github.com/akuukka/quickhull from cddlib solutions.
-[+] Autoresize the window
+[+] Autoresize the window [0.1.0]
+[ ] Fix world orientation
+    --  I'm not quite sure what that's supposed to mean, but I think it means
+          "I've got a hunch that this thing is rotated wrong" or something.
+          It should be mostly accurate though. Mostly.
 ( MANY MORE COMING )

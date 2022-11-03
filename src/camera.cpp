@@ -6,6 +6,14 @@
 
 void Camera::applyRotation() {
     glm::vec3 direction;
+
+    // replace with while?
+    if (this->mRotation.z > 360) this->mRotation.z -= 360;
+    if (this->mRotation.z < 0) this->mRotation.z += 360;
+
+    if (this->mRotation.x >  90) this->mRotation.x =  89.5;
+    if (this->mRotation.x < -90) this->mRotation.x = -89.5;
+
     // Yaw:
     direction.x = sin(glm::radians(this->mRotation.z)) * cos(glm::radians(this->mRotation.x));
     direction.y = cos(glm::radians(this->mRotation.z)) * cos(glm::radians(this->mRotation.x));
@@ -24,7 +32,10 @@ void Camera::applyRotation() {
 }
 
 void Camera::recalcProjection() {
-    this->projectionMatrix = glm::perspective(glm::radians(fieldOfView), aspectRatio, nearPlane, farPlane);
+    if (this->isOrthographic)
+        this->projectionMatrix = glm::ortho(-viewWidth / 2.0, viewWidth / 2.0, viewHeight / 2.0, -viewHeight / 2.0, 0.0, 1.0);
+    else
+        this->projectionMatrix = glm::perspective(glm::radians(fieldOfView), aspectRatio, nearPlane, farPlane);
 }
 
 void Camera::updateOrbitDepth() {
@@ -32,10 +43,12 @@ void Camera::updateOrbitDepth() {
 }
 
 Camera::Camera(int viewWidth, int viewHeight, float fov, float nearplane, float farplane) {
-    fieldOfView = fov;
-    aspectRatio = (float)viewWidth/(float)viewHeight;
-    nearPlane = nearplane;
-    farPlane = farplane;
+    this->viewWidth = viewWidth;
+    this->viewHeight = viewHeight;
+    this->fieldOfView = fov;
+    this->aspectRatio = (float)viewWidth/(float)viewHeight;
+    this->nearPlane = nearplane;
+    this->farPlane = farplane;
     this->recalcProjection();
     this->mDirection = glm::vec3(0.0f);
     this->mLocation = glm::vec3(0.0, 0.0, 0.0f);
@@ -43,15 +56,27 @@ Camera::Camera(int viewWidth, int viewHeight, float fov, float nearplane, float 
     this->rotate(0);
 }
 
+void Camera::changeFOV(float FOV) {
+    fieldOfView = FOV;
+    this->recalcProjection();
+}
+
+void Camera::setOrtography() { this->useOrthography(true); }
+void Camera::setPerspective() { this->useOrthography(false); }
+
+void Camera::useOrthography(bool useOrthography) {
+    if (useOrthography != this->isOrthographic) {
+        this->isOrthographic = useOrthography;
+        this->recalcProjection();
+    }
+}
+
+bool Camera::useOrthography() { return this->isOrthographic; }
+
 void Camera::rotate(float rotation) { rotate(rotation, rotation, rotation); }
 void Camera::rotate(float pitch, float roll, float yaw) {
     this->mRotation = glm::vec3(pitch, roll, yaw);
     this->applyRotation();
-}
-
-void Camera::changeFOV(float FOV) {
-    fieldOfView = FOV;
-    this->recalcProjection();
 }
 
 void Camera::rotateBy(float rotation) { rotateBy(rotation, rotation, rotation); }

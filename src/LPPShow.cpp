@@ -6,7 +6,6 @@
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_glfw.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include "assets.h"
 #include "camera.h"
@@ -16,7 +15,7 @@
 const float movementSpeed = 2.5f;
 ImVec2 windowPosition = { 600, 0 };
 ImVec2 windowSize = { 384, 720 };// { 360, 720 };
-ImVec4 worldColor = { 0.364, 0.674, 0.764, 1.0 }; //519dea
+ImVec4 worldColor = { 0.364, 0.674, 0.764, 1.0 };
 
 struct MouseState {
     bool leftMouseButton;
@@ -31,6 +30,7 @@ struct MouseState {
 
 namespace SceneData {
     bool canMoveCamera = true;
+    bool allowEditCamera = false;
     bool showDebugOverlay = false;
     LinearProgrammingProblemDisplay* limits;
     WorldGridDisplay* worldOrigin;
@@ -57,8 +57,11 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
     float vertical = (glfwGetKey(inputWindow, GLFW_KEY_W) - glfwGetKey(inputWindow, GLFW_KEY_S))
                      + (glfwGetKey(inputWindow, GLFW_KEY_UP) - glfwGetKey(inputWindow, GLFW_KEY_DOWN));
 
+
     if (horizontal || vertical) {
+        // BUG: seems to be inverted on Windows for some reason.
         camera->orbit(horizontal * movementSpeed * speedMod, -vertical * movementSpeed * speedMod);
+        // camera->setPerspective();
     }
 }
 
@@ -72,24 +75,48 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui::SetWindowSize(windowSize);
 
     if (ImGui::CollapsingHeader("Camera controls")) {
-        // auto cameraLocation = camera->getCameraLocation();
-        // auto cameraRotation = camera->getCameraRotation();
-        // ImGui::InputFloat3("CameraPos:", &cameraLocation[0]);
-        // if (ImGui::IsItemEdited())
-        //     camera->teleportTo(cameraLocation.x, cameraLocation.y, cameraLocation.z);
-        // ImGui::InputFloat3("CameraLook:", &cameraRotation[0]);
-        // if (ImGui::IsItemEdited())
-        //     camera->rotate(cameraRotation.x, cameraRotation.y, cameraRotation.z);
-        ImGui::Text("CameraPos: %s", glx_toString(camera->getCameraLocation()).c_str());
-        ImGui::Text("CameraLook: %s", glx_toString(camera->getCameraRotation()).c_str());
+        if (SceneData::allowEditCamera) {
+            auto cameraLocation = camera->getCameraLocation();
+            auto cameraRotation = camera->getCameraRotation();
+            if (ImGui::InputFloat3("CameraPos:", &cameraLocation[0]))
+                camera->teleportTo(cameraLocation.x, cameraLocation.y, cameraLocation.z);
+            if (ImGui::InputFloat3("CameraLook:", &cameraRotation[0]))
+                camera->rotate(cameraRotation.x, cameraRotation.y, cameraRotation.z);
+        } else {
+            ImGui::Text("CameraPos: %s", glx_toString(camera->getCameraLocation()).c_str());
+            ImGui::Text("CameraLook: %s", glx_toString(camera->getCameraRotation()).c_str());
+        }
         ImGui::Text("CameraDirect: %s", glx_toString(camera->getCameraDirection()).c_str());
         ImGui::Text("Movement speed: %.3f", movementSpeed);
         ImGui::SliderFloat("Look insensitivity", &camera->lookInSensitivity, 1.0f, 50.0f);
         ImGui::SliderFloat("Look depth", &camera->lookDepth, 0.0f, 100.0f);
+        ImGui::Checkbox("Allow editing camera values", &SceneData::allowEditCamera);
+        // bool isOrtho = camera->useOrthography();
+        // if (ImGui::Checkbox("Use orthography", &isOrtho)) {
+        //     camera->useOrthography(isOrtho);
+        // }
+        
+        if (ImGui::Button("up X View")) {
+            camera->teleportTo(camera->lookDepth, 0, 0);
+            camera->rotate(0, 0, -90);
+            // camera->setOrtography();
+        }
+        if (ImGui::Button("down Y View")) {
+            camera->teleportTo(0, -camera->lookDepth, 0);
+            camera->rotate(0, 0, 0);
+            // camera->setOrtography();
+        }
+        if (ImGui::Button("down Z view")) {
+            camera->teleportTo(0, 0, camera->lookDepth);
+            camera->rotate(-89.5, 0, 0);
+            // camera->setOrtography();
+        }
     }
 
     if (ImGui::CollapsingHeader("World settings")) {
+        #ifdef DEBUG
         ImGui::ColorPicker4("World color", &worldColor.x, ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoAlpha);
+        #endif
         ImGui::Checkbox("Show grid", &SceneData::worldOrigin->gridEnabled);
         ImGui::Checkbox("Show world axis", &SceneData::worldOrigin->axisEnabled);
         ImGui::SliderFloat("Grid scale", &SceneData::worldOrigin->zoomScale, 0.1f, 10.0f);
@@ -105,21 +132,42 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     }
     ImGui::Separator();
 
+    glm::vec4 targetFunctionEq = SceneData::limits->getTargetFunction();
+    ImGui::InputFloat4("Target function", &targetFunctionEq[0]);
+    if (ImGui::IsItemEdited()) {
+        SceneData::limits->setTargetFunction(targetFunctionEq);
+    }
+    ImGui::Separator();
+
+    // TODO: Make into a scrollbox
     for (int planeIndex = 0; planeIndex < SceneData::limits->getEquationCount(); planeIndex++) {
         glm::vec4 planeEquationOrigin = SceneData::limits->getLimitPlane(planeIndex);
         ImGui::Text("Plane: ");
         ImGui::PushID(planeIndex);
-        ImGui::InputFloat4("Equation", &planeEquationOrigin[0]);
-        ImGui::PopID();
-        if (ImGui::IsItemEdited()) {
+        if (ImGui::InputFloat4("Equation", &planeEquationOrigin[0])) {
             SceneData::limits->editLimitPlane(planeIndex, planeEquationOrigin);
         }
+        ImGui::PopID();
     }
 
+    if (ImGui::Button("Solve")) {
+        try {
+            SceneData::limits->solve();
+        } catch (std::runtime_error &dd_error) {
+            ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, "Failed to solve the equation: %s", dd_error.what());
+        }
+    }
+    if (SceneData::limits->isSolved()) {
+        ImGui::Text("Optimal value: %.4f", SceneData::limits->getOptimalValue());
+        ImGui::Text("Optimal plan: %.3fx1 %.3fx2 %.3fx3 %.3f", SceneData::limits->getOptimalVertex());
+    }
+
+    #ifdef DEBUG
     ImGui::Checkbox("Show debug overlay (imgui)", &SceneData::showDebugOverlay);
     ImGui::Checkbox("Toggle freecam", &SceneData::canMoveCamera);
 
     if (SceneData::showDebugOverlay) ImGui::ShowMetricsWindow(&SceneData::showDebugOverlay);
+    #endif
 
     ImGui::End();
 
@@ -158,6 +206,11 @@ void glfwMouseCallback(GLFWwindow* window) {
 }
 
 int main() {
+    // XXX: Make GLFW init thing into an object?
+    // That way we could use auto-destructors without worrying about 
+    // deleting stray Objects after glfw has been deinitialized.
+    // We could probably make it into a thin wrapper
+    // Maybe even overrideable, with a .init where we could set up ImGui, for example.
     ////////////
     //// INIT GLFW
     ////////////
@@ -176,7 +229,6 @@ int main() {
     GLFWwindow* mainWindow = glfwCreateWindow(windowWidth, windowHeight, "Linear Programming Problem: Show", NULL, NULL);
     if (mainWindow == nullptr) return logCriticalError("Failed to create a window");
     // ...
-    // glfwSetCursorPosCallback(mainWindow, glfwMouseCallback);
     glfwSetWindowSizeCallback(mainWindow, glfwWindowResizeCallback);
     // ...
     glfwMakeContextCurrent(mainWindow);
@@ -212,11 +264,7 @@ int main() {
     // 63.5593°, 0°, 46.6919° // pitch - 90, 0, yaw - 180
     camera->lookDepth = glm::length(camera->getCameraLocation());
     SceneData::sceneCamera = camera;
-    // Object* cube = new Object();
-    // fromWavefront(cube, "assets/the world.obj");
 
-    // SceneData::cubeShader = new Shader("assets/default.vert", "assets/default.frag");
-    // SceneData::cube = cube;
     try {
         SceneData::limits = new LinearProgrammingProblemDisplay();
         SceneData::worldOrigin = new WorldGridDisplay();
@@ -237,14 +285,18 @@ int main() {
         deltaTime = time - lastFrame;
         lastFrame = time;
 
-        // glClearColor(0.176, 0.487, 0.801, 1.0);
-        // glClearColor(0, 0, 0, 1.0);
         glClearColor(worldColor.x, worldColor.y, worldColor.z, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // XXX: wonky with the built-in callback, maybe because data races?
+        //      Shouldn't happen though, I imagine the callbacks are executed
+        //      during glfwPollEvents();
+        //      well it says that right in the description that they don't
+        //      necessary get called when glfwPollEvents(); is executed
         glfwMouseCallback(mainWindow);
         updateProcessDraw(mainWindow, camera, deltaTime);
 
+        // FIXME: Needs VSync on Windows
         glfwSwapBuffers(mainWindow);
         glfwPollEvents();
     }

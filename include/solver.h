@@ -1,8 +1,15 @@
 #pragma once
 
-// #include <glm/glm.hpp>
-
 class LinearProgrammingProblemDisplay {
+    struct Solution
+    {
+        bool isSolved;
+        bool didMinimize;
+        float optimalValue;
+        glm::vec4 optimalVector;
+        std::vector<glm::vec3> vertices;
+    };
+    
     private:
     static std::shared_ptr<Object> planeObject;
     static std::shared_ptr<Shader> planeShader;
@@ -13,6 +20,10 @@ class LinearProgrammingProblemDisplay {
     std::vector<glm::vec4> planeEquations;
     std::vector<glm::mat4> planeTransforms;
 
+    glm::vec4 targetFunction;
+
+    Solution solution;
+
     void recalculatePlane(int planeIndex);
     void rebindAttributes();
 
@@ -20,6 +31,9 @@ class LinearProgrammingProblemDisplay {
     LinearProgrammingProblemDisplay();
 
     int getEquationCount();
+
+    void setTargetFunction(glm::vec4 targetFunction);
+    glm::vec4 getTargetFunction();
 
     int addLimitPlane(glm::vec4 constraints);
     int addLimitPlane(float* constraints);
@@ -30,6 +44,10 @@ class LinearProgrammingProblemDisplay {
     void removeLimitPlane(int planeIndex);
 
     bool solve();
+
+    bool isSolved();
+    float getOptimalValue();
+    glm::vec4 getOptimalVertex();
 
     void renderLimitPlanes(glm::mat4 view, glm::mat4 projection);
     void renderAcceptableValues();

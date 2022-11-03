@@ -9,6 +9,8 @@
 #include "solver.h"
 
 #ifdef USE_CDDLIB
+#define REFLECT(var) #var
+#include <cdd/setoper.h>
 #include <cdd/cdd.h>
 #endif
 
@@ -17,6 +19,49 @@
 #endif
 
 const glm::vec3 worldUp({0, 0, 1});
+
+#ifdef USE_CDDLIB
+// XXX: This code is ugly and could at least be baked in
+const char* reflect_dd_error(dd_ErrorType error) {
+    switch (error)
+    {
+    case dd_DimensionTooLarge: return REFLECT(dd_DimensionTooLarge);
+    case dd_ImproperInputFormat: return REFLECT(dd_ImproperInputFormat);
+    case dd_NegativeMatrixSize: return REFLECT(dd_NegativeMatrixSize);
+    case dd_EmptyVrepresentation: return REFLECT(dd_EmptyVrepresentation);
+    case dd_EmptyHrepresentation: return REFLECT(dd_EmptyHrepresentation);
+    case dd_EmptyRepresentation: return REFLECT(dd_EmptyRepresentation);
+    case dd_IFileNotFound: return REFLECT(dd_IFileNotFound);
+    case dd_OFileNotOpen: return REFLECT(dd_OFileNotOpen);
+    case dd_NoLPObjective: return REFLECT(dd_NoLPObjective);
+    case dd_NoRealNumberSupport: return REFLECT(dd_NoRealNumberSupport);
+    case dd_NotAvailForH: return REFLECT(dd_NotAvailForH);
+    case dd_NotAvailForV: return REFLECT(dd_NotAvailForV);
+    case dd_CannotHandleLinearity: return REFLECT(dd_CannotHandleLinearity);
+    case dd_RowIndexOutOfRange: return REFLECT(dd_RowIndexOutOfRange);
+    case dd_ColIndexOutOfRange: return REFLECT(dd_ColIndexOutOfRange);
+    case dd_LPCycling: return REFLECT(dd_LPCycling);
+    case dd_NumericallyInconsistent: return REFLECT(dd_NumericallyInconsistent);
+    case dd_NoError: return REFLECT(dd_NoError);
+    default: return "Unknown dd_ErrorType";
+    }
+}
+
+// @throws std::runtime_error if there's a dd error
+void throw_dd_error(dd_ErrorType error) {
+    if (error != dd_NoError) {
+        throw new std::runtime_error(reflect_dd_error(error));
+    }
+}
+
+glm::vec4 createVector(dd_Arow dd_vector, int vector_length) {
+    glm::vec4 vector(0);
+    for (int index = 0; index < vector_length && index < 4; index++) {
+        vector[index] = dd_vector[index][0];
+    }
+    return vector;
+}
+#endif
 
 // class LinearProgrammingProblemDisplay {
 //  private:
@@ -31,7 +76,7 @@ void LinearProgrammingProblemDisplay::createPlaneObject() {
         {-1.0, -1.0, 0.0},
         {-1.0,  1.0, 0.0},
         { 1.0, -1.0, 0.0},
-        { 1.0,  1.0, 0.0} 
+        { 1.0,  1.0, 0.0}
     };
 
     int indices[] = {
@@ -55,25 +100,31 @@ void LinearProgrammingProblemDisplay::recalculatePlane(int planeIndex) {
     glm::vec3 planeNormal = glm::normalize(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z));
 
     // std::cout << "Editing: " << planeIndex << " " << glm::to_string(planeEquation) << std::endl;
-    glm::vec3 planeIntersections = glm::vec3(0);
 
-    float lengthSquared = glm::pow(planeEquation.x, 2) + 
-                          glm::pow(planeEquation.y, 2) + 
-                          glm::pow(planeEquation.z, 2);
-
-    if (planeEquation.x != 0) {
-        planeIntersections.x = planeEquation.w / planeEquation.x;
-    } // else 
-    if (planeEquation.y != 0) {
-        planeIntersections.y = planeEquation.w / planeEquation.y;
-    } // else 
-    if (planeEquation.z != 0) {
-        planeIntersections.z = planeEquation.w / planeEquation.z;
-    }
-    if (lengthSquared == 0) { lengthSquared = 1; } 
+    // float lengthSquared = glm::pow(planeEquation.x, 2) +
+    //                       glm::pow(planeEquation.y, 2) +
+    //                       glm::pow(planeEquation.z, 2);
+    // float lengthDoubled = glm::length(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z)) * 2;
+    float distanceToLine = glm::abs(planeEquation.w) / glm::length(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z));
+    // So I was kind of correct with the guesses.. Kind of.
+    // Really shows how much easier it is when you actually think before writing code and
+    //      making any assumptions based off of a simplifed example in Blender.
+    // It's worse than I thought
+    // It's trigonometry (oh no)
+    // Update: I'm extra stupid right now. It's just basic vector things.
 
     glm::mat4 planeTransform = glm::mat4(1);
-    if (worldUp != planeNormal) { // e.g. we actually have to do something
+    if (worldUp == glm::abs(planeNormal)) {
+        /** HACK: This is done to properly orient the plane when it's aligned
+         *          with the world axis -- in this case it's hardcoded to Z+
+         *        We modify *up* value instead of *right*
+         *        But we're better off merging it with the default workflow
+         *        E.g. have a default *right* vector and fall back to that
+         *          if planeNormal and worldUp align. *how would we check it though*
+         *        Probably via the abs method, can't think of anything good right now
+         */
+        planeTransform[1] = { 0, -planeNormal.z, 0, 0 };
+    } else {
         glm::vec3 right = glm::normalize(glm::cross(planeNormal, worldUp));
         glm::vec3 up = glm::normalize(glm::cross(right, planeNormal));
 
@@ -82,13 +133,10 @@ void LinearProgrammingProblemDisplay::recalculatePlane(int planeIndex) {
         planeTransform[2] = { planeNormal, 0 };
     }
 
-    planeTransform[3] = { planeIntersections / lengthSquared, 1 };
+    planeTransform[3] = { planeNormal * distanceToLine, 1 };
 
     if (planeIndex == planeTransforms.size()) { planeTransforms.push_back(planeTransform); }
     else { planeTransforms[planeIndex] = planeTransform; }
-
-    // std::cout << "Transform " << std::endl;
-    // std::cout << to_string(planeTransform) << std::endl;
 
     rebindAttributes();
 }
@@ -103,6 +151,13 @@ LinearProgrammingProblemDisplay::LinearProgrammingProblemDisplay() {
 
 int LinearProgrammingProblemDisplay::getEquationCount() { return planeEquations.size(); }
 
+void LinearProgrammingProblemDisplay::setTargetFunction(glm::vec4 targetFunction) {
+    this->targetFunction = targetFunction;
+}
+glm::vec4 LinearProgrammingProblemDisplay::getTargetFunction() {
+    return targetFunction; // XXX: copy? we skip the whole immutability part with this
+}
+
 // DEPRECATE
 int LinearProgrammingProblemDisplay::addLimitPlane(float* constraints) {
     return addLimitPlane(glm::vec4(constraints[0], constraints[1], constraints[2], constraints[3])); // BAD
@@ -113,7 +168,7 @@ int LinearProgrammingProblemDisplay::addLimitPlane(glm::vec4 constraints) {
     return planeEquations.size();
 }
 
-// Throws: std::out_of_range
+// @throws: std::out_of_range
 glm::vec4 LinearProgrammingProblemDisplay::getLimitPlane(int planeIndex) { return planeEquations.at(planeIndex); }
 
 // DEPRECATE
@@ -137,7 +192,89 @@ void LinearProgrammingProblemDisplay::removeLimitPlane(int planeIndex) {
     rebindAttributes();
 }
 
-bool LinearProgrammingProblemDisplay::solve() { return false; };
+// Solves the given LPP and return boolean if a solution was found
+// @throws std::runtime_error if there's a dd error
+bool LinearProgrammingProblemDisplay::solve() {
+    // Yes we use #ifndef and I know it's bad, but I have to build it somehow on Windows first.
+    #ifndef USE_CDDLIB
+    return false;
+    #else
+    try {
+    dd_set_global_constants();
+
+    // TODO: Properly reset the solution: clear optimal values, vectors, and vertices
+    solution.isSolved = false;
+    // FIXME: potential memory leak????
+    // It should delete vectors, as they're not being pointed at
+    // and rather stored direly
+    // because RAII
+    solution.vertices.clear();
+
+    dd_MatrixPtr constraintMatrix;
+    dd_LPPtr linearProgrammingProblem;
+    dd_ErrorType error;
+
+    constraintMatrix = dd_CreateMatrix(4, 3 + this->planeEquations.size());
+
+    int row;
+    for (row = 0; row < planeEquations.size(); row++) {
+        // Ah yes I love doing stuff this way. Just can't get enough of it.
+        // *sarcarsm please don't judge*
+        /** XXX: cddlib expects us to provide the constraints in a different form
+         * it expects the form of:
+         * B A1 A2 A3 >= 0
+         * but we collect them in form of
+         * A1 A2 A3 <= B
+         * so we have to multiply A's (planeEquation.xyz) by -1
+         * And shift B (planeEquation.w) to the first column.
+         */
+        const auto planeEquation = planeEquations.at(row);
+        dd_set_d(constraintMatrix->matrix[row][0],  planeEquation.w);
+        dd_set_d(constraintMatrix->matrix[row][1], -planeEquation.x);
+        dd_set_d(constraintMatrix->matrix[row][2], -planeEquation.y);
+        dd_set_d(constraintMatrix->matrix[row][3], -planeEquation.z);
+    }
+    for (int diag = 0; diag < 3; diag++) {
+        // -This way we set the x1, x2, x3 >= 0 condition
+        // -Other form is
+        // dd_set_d(constraintMatrix->matrix[row + 0][1], 1.0);
+        // dd_set_d(constraintMatrix->matrix[row + 1][2], 1.0);
+        // dd_set_d(constraintMatrix->matrix[row + 2][3], 1.0);
+        //  without the loop
+        dd_set_d(constraintMatrix->matrix[row + diag][diag + 1], 1.0);
+    }
+
+    dd_set_d(constraintMatrix->rowvec[0],  targetFunction.w);
+    dd_set_d(constraintMatrix->rowvec[1], -targetFunction.x);
+    dd_set_d(constraintMatrix->rowvec[2], -targetFunction.y);
+    dd_set_d(constraintMatrix->rowvec[3], -targetFunction.z);
+
+    constraintMatrix->representation = dd_Inequality;
+
+    linearProgrammingProblem = dd_Matrix2LP(constraintMatrix, &error);
+    throw_dd_error(error);
+    dd_LPSolve(linearProgrammingProblem, dd_DualSimplex, &error);
+    throw_dd_error(error);
+
+    solution.isSolved = true;
+    solution.optimalValue = linearProgrammingProblem->optvalue[0];
+    solution.optimalVector = createVector(linearProgrammingProblem->sol, linearProgrammingProblem->d);
+    solution.didMinimize = linearProgrammingProblem->objective == dd_LPmin;
+
+    } catch (std::runtime_error &dd_error) {
+        dd_free_global_constants();
+        throw dd_error;
+    }
+    std::cout << "solve(): Cleaning up" << std::endl;
+    dd_free_global_constants();
+    #endif
+};
+
+bool LinearProgrammingProblemDisplay::isSolved() { return solution.isSolved; }
+
+float LinearProgrammingProblemDisplay::getOptimalValue() { return solution.optimalValue; }
+
+glm::vec4 LinearProgrammingProblemDisplay::getOptimalVertex() { return solution.optimalVector; }
 
 void LinearProgrammingProblemDisplay::renderLimitPlanes(glm::mat4 view, glm::mat4 projection) {
     if (planeTransforms.size() == 0) return;
@@ -156,7 +293,7 @@ void LinearProgrammingProblemDisplay::renderLimitPlanes(glm::mat4 view, glm::mat
      *   And another one, with the matrix transforms
      * - Passing matrix transforms via vertex attributes
      *   Which isn't that bad, as they're involved in vertex stage, which uses them either way
-     * 
+     *
      * I'm mostly concerned about re-creating the MBO (matrix buffer object)
      * Like, do we have to re-link it to the VAO? What happens to the old link?
      * Do we have to re-link the whole object?
@@ -211,7 +348,7 @@ void WorldGridDisplay::createObjects() {
      * Right now I have to use two different shaders for basically the same generic object
      * So I would avoid creating and mainly repeating the same operation with loading
      * VertexAttributePositionUV
-     * 
+     *
      * This needs to be redone, probably via multiple data buffers or appending to the end of one
      * while collecting the offsets/strides from previous steps
      * so .addVertexAttribute3D() -> strides: [3]
