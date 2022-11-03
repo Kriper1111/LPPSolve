@@ -11,7 +11,7 @@ class LinearProgrammingProblemDisplay {
     static void createPlaneShader();
 
     std::vector<glm::vec4> planeEquations;
-    std::vector<glm::mat3> planeTransforms;
+    std::vector<glm::mat4> planeTransforms;
 
     void recalculatePlane(int planeIndex);
     void rebindAttributes();

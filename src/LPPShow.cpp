@@ -14,6 +14,9 @@
 
 
 const float movementSpeed = 2.5f;
+ImVec2 windowPosition = { 600, 0 };
+ImVec2 windowSize = { 384, 720 };// { 360, 720 };
+ImVec4 worldColor = { 0.364, 0.674, 0.764, 1.0 }; //519dea
 
 struct MouseState {
     bool leftMouseButton;
@@ -40,6 +43,8 @@ void glfwErrorCallback(int error, const char* description) {
 
 int logCriticalError(const char* description) {
     std::cerr << "Critical: " << description << std::endl;
+    // if(SceneData::hasOpenGlContext)
+    glfwTerminate();
     return -1;
 }
 
@@ -62,7 +67,9 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    ImGui::Begin("Planes");
+    ImGui::Begin("Planes", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+    ImGui::SetWindowPos(windowPosition);
+    ImGui::SetWindowSize(windowSize);
 
     if (ImGui::CollapsingHeader("Camera controls")) {
         // auto cameraLocation = camera->getCameraLocation();
@@ -81,7 +88,8 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::SliderFloat("Look depth", &camera->lookDepth, 0.0f, 100.0f);
     }
 
-    if (ImGui::CollapsingHeader("World Origin")) {
+    if (ImGui::CollapsingHeader("World settings")) {
+        ImGui::ColorPicker4("World color", &worldColor.x, ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoAlpha);
         ImGui::Checkbox("Show grid", &SceneData::worldOrigin->gridEnabled);
         ImGui::Checkbox("Show world axis", &SceneData::worldOrigin->axisEnabled);
         ImGui::SliderFloat("Grid scale", &SceneData::worldOrigin->zoomScale, 0.1f, 10.0f);
@@ -123,6 +131,13 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+void glfwWindowResizeCallback(GLFWwindow *window, int width, int height) {
+    windowSize.x = width * 0.4;
+    windowSize.y = height;
+
+    windowPosition.x = width - windowSize.x;
+    windowPosition.y = 0; // height - windowSize.y;
+}
 
 void glfwMouseCallback(GLFWwindow* window, double positionX, double positionY) {
     mouseState.deltaX = mouseState.positionX - positionX;
@@ -162,6 +177,7 @@ int main() {
     if (mainWindow == nullptr) return logCriticalError("Failed to create a window");
     // ...
     // glfwSetCursorPosCallback(mainWindow, glfwMouseCallback);
+    glfwSetWindowSizeCallback(mainWindow, glfwWindowResizeCallback);
     // ...
     glfwMakeContextCurrent(mainWindow);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) return logCriticalError("Failed to get OpenGL context");
@@ -201,8 +217,18 @@ int main() {
 
     // SceneData::cubeShader = new Shader("assets/default.vert", "assets/default.frag");
     // SceneData::cube = cube;
-    SceneData::limits = new LinearProgrammingProblemDisplay();
-    SceneData::worldOrigin = new WorldGridDisplay();
+    try {
+        SceneData::limits = new LinearProgrammingProblemDisplay();
+        SceneData::worldOrigin = new WorldGridDisplay();
+    } catch (std::exception &ioerr) {
+        delete SceneData::limits;
+        delete SceneData::worldOrigin;
+        // Might get to segfault
+        return logCriticalError("Failed to compile required shaders");
+    }
+
+    // ???
+    glfwWindowResizeCallback(mainWindow, windowWidth, windowHeight);
 
     float lastFrame, deltaTime = 0;
 
@@ -211,7 +237,9 @@ int main() {
         deltaTime = time - lastFrame;
         lastFrame = time;
 
-        glClearColor(0.176, 0.487, 0.801, 1.0);
+        // glClearColor(0.176, 0.487, 0.801, 1.0);
+        // glClearColor(0, 0, 0, 1.0);
+        glClearColor(worldColor.x, worldColor.y, worldColor.z, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glfwMouseCallback(mainWindow);

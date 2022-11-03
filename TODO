@@ -29,4 +29,6 @@
 [ ] Updated manual Object generation from vertex data:
     Follow FIXME in solver.cpp#L191
 [ ] Object file bake script
+[ ] Quickhull via https://github.com/akuukka/quickhull from cddlib solutions.
+[+] Autoresize the window
 ( MANY MORE COMING )

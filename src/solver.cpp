@@ -55,21 +55,40 @@ void LinearProgrammingProblemDisplay::recalculatePlane(int planeIndex) {
     glm::vec3 planeNormal = glm::normalize(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z));
 
     // std::cout << "Editing: " << planeIndex << " " << glm::to_string(planeEquation) << std::endl;
+    glm::vec3 planeIntersections = glm::vec3(0);
 
-    glm::mat3 planeTransform = glm::mat3(1);
+    float lengthSquared = glm::pow(planeEquation.x, 2) + 
+                          glm::pow(planeEquation.y, 2) + 
+                          glm::pow(planeEquation.z, 2);
+
+    if (planeEquation.x != 0) {
+        planeIntersections.x = planeEquation.w / planeEquation.x;
+    } // else 
+    if (planeEquation.y != 0) {
+        planeIntersections.y = planeEquation.w / planeEquation.y;
+    } // else 
+    if (planeEquation.z != 0) {
+        planeIntersections.z = planeEquation.w / planeEquation.z;
+    }
+    if (lengthSquared == 0) { lengthSquared = 1; } 
+
+    glm::mat4 planeTransform = glm::mat4(1);
     if (worldUp != planeNormal) { // e.g. we actually have to do something
         glm::vec3 right = glm::normalize(glm::cross(planeNormal, worldUp));
         glm::vec3 up = glm::normalize(glm::cross(right, planeNormal));
 
-        planeTransform[0] = right;
-        planeTransform[1] = up;
-        planeTransform[2] = planeNormal;
+        planeTransform[0] = { right, 0 };
+        planeTransform[1] = { up, 0 };
+        planeTransform[2] = { planeNormal, 0 };
     }
+
+    planeTransform[3] = { planeIntersections / lengthSquared, 1 };
 
     if (planeIndex == planeTransforms.size()) { planeTransforms.push_back(planeTransform); }
     else { planeTransforms[planeIndex] = planeTransform; }
 
-    // std::cout << "Transforms now: " << planeTransforms.size() << std::endl;
+    // std::cout << "Transform " << std::endl;
+    // std::cout << to_string(planeTransform) << std::endl;
 
     rebindAttributes();
 }
@@ -143,7 +162,7 @@ void LinearProgrammingProblemDisplay::renderLimitPlanes(glm::mat4 view, glm::mat
      * Do we have to re-link the whole object?
      */
     // glDrawElementsInstanced(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0, planeTransforms.size());
-    for (glm::mat3 planeTransform : planeTransforms) {
+    for (glm::mat4 planeTransform : planeTransforms) {
         planeShader->setUniform("planeTransform", planeTransform);
         glDrawElements(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0);
     }
