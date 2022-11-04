@@ -12,15 +12,18 @@ THIRDPARTY_INCLUDE = thirdparty
 IMGUI_DIR = $(THIRDPARTY_INCLUDE)/imgui
 
 SOURCES = $(SOURCES_DIR)/assets.cpp $(SOURCES_DIR)/camera.cpp $(SOURCES_DIR)/LPPShow.cpp $(SOURCES_DIR)/solver.cpp
+SOURCES += $(THIRDPARTY_INCLUDE)/quickhull/QuickHull.cpp
 SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
 SOURCES += $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
 SOURCES += $(THIRDPARTY_INCLUDE)/glad.c
 
 OBJS = $(addprefix objects/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 
+SHADERS = $(wildcard assets/*.vert) $(wildcard assets/*.frag)
+
 CXXFLAGS = -I$(INCLUDE_DIR) -I$(THIRDPARTY_INCLUDE)
 CXXFLAGS += -I$(IMGUI_DIR) -DDEBUG -DUSE_OBJ_LOADER -DUSE_CDDLIB -g
-LIBS = -lfmt
+LIBS = 
 
 ############################
 # PLATFORM-SPECIFIC
@@ -69,16 +72,20 @@ objects/%.o:src/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 objects/%.o:thirdparty/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
+objects/%.o:thirdparty/quickhull/%.cpp
+	$(CXX) -I$(THIRDPARTY_INCLUDE) -c -o $@ $<
 objects/%.o:$(IMGUI_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 objects/%.o:$(IMGUI_DIR)/backends/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
+include/bake%.h: $(SHADERS)
+	python preconfigure/bake_shaders.py $^ $@
+
 all: object-folder $(EXECUTABLE_NAME)
 	@echo "Build done for $(EXECUTABLE_NAME) v$(EXECUTABLE_VERSION)"
 
-bake: assets/*.vert assets/*.frag include/baked_shaders.h
-	python preconfigure/bake_shaders.py assets/* include/baked_shaders.h
+bake: include/baked_shaders.h
 
 object-folder:
 	@mkdir -p objects

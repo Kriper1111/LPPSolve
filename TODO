@@ -4,17 +4,11 @@ implementation. It's main goal is to be a post-it note for myself.
 I'll remove the descriptions of targets once they're done.
 
 [ ] Serialization or Unit tests
-[ ] Actual solution support
-    --  the groundwork is kind of there, but needs proper
-          implementation. We could also support cddlib's .ine/.ext
-          files, those are pretty humanly readable.
-    --  Some caveats to consider - the library accepts matrices in
-          form of [b a1 a2 a3], fit into x1a1 + x2a2 + x3a3 + b >= 0
-        So, coming from our "expected" x1a1 + x2a2 + x3a3 <= b
-          form, we'll have to shuffle some values around.
-        Additionally, we have to include x1, x2, x3 >= 0
-        This could be done by appending last three rows of an 
-          eye-matrix to the LP matrix.
+    -- We could use support cddlib's .ine/.ext files for that,
+          those are pretty humanly readable. Would require writing a
+          converter from their format to the plane constraints, meh.
+          And then back to solve it. Meh, squared.
+[+] Actual solution support
     --  At some point, we should think of dynamic signs
           and quite possibly UI simplifications: hide zeroed out
           variables and remove equations.
@@ -55,7 +49,7 @@ I'll remove the descriptions of targets once they're done.
     --  Or as a remedy to the problems with multiconfigurations, I could *just* switch to
           CMake. But I'd like to keep the Makefile regardless. The fact that I am thinking of
           using CMake is not going to stop me from using the original Makefile for builds.
-[ ] Quickhull via https://github.com/akuukka/quickhull from cddlib solutions.
+[+] Quickhull via https://github.com/akuukka/quickhull from cddlib solutions.
 [+] Autoresize the window [0.1.0]
 [ ] Fix world orientation
     --  I'm not quite sure what that's supposed to mean, but I think it means

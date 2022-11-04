@@ -24,6 +24,8 @@ class Object {
     ~Object();
 };
 
+// FIXME: this garbage. Next step is to move to the MeshBuilder thing.
+bool fromVertexData(Object* object, const float* vertexData, size_t vertexCount, const int* indices, int indexCount);
 bool fromVertexData(Object* object, VertexAttributePosition* vertexData, int vertexCount, int* indices, int indexCount);
 bool fromVertexData(Object* object, VertexAttributePositionUV* vertexData, int vertexCount, int* indices, int indexCount);
 bool fromWavefront(Object* target, const char* objectLocation);

@@ -86,6 +86,34 @@ bool fromVertexData(
     return true;
 };
 bool fromVertexData(Object* object, VertexAttributePositionUV* vertexData, int indices){ return false; };
+bool fromVertexData(
+    Object* object,
+    const float* vertexData,
+    size_t vertexCount,
+    const int* indices,
+    int indexCount
+) {
+    glGenVertexArrays(1, &object->objectData);
+    glGenBuffers(1, &object->vertexData);
+    glGenBuffers(1, &object->indices);
+
+    glBindVertexArray(object->objectData);
+    glBindBuffer(GL_ARRAY_BUFFER, object->vertexData);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(*vertexData) * vertexCount, vertexData, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+    glEnableVertexAttribArray(0);
+
+    object->vertexCount = vertexCount / 3;
+
+    // FIXME: Refactor this
+    if (indices != nullptr) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object->indices);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(*indices) * indexCount, indices, GL_STATIC_DRAW);
+        object->vertexCount = indexCount;
+    }
+
+    return true;
+}
 
 /**
  * XXX:
@@ -192,6 +220,9 @@ void Shader::setUniform<int>(const char *name, int uniformValue) {
 
 template <>
 void Shader::setUniform<float>(const char*name, float uniformValue) { glUniform1f(glGetUniformLocation(this->pShaderProgram, name), uniformValue); }
+
+template <>
+void Shader::setUniform<double>(const char*name, double uniformValue) { glUniform1f(glGetUniformLocation(this->pShaderProgram, name), uniformValue); }
 
 template<>
 void Shader::setUniform<glm::vec3>(const char*name, glm::vec3 uniformValue) { glUniform3f(glGetUniformLocation(this->pShaderProgram, name), uniformValue.x, uniformValue.y, uniformValue.z); }

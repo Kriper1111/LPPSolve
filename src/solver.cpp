@@ -10,9 +10,10 @@
 
 #ifdef USE_CDDLIB
 #define REFLECT(var) #var
-#include <cstdio>
 #include <cdd/setoper.h>
 #include <cdd/cdd.h>
+
+#include <quickhull/QuickHull.hpp>
 #endif
 
 #ifdef USE_BAKED_SHADERS
@@ -62,6 +63,38 @@ glm::vec4 createVector(dd_Arow dd_vector, int vector_length) {
     }
     return vector;
 }
+
+std::vector<float> getVertices(dd_MatrixPtr vform) {
+    std::vector<float> vertices;
+    for (int row = 0; row < vform->rowsize; row++) {
+        if (vform->matrix[row][0][0] == 0) continue;
+        vertices.push_back(vform->matrix[row][1][0]);
+        vertices.push_back(vform->matrix[row][2][0]);
+        vertices.push_back(vform->matrix[row][3][0]);
+    }
+    return vertices;
+}
+
+std::vector<size_t> getIndices(const std::vector<float> vertices) {
+    quickhull::QuickHull<float> qh;
+    auto convexHull = qh.getConvexHull(vertices.data(), vertices.size(), true, false);
+    return convexHull.getIndexBuffer();
+}
+
+void generateSolutionObject(Object* object, const dd_MatrixPtr vform) {
+    std::vector<float> vertices = getVertices(vform);
+    quickhull::QuickHull<float> qh;
+
+    auto convexHull = qh.getConvexHull(vertices.data(), vertices.size() / 3, true, true);
+    auto indexBuffer = convexHull.getIndexBuffer();
+
+    // Cast to <int> because for some reason OpenGL doesn't like anything other than
+    // *(u)int* in its index buffer
+    std::vector<int> indices(indexBuffer.begin(), indexBuffer.end());
+
+    fromVertexData(object, vertices.data(), vertices.size(), indices.data(), (int)indexBuffer.size());
+}
+
 #endif
 
 // class LinearProgrammingProblemDisplay {
@@ -136,6 +169,8 @@ void LinearProgrammingProblemDisplay::recalculatePlane(int planeIndex) {
 
     planeTransform[3] = { planeNormal * distanceToLine, 1 };
 
+    planeTransform = glm::scale(planeTransform, { 10.0, 10.0, 10.0 });
+
     if (planeIndex == planeTransforms.size()) { planeTransforms.push_back(planeTransform); }
     else { planeTransforms[planeIndex] = planeTransform; }
 
@@ -152,12 +187,8 @@ LinearProgrammingProblemDisplay::LinearProgrammingProblemDisplay() {
 
 int LinearProgrammingProblemDisplay::getEquationCount() { return planeEquations.size(); }
 
-void LinearProgrammingProblemDisplay::setTargetFunction(glm::vec4 targetFunction) {
-    this->targetFunction = targetFunction;
-}
-glm::vec4 LinearProgrammingProblemDisplay::getTargetFunction() {
-    return targetFunction; // XXX: copy? we skip the whole immutability part with this
-}
+void LinearProgrammingProblemDisplay::setTargetFunction(glm::vec4 targetFunction) { this->targetFunction = targetFunction; }
+const glm::vec4 LinearProgrammingProblemDisplay::getTargetFunction() { return this->targetFunction; }
 
 // DEPRECATE
 int LinearProgrammingProblemDisplay::addLimitPlane(float* constraints) {
@@ -193,27 +224,32 @@ void LinearProgrammingProblemDisplay::removeLimitPlane(int planeIndex) {
     rebindAttributes();
 }
 
+template <typename dd_Type>
+using dd_unique_ptr = std::unique_ptr<dd_Type, void(*)(dd_Type*)>;
+
 // Solves the given LPP and return boolean if a solution was found
 // @throws std::runtime_error if there's a dd error
 void LinearProgrammingProblemDisplay::solve() {
-    // Yes we use #ifndef and I know it's bad, but I have to build it somehow on Windows first.
+    // Yes we use #ifdef and I know it's bad, but I have to build it somehow on Windows first.
     #ifdef USE_CDDLIB
+    // XXX: This is less likely to throw a segfault than plainly deleting them, but who knows
+    //      This approach relies on RAII to deinit the values. The question is whether I can
+    //      deinit them after I dd_free_global_constants();
+    dd_unique_ptr<dd_LPType> linearProgrammingProblem(nullptr, dd_FreeLPData);
+    dd_unique_ptr<dd_MatrixType> constraintMatrix(nullptr, dd_FreeMatrix);
+    dd_unique_ptr<dd_MatrixType> verticesMatrix(nullptr, dd_FreeMatrix);
+    dd_unique_ptr<dd_PolyhedraType> polyhedra(nullptr, dd_FreePolyhedra);
+    dd_ErrorType error;
     try {
     dd_set_global_constants();
 
-    // TODO: Properly reset the solution: clear optimal values, vectors, and vertices
-    solution.isSolved = false;
-    // FIXME: potential memory leak????
-    // It should delete vectors, as they're not being pointed at
-    // and rather stored direly
-    // because RAII
-    solution.vertices.clear();
+    // XXX: potential memory leak?
+    // I think std::vector will take care of floats/ints inside of the old one
+    // Or maybe the reassignment operator will do that.
+    // Maybe it's just best if I have a .reset() function??
+    solution = Solution();
 
-    dd_MatrixPtr constraintMatrix;
-    dd_LPPtr linearProgrammingProblem;
-    dd_ErrorType error;
-
-    constraintMatrix = dd_CreateMatrix(3 + this->planeEquations.size(), 4);
+    constraintMatrix.reset(dd_CreateMatrix(3 + this->planeEquations.size(), 4));
 
     int row;
     for (row = 0; row < planeEquations.size(); row++) {
@@ -251,18 +287,21 @@ void LinearProgrammingProblemDisplay::solve() {
     constraintMatrix->representation = dd_Inequality;
     constraintMatrix->objective = dd_LPmin;
 
-    dd_WriteMatrix(stderr, constraintMatrix);
+    linearProgrammingProblem.reset(dd_Matrix2LP(constraintMatrix.get(), &error));
+    throw_dd_error(error);
+    polyhedra.reset(dd_DDMatrix2Poly(constraintMatrix.get(), &error));
+    throw_dd_error(error);
+    dd_LPSolve(linearProgrammingProblem.get(), dd_DualSimplex, &error);
+    throw_dd_error(error);
 
-    linearProgrammingProblem = dd_Matrix2LP(constraintMatrix, &error);
-    dd_WriteLP(stderr, linearProgrammingProblem);
-    throw_dd_error(error);
-    dd_LPSolve(linearProgrammingProblem, dd_DualSimplex, &error);
-    throw_dd_error(error);
+    verticesMatrix.reset(dd_CopyGenerators(polyhedra.get()));
 
     solution.isSolved = true;
     solution.optimalValue = linearProgrammingProblem->optvalue[0];
     solution.optimalVector = createVector(linearProgrammingProblem->sol, linearProgrammingProblem->d);
     solution.didMinimize = linearProgrammingProblem->objective == dd_LPmin;
+    solution.object.reset(new Object());
+    generateSolutionObject(solution.object.get(), verticesMatrix.get());
 
     } catch (std::runtime_error &dd_error) {
         dd_free_global_constants();
@@ -273,11 +312,9 @@ void LinearProgrammingProblemDisplay::solve() {
     #endif
 };
 
-bool LinearProgrammingProblemDisplay::isSolved() { return solution.isSolved; }
-
-float LinearProgrammingProblemDisplay::getOptimalValue() { return solution.optimalValue; }
-
-glm::vec4 LinearProgrammingProblemDisplay::getOptimalVertex() { return solution.optimalVector; }
+const LinearProgrammingProblemDisplay::Solution* LinearProgrammingProblemDisplay::getSolution() {
+    return &this->solution;
+}
 
 void LinearProgrammingProblemDisplay::renderLimitPlanes(glm::mat4 view, glm::mat4 projection) {
     if (planeTransforms.size() == 0) return;
@@ -307,10 +344,18 @@ void LinearProgrammingProblemDisplay::renderLimitPlanes(glm::mat4 view, glm::mat
         glDrawElements(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0);
     }
 }
-void LinearProgrammingProblemDisplay::renderAcceptableValues() {};
+void LinearProgrammingProblemDisplay::renderAcceptableValues(glm::mat4 view, glm::mat4 projection) {
+    if (!this->solution.isSolved || !this->solution.object) return;
+    glBindVertexArray(this->solution.object->objectData);
+    this->planeShader->activate();
+    this->planeShader->setTransform(projection, view);
+    this->planeShader->setUniform("planeTransform", glm::mat4(1));
+    glDrawElements(GL_TRIANGLES, this->solution.object->vertexCount, GL_UNSIGNED_INT, 0);
+};
 void LinearProgrammingProblemDisplay::renderSolution() {};
 
 LinearProgrammingProblemDisplay::~LinearProgrammingProblemDisplay() {
+    LinearProgrammingProblemDisplay::solution.object.reset();
     LinearProgrammingProblemDisplay::planeObject.reset();
     LinearProgrammingProblemDisplay::planeShader.reset();
 };
@@ -395,21 +440,28 @@ WorldGridDisplay::WorldGridDisplay() {
     if (!WorldGridDisplay::gridShader || !WorldGridDisplay::axisShader) WorldGridDisplay::createShaders();
 }
 
+void WorldGridDisplay::zoomGrid(float amount) {
+    zoomScale += amount;
+    while (zoomScale > 2.0) zoomScale -= 2.0;
+    while (zoomScale < 1.0) zoomScale += 1.0;
+}
+
 void WorldGridDisplay::render(glm::mat4 view, glm::mat4 projection) {
     if (gridEnabled) {
         gridShader->activate();
         gridShader->setTransform(projection, view);
-        gridShader->setUniform("gridScale", zoomScale);
 
         glBindVertexArray(gridObject->objectData);
-        // XXX: count in scale and some kind of threshold system
+        gridShader->setUniform("gridScale", zoomScale / 2.0);
+        glDrawElements(GL_LINES, gridObject->vertexCount, GL_UNSIGNED_INT, 0);
+        gridShader->setUniform("gridScale", zoomScale);
+        glDrawElements(GL_LINES, gridObject->vertexCount, GL_UNSIGNED_INT, 0);
+        gridShader->setUniform("gridScale", zoomScale * 2.0);
         glDrawElements(GL_LINES, gridObject->vertexCount, GL_UNSIGNED_INT, 0);
     }
     if (axisEnabled) {
         gridShader->activate();
         gridShader->setTransform(projection, view);
-        // axisShader->activate();
-        // axisShader->setTransform(projection, view);
         glBindVertexArray(axisObject->objectData);
         glDrawElements(GL_LINES, axisObject->vertexCount, GL_UNSIGNED_INT, 0);
     }

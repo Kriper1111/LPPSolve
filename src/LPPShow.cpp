@@ -14,7 +14,7 @@
 
 const float movementSpeed = 2.5f;
 ImVec2 windowPosition = { 600, 0 };
-ImVec2 windowSize = { 384, 720 };// { 360, 720 };
+ImVec2 windowSize = { 384, 720 };
 ImVec4 worldColor = { 0.364, 0.674, 0.764, 1.0 };
 
 struct MouseState {
@@ -30,6 +30,7 @@ struct MouseState {
 
 namespace SceneData {
     bool canMoveCamera = true;
+    bool showPlanes = true; // FIXME: merge into display proper once testing phase is over
     bool allowEditCamera = false;
     bool showDebugOverlay = false;
     LinearProgrammingProblemDisplay* limits;
@@ -91,10 +92,10 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::SliderFloat("Look insensitivity", &camera->lookInSensitivity, 1.0f, 50.0f);
         ImGui::SliderFloat("Look depth", &camera->lookDepth, 0.0f, 100.0f);
         ImGui::Checkbox("Allow editing camera values", &SceneData::allowEditCamera);
-        // bool isOrtho = camera->useOrthography();
-        // if (ImGui::Checkbox("Use orthography", &isOrtho)) {
-        //     camera->useOrthography(isOrtho);
-        // }
+        bool isOrtho = camera->useOrthography();
+        if (ImGui::Checkbox("Use orthography", &isOrtho)) {
+            camera->useOrthography(isOrtho);
+        }
         
         if (ImGui::Button("up X View")) {
             camera->teleportTo(camera->lookDepth, 0, 0);
@@ -130,10 +131,11 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     if (ImGui::Button("Remove plane") && SceneData::limits->getEquationCount() > 0) {
         SceneData::limits->removeLimitPlane();
     }
+    ImGui::Checkbox("Show planes", &SceneData::showPlanes);
     ImGui::Separator();
 
     glm::vec4 targetFunctionEq = SceneData::limits->getTargetFunction();
-    ImGui::InputFloat4("Target function", &targetFunctionEq[0]);
+    ImGui::InputFloat4("Target function", &targetFunctionEq.x);
     if (ImGui::IsItemEdited()) {
         SceneData::limits->setTargetFunction(targetFunctionEq);
     }
@@ -155,12 +157,14 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             SceneData::limits->solve();
         } catch (std::runtime_error &dd_error) {
             std::cerr << "Faile to solve equation: " << dd_error.what() << std::endl;
-            ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, "Failed to solve the equation: %s", dd_error.what());
         }
     }
-    if (SceneData::limits->isSolved()) {
-        ImGui::Text("Optimal value: %.4f", SceneData::limits->getOptimalValue());
-        ImGui::Text("Optimal plan: %.3fx1 %.3fx2 %.3fx3 %.3f", SceneData::limits->getOptimalVertex());
+    auto solution = SceneData::limits->getSolution();
+    if (solution->isErrored) {
+        ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, "Failed to solve the equation: %s", solution->errorString);
+    } else if (solution->isSolved) {
+        ImGui::Text("Optimal value: %.4f", solution->optimalValue);
+        ImGui::Text("Optimal plan: %.3fx1 %.3fx2 %.3fx3 %.3f", solution->optimalVector);
     }
 
     #ifdef DEBUG
@@ -173,7 +177,8 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui::End();
 
     if (SceneData::canMoveCamera) moveCamera(camera, window, timeStep);
-    SceneData::limits->renderLimitPlanes(camera->getView(), camera->getProjection());
+    if (SceneData::showPlanes) SceneData::limits->renderLimitPlanes(camera->getView(), camera->getProjection());
+    if (solution->isSolved) SceneData::limits->renderAcceptableValues(camera->getView(), camera->getProjection());
     SceneData::worldOrigin->render(camera->getView(), camera->getProjection());
 
     ImGui::Render();
@@ -275,6 +280,8 @@ int main() {
         // Might get to segfault
         return logCriticalError("Failed to compile required shaders");
     }
+
+    SceneData::limits->setTargetFunction({0, 0, 0, 0});
 
     // ???
     glfwWindowResizeCallback(mainWindow, windowWidth, windowHeight);

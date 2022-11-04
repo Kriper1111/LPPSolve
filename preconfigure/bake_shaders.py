@@ -35,6 +35,8 @@ if __name__ == "__main__":
     infiles, outfile = args
     shaders = list(collect_shaders(infiles))
 
+    print("Baking:", *infiles)
+
     vertex_shaders = filter(lambda shader: shader[1] == "vert", shaders)
     fragment_shaders = filter(lambda shader: shader[1] == "frag", shaders)
 

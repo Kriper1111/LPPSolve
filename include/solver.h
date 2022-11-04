@@ -3,13 +3,15 @@
 class LinearProgrammingProblemDisplay {
     struct Solution
     {
-        bool isSolved;
+        bool isSolved = false;
+        bool isErrored = false;
         bool didMinimize;
         float optimalValue;
         glm::vec4 optimalVector;
-        std::vector<glm::vec3> vertices;
+        std::string errorString;
+        std::unique_ptr<Object> object;
     };
-    
+
     private:
     static std::shared_ptr<Object> planeObject;
     static std::shared_ptr<Shader> planeShader;
@@ -33,7 +35,7 @@ class LinearProgrammingProblemDisplay {
     int getEquationCount();
 
     void setTargetFunction(glm::vec4 targetFunction);
-    glm::vec4 getTargetFunction();
+    const glm::vec4 getTargetFunction();
 
     int addLimitPlane(glm::vec4 constraints);
     int addLimitPlane(float* constraints);
@@ -46,11 +48,12 @@ class LinearProgrammingProblemDisplay {
     void solve();
 
     bool isSolved();
+    const Solution* getSolution();
     float getOptimalValue();
     glm::vec4 getOptimalVertex();
 
     void renderLimitPlanes(glm::mat4 view, glm::mat4 projection);
-    void renderAcceptableValues();
+    void renderAcceptableValues(glm::mat4 view, glm::mat4 projection);
     void renderSolution();
 
     ~LinearProgrammingProblemDisplay();
@@ -74,6 +77,7 @@ class WorldGridDisplay {
 
     WorldGridDisplay();
 
+    void zoomGrid(float zoomAmount);
     void render(glm::mat4 view, glm::mat4 projection);
 
     ~WorldGridDisplay();

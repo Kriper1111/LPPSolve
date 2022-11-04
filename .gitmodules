@@ -1,0 +1,3 @@
+[submodule "thirdparty/quickhull"]
+	path = thirdparty/quickhull
+	url = https://github.com/akuukka/quickhull
