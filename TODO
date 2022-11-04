@@ -3,6 +3,7 @@
 implementation. It's main goal is to be a post-it note for myself.
 I'll remove the descriptions of targets once they're done.
 
+[ ] Serialization or Unit tests
 [ ] Actual solution support
     --  the groundwork is kind of there, but needs proper
           implementation. We could also support cddlib's .ine/.ext

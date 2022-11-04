@@ -10,6 +10,7 @@
 
 #ifdef USE_CDDLIB
 #define REFLECT(var) #var
+#include <cstdio>
 #include <cdd/setoper.h>
 #include <cdd/cdd.h>
 #endif
@@ -50,7 +51,7 @@ const char* reflect_dd_error(dd_ErrorType error) {
 // @throws std::runtime_error if there's a dd error
 void throw_dd_error(dd_ErrorType error) {
     if (error != dd_NoError) {
-        throw new std::runtime_error(reflect_dd_error(error));
+        throw std::runtime_error(reflect_dd_error(error));
     }
 }
 
@@ -105,7 +106,7 @@ void LinearProgrammingProblemDisplay::recalculatePlane(int planeIndex) {
     //                       glm::pow(planeEquation.y, 2) +
     //                       glm::pow(planeEquation.z, 2);
     // float lengthDoubled = glm::length(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z)) * 2;
-    float distanceToLine = glm::abs(planeEquation.w) / glm::length(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z));
+    float distanceToLine = planeEquation.w / glm::length(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z));
     // So I was kind of correct with the guesses.. Kind of.
     // Really shows how much easier it is when you actually think before writing code and
     //      making any assumptions based off of a simplifed example in Blender.
@@ -194,11 +195,9 @@ void LinearProgrammingProblemDisplay::removeLimitPlane(int planeIndex) {
 
 // Solves the given LPP and return boolean if a solution was found
 // @throws std::runtime_error if there's a dd error
-bool LinearProgrammingProblemDisplay::solve() {
+void LinearProgrammingProblemDisplay::solve() {
     // Yes we use #ifndef and I know it's bad, but I have to build it somehow on Windows first.
-    #ifndef USE_CDDLIB
-    return false;
-    #else
+    #ifdef USE_CDDLIB
     try {
     dd_set_global_constants();
 
@@ -214,7 +213,7 @@ bool LinearProgrammingProblemDisplay::solve() {
     dd_LPPtr linearProgrammingProblem;
     dd_ErrorType error;
 
-    constraintMatrix = dd_CreateMatrix(4, 3 + this->planeEquations.size());
+    constraintMatrix = dd_CreateMatrix(3 + this->planeEquations.size(), 4);
 
     int row;
     for (row = 0; row < planeEquations.size(); row++) {
@@ -250,8 +249,12 @@ bool LinearProgrammingProblemDisplay::solve() {
     dd_set_d(constraintMatrix->rowvec[3], -targetFunction.z);
 
     constraintMatrix->representation = dd_Inequality;
+    constraintMatrix->objective = dd_LPmin;
+
+    dd_WriteMatrix(stderr, constraintMatrix);
 
     linearProgrammingProblem = dd_Matrix2LP(constraintMatrix, &error);
+    dd_WriteLP(stderr, linearProgrammingProblem);
     throw_dd_error(error);
     dd_LPSolve(linearProgrammingProblem, dd_DualSimplex, &error);
     throw_dd_error(error);

@@ -19,7 +19,7 @@ SOURCES += $(THIRDPARTY_INCLUDE)/glad.c
 OBJS = $(addprefix objects/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 
 CXXFLAGS = -I$(INCLUDE_DIR) -I$(THIRDPARTY_INCLUDE)
-CXXFLAGS += -I$(IMGUI_DIR) -DDEBUG -DUSE_OBJ_LOADER -g
+CXXFLAGS += -I$(IMGUI_DIR) -DDEBUG -DUSE_OBJ_LOADER -DUSE_CDDLIB -g
 LIBS = -lfmt
 
 ############################

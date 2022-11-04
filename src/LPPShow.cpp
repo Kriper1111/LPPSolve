@@ -154,6 +154,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         try {
             SceneData::limits->solve();
         } catch (std::runtime_error &dd_error) {
+            std::cerr << "Faile to solve equation: " << dd_error.what() << std::endl;
             ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, "Failed to solve the equation: %s", dd_error.what());
         }
     }

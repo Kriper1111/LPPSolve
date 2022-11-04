@@ -43,7 +43,7 @@ class LinearProgrammingProblemDisplay {
     void removeLimitPlane();
     void removeLimitPlane(int planeIndex);
 
-    bool solve();
+    void solve();
 
     bool isSolved();
     float getOptimalValue();
