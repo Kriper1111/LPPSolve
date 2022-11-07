@@ -248,9 +248,6 @@ void LinearProgrammingProblemDisplay::removeLimitPlane(int planeIndex) {
     rebindAttributes();
 }
 
-const char *LinearProgrammingProblemDisplay::getOptimizationDirection()  { return this->doMinimize ? "min" : "max"; }
-void LinearProgrammingProblemDisplay::minimizeObjective(bool doMinimize) { this->doMinimize = doMinimize; }
-
 template <typename dd_Type>
 using dd_unique_ptr = std::unique_ptr<dd_Type, void(*)(dd_Type*)>;
 

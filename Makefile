@@ -11,18 +11,23 @@ INCLUDE_DIR = include
 THIRDPARTY_INCLUDE = thirdparty
 IMGUI_DIR = $(THIRDPARTY_INCLUDE)/imgui
 
-SOURCES = $(SOURCES_DIR)/assets.cpp $(SOURCES_DIR)/camera.cpp $(SOURCES_DIR)/LPPShow.cpp $(SOURCES_DIR)/solver.cpp
-SOURCES += $(THIRDPARTY_INCLUDE)/quickhull/QuickHull.cpp
-SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
-SOURCES += $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
-SOURCES += $(THIRDPARTY_INCLUDE)/glad.c
+SOURCES_BASE = $(SOURCES_DIR)/assets.cpp $(SOURCES_DIR)/camera.cpp $(SOURCES_DIR)/LPPShow.cpp $(SOURCES_DIR)/solver.cpp
+SOURCES_THIRDPARTY = $(THIRDPARTY_INCLUDE)/quickhull/QuickHull.cpp
+SOURCES_THIRDPARTY += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
+SOURCES_THIRDPARTY += $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
+SOURCES_THIRDPARTY += $(THIRDPARTY_INCLUDE)/glad.c
 
-OBJS = $(addprefix objects/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
+SOURCES = $(SOURCES_BASE) + $(SOURCES_THIRDPARTY)
+
+OBJS_BASE = $(addprefix objects/, $(addsuffix .o, $(basename $(notdir $(SOURCES_BASE)))))
+OBJS_THIRDPARTY = $(addprefix objects/, $(addsuffix .o, $(basename $(notdir $(SOURCES_THIRDPARTY)))))
+
+OBJS = $(OBJS_BASE) $(OBJS_THIRDPARTY)
 
 SHADERS = $(wildcard assets/*.vert) $(wildcard assets/*.frag)
 
 CXXFLAGS = -I$(INCLUDE_DIR) -I$(THIRDPARTY_INCLUDE)
-CXXFLAGS += -I$(IMGUI_DIR) -DDEBUG -DUSE_OBJ_LOADER -DUSE_CDDLIB -g
+CXXFLAGS += -I$(IMGUI_DIR) -DUSE_CDDLIB
 LIBS = 
 
 ############################
@@ -55,9 +60,6 @@ CFLAGS = $(CXXFLAGS) # I think after?
 ############################
 configuration:=debug
 ifeq ($(configuration),debug)
-	SOURCES_DEBUG =
-	OBJS += $(addprefix objects/, $(addsuffix .o, $(basename $(notdir $(SOURCES_DEBUG)))))
-
 	CXXFLAGS += -DDEBUG -DUSE_OBJ_LOADER -g
 endif
 
@@ -95,7 +97,10 @@ obj: $(OBJS)
 $(EXECUTABLE_NAME): $(OBJS)
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
 
+clean-all: clean
+	-rm $(OBJS_THIRDPARTY)
+
 clean:
-	-rm $(OBJS)
+	-rm $(OBJS_BASE)
 	-rm $(EXECUTABLE_NAME)
 	@echo "All clean!"
