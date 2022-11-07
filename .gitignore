@@ -9,6 +9,7 @@ thirdparty/imgui
 
 include/baked_shaders.h
 
+dist
 build
 objects
 /LPPShow*
