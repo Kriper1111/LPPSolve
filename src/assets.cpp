@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "config.h"
 
 Object::~Object() {
     glDeleteBuffers(1, &this->vertexData);
@@ -54,7 +55,7 @@ bool fromWavefront(Object* target, const char* objectLocation) {
     return true;
 }
 #else
-bool legl::fromWavefront(Object* target, const char* objectLocation) { return false; }
+bool fromWavefront(Object* target, const char* objectLocation) { return false; }
 #endif
 
 bool fromVertexData(

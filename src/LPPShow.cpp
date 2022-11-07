@@ -10,7 +10,7 @@
 #include "assets.h"
 #include "camera.h"
 #include "solver.h"
-
+#include "config.h"
 
 const float movementSpeed = 2.5f;
 ImVec2 windowPosition = { 600, 0 };
@@ -243,6 +243,10 @@ int main() {
     ////////////
     //// INIT GLFW
     ////////////
+
+    #ifdef PRINT_HELLO
+    std::cout << "Hello!" << std::endl;
+    #endif
 
     if(glfwInit() == GLFW_FALSE) { std::cerr << "Failed to init GLFW" << std::endl; return -1; }
 
