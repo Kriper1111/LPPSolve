@@ -19,23 +19,28 @@ class LinearProgrammingProblemDisplay {
     static void createPlaneObject();
     static void createPlaneShader();
 
+    std::vector<int> pointlessEquations; // Basically all zeroes
     std::vector<glm::vec4> planeEquations;
     std::vector<glm::mat4> planeTransforms;
 
-    glm::vec4 targetFunction;
-
+    glm::vec4 objectiveFunction;
     Solution solution;
 
+    void collectPointless();
     void recalculatePlane(int planeIndex);
     void rebindAttributes();
 
     public:
+    std::vector<bool> visibleEquations; // We could maybe merge that into one flag?
+
     LinearProgrammingProblemDisplay();
 
     int getEquationCount();
 
-    void setTargetFunction(glm::vec4 targetFunction);
-    const glm::vec4 getTargetFunction();
+    void setObjectiveFunction(glm::vec4 objectiveFunction);
+    const glm::vec4 getObjectiveFunction();
+
+    bool doMinimize = true;
 
     int addLimitPlane(glm::vec4 constraints);
     int addLimitPlane(float* constraints);

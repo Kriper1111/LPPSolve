@@ -95,8 +95,12 @@ void generateSolutionObject(Object* object, const dd_MatrixPtr vform) {
     fromVertexData(object, vertices.data(), vertices.size(), indices.data(), (int)indexBuffer.size());
 }
 
-#endif
+#endif // USE_CDDLIB
 
+/**
+ * FIXME: This whole thing isn't thread-safe. At all. Which is a candidate
+ * to a change, don't want to hang rendering for too long with calculations.
+*/
 // class LinearProgrammingProblemDisplay {
 //  private:
 
@@ -127,6 +131,15 @@ void LinearProgrammingProblemDisplay::createPlaneShader() {
     #else
     LinearProgrammingProblemDisplay::planeShader.reset(new Shader("assets/plane.vert", "assets/default.frag"));
     #endif
+}
+
+void LinearProgrammingProblemDisplay::collectPointless() {
+    // It never gets better, does it?
+    // I hope they're sorted
+    for (const int index : this->pointlessEquations) {
+        this->removeLimitPlane(index);
+    }
+    this->pointlessEquations.clear();
 }
 
 void LinearProgrammingProblemDisplay::recalculatePlane(int planeIndex) {
@@ -185,18 +198,24 @@ LinearProgrammingProblemDisplay::LinearProgrammingProblemDisplay() {
     if (!LinearProgrammingProblemDisplay::planeShader) createPlaneShader();
 };
 
-int LinearProgrammingProblemDisplay::getEquationCount() { return planeEquations.size(); }
+int LinearProgrammingProblemDisplay::getEquationCount() {
+    this->collectPointless();
+    return planeEquations.size();
+}
 
-void LinearProgrammingProblemDisplay::setTargetFunction(glm::vec4 targetFunction) { this->targetFunction = targetFunction; }
-const glm::vec4 LinearProgrammingProblemDisplay::getTargetFunction() { return this->targetFunction; }
+void LinearProgrammingProblemDisplay::setObjectiveFunction(glm::vec4 objectiveFunction) { this->objectiveFunction = objectiveFunction; }
+const glm::vec4 LinearProgrammingProblemDisplay::getObjectiveFunction() { return this->objectiveFunction; }
 
 // DEPRECATE
 int LinearProgrammingProblemDisplay::addLimitPlane(float* constraints) {
     return addLimitPlane(glm::vec4(constraints[0], constraints[1], constraints[2], constraints[3])); // BAD
 }
 int LinearProgrammingProblemDisplay::addLimitPlane(glm::vec4 constraints) {
-    planeEquations.push_back(constraints);
-    recalculatePlane(planeEquations.size() - 1);
+    if (constraints.x != 0 || constraints.y != 0 || constraints.z != 0 || constraints.w != 0) {
+        planeEquations.push_back(constraints);
+        visibleEquations.push_back(true);
+        recalculatePlane(planeEquations.size() - 1);
+    }
     return planeEquations.size();
 }
 
@@ -210,19 +229,27 @@ void LinearProgrammingProblemDisplay::editLimitPlane(int planeIndex, float* cons
 void LinearProgrammingProblemDisplay::editLimitPlane(int planeIndex, glm::vec4 constraints) {
     planeEquations[planeIndex] = constraints;
     recalculatePlane(planeIndex);
+    if (constraints.x == 0 && constraints.y == 0 && constraints.z == 0 && constraints.w == 0) {
+        this->pointlessEquations.push_back(planeIndex);
+    }
 }
 
 void LinearProgrammingProblemDisplay::removeLimitPlane() {
     planeEquations.pop_back();
     planeTransforms.pop_back();
+    visibleEquations.pop_back();
     rebindAttributes();
 }
 void LinearProgrammingProblemDisplay::removeLimitPlane(int planeIndex) {
     if (planeIndex < 0 || planeIndex >= planeTransforms.size()) return;
     planeEquations.erase(planeEquations.begin() + planeIndex);
     planeTransforms.erase(planeTransforms.begin() + planeIndex);
+    visibleEquations.erase(visibleEquations.begin() + planeIndex);
     rebindAttributes();
 }
+
+const char *LinearProgrammingProblemDisplay::getOptimizationDirection()  { return this->doMinimize ? "min" : "max"; }
+void LinearProgrammingProblemDisplay::minimizeObjective(bool doMinimize) { this->doMinimize = doMinimize; }
 
 template <typename dd_Type>
 using dd_unique_ptr = std::unique_ptr<dd_Type, void(*)(dd_Type*)>;
@@ -279,13 +306,13 @@ void LinearProgrammingProblemDisplay::solve() {
         dd_set_d(constraintMatrix->matrix[row + diag][diag + 1], 1.0);
     }
 
-    dd_set_d(constraintMatrix->rowvec[0],  targetFunction.w);
-    dd_set_d(constraintMatrix->rowvec[1], -targetFunction.x);
-    dd_set_d(constraintMatrix->rowvec[2], -targetFunction.y);
-    dd_set_d(constraintMatrix->rowvec[3], -targetFunction.z);
+    dd_set_d(constraintMatrix->rowvec[0],  objectiveFunction.w);
+    dd_set_d(constraintMatrix->rowvec[1], -objectiveFunction.x);
+    dd_set_d(constraintMatrix->rowvec[2], -objectiveFunction.y);
+    dd_set_d(constraintMatrix->rowvec[3], -objectiveFunction.z);
 
     constraintMatrix->representation = dd_Inequality;
-    constraintMatrix->objective = dd_LPmin;
+    constraintMatrix->objective = this->doMinimize ? dd_LPmin : dd_LPmax;
 
     linearProgrammingProblem.reset(dd_Matrix2LP(constraintMatrix.get(), &error));
     throw_dd_error(error);
@@ -339,8 +366,9 @@ void LinearProgrammingProblemDisplay::renderLimitPlanes(glm::mat4 view, glm::mat
      * Do we have to re-link the whole object?
      */
     // glDrawElementsInstanced(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0, planeTransforms.size());
-    for (glm::mat4 planeTransform : planeTransforms) {
-        planeShader->setUniform("planeTransform", planeTransform);
+    for (int planeIndex = 0; planeIndex < planeTransforms.size(); planeIndex++) {
+        if (!visibleEquations[planeIndex]) continue;
+        planeShader->setUniform("planeTransform", planeTransforms[planeIndex]);
         glDrawElements(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0);
     }
 }

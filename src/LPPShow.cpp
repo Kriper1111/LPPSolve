@@ -96,7 +96,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         if (ImGui::Checkbox("Use orthography", &isOrtho)) {
             camera->useOrthography(isOrtho);
         }
-        
+
         if (ImGui::Button("up X View")) {
             camera->teleportTo(camera->lookDepth, 0, 0);
             camera->rotate(0, 0, -90);
@@ -134,19 +134,39 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui::Checkbox("Show planes", &SceneData::showPlanes);
     ImGui::Separator();
 
-    glm::vec4 targetFunctionEq = SceneData::limits->getTargetFunction();
-    ImGui::InputFloat4("Target function", &targetFunctionEq.x);
-    if (ImGui::IsItemEdited()) {
-        SceneData::limits->setTargetFunction(targetFunctionEq);
-    }
+    glm::vec4 objectiveFunctionEq = SceneData::limits->getObjectiveFunction();
+    ImGui::Text("Objective function:");
+    if(ImGui::InputFloat4("##objective", &objectiveFunctionEq.x))
+        SceneData::limits->setObjectiveFunction(objectiveFunctionEq);
+    ImGui::SameLine(); ImGui::Text("->"); ImGui::SameLine();
+    auto doMinimize = SceneData::limits->doMinimize;
+    int currentItem = (int) doMinimize;
+
+    // XXX: This solution is much cleaner but lacks clear localization support
+    ImGui::PushItemWidth(50.0f);
+    if (ImGui::Combo("##min", &currentItem, "min\0max\0"))
+        SceneData::limits -> doMinimize = !doMinimize;
+    ImGui::PopItemWidth();
+
+    // if(ImGui::BeginCombo("##minmax", doMinimize ? "min" : "max")) {
+    //     if (ImGui::Selectable("min", doMinimize))
+    //         SceneData::limits->doMinimize = !doMinimize;
+    //     if (ImGui::Selectable("max", !doMinimize))
+    //         SceneData::limits->doMinimize = !doMinimize;
+    //     ImGui::EndCombo();
+    // }
     ImGui::Separator();
 
     // TODO: Make into a scrollbox
     for (int planeIndex = 0; planeIndex < SceneData::limits->getEquationCount(); planeIndex++) {
         glm::vec4 planeEquationOrigin = SceneData::limits->getLimitPlane(planeIndex);
-        ImGui::Text("Plane: ");
         ImGui::PushID(planeIndex);
-        if (ImGui::InputFloat4("Equation", &planeEquationOrigin[0])) {
+        // XXX: Do we want to use std::vector<bool> optimization or fall back to Plane objects?
+        bool isVisible = SceneData::limits->visibleEquations[planeIndex];
+        if(ImGui::Checkbox("##vis", &isVisible))
+            SceneData::limits->visibleEquations[planeIndex] = isVisible;
+        ImGui::SameLine(); ImGui::Text("Plane: "); ImGui::SameLine();
+        if (ImGui::InputFloat4("##vec", &planeEquationOrigin[0])) {
             SceneData::limits->editLimitPlane(planeIndex, planeEquationOrigin);
         }
         ImGui::PopID();
@@ -176,7 +196,10 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
 
     ImGui::End();
 
-    if (SceneData::canMoveCamera) moveCamera(camera, window, timeStep);
+    auto iio = ImGui::GetIO();
+    if (SceneData::canMoveCamera && !(iio.WantCaptureKeyboard || iio.WantCaptureMouse)) {
+        moveCamera(camera, window, timeStep);
+    }
     if (SceneData::showPlanes) SceneData::limits->renderLimitPlanes(camera->getView(), camera->getProjection());
     if (solution->isSolved) SceneData::limits->renderAcceptableValues(camera->getView(), camera->getProjection());
     SceneData::worldOrigin->render(camera->getView(), camera->getProjection());
@@ -213,7 +236,7 @@ void glfwMouseCallback(GLFWwindow* window) {
 
 int main() {
     // XXX: Make GLFW init thing into an object?
-    // That way we could use auto-destructors without worrying about 
+    // That way we could use auto-destructors without worrying about
     // deleting stray Objects after glfw has been deinitialized.
     // We could probably make it into a thin wrapper
     // Maybe even overrideable, with a .init where we could set up ImGui, for example.
@@ -257,8 +280,6 @@ int main() {
 
     ImGui_ImplGlfw_InitForOpenGL(mainWindow, true);
     ImGui_ImplOpenGL3_Init("#version 130");
-    // ImGuiIO& iio = ImGui::GetIO(); (void) iio;
-    // No need for custom fonts, for now
 
     ////////////
     //// SCENE SETUP
@@ -281,7 +302,7 @@ int main() {
         return logCriticalError("Failed to compile required shaders");
     }
 
-    SceneData::limits->setTargetFunction({0, 0, 0, 0});
+    SceneData::limits->setObjectiveFunction({0, 0, 0, 0});
 
     // ???
     glfwWindowResizeCallback(mainWindow, windowWidth, windowHeight);
