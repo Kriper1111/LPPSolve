@@ -31,7 +31,6 @@ struct MouseState {
 
 namespace SceneData {
     bool canMoveCamera = true;
-    bool showPlanes = true; // FIXME: merge into display proper once testing phase is over
     bool allowEditCamera = false;
     bool showDebugOverlay = false;
     Display* lppshow;
@@ -45,7 +44,6 @@ void glfwErrorCallback(int error, const char* description) {
 
 int logCriticalError(const char* description) {
     std::cerr << "Critical: " << description << std::endl;
-    // if(SceneData::hasOpenGlContext)
     glfwTerminate();
     return -1;
 }
@@ -121,7 +119,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         #endif
         ImGui::Checkbox("Show grid", &SceneData::worldOrigin->gridEnabled);
         ImGui::Checkbox("Show world axis", &SceneData::worldOrigin->axisEnabled);
-        ImGui::SliderFloat("Grid scale", &SceneData::worldOrigin->zoomScale, 0.1f, 10.0f);
+        ImGui::InputFloat("Grid scale", &SceneData::worldOrigin->zoomScale, 0.1f, 0.25f);
     }
 
     ImGui::Text("Total planes: %d", SceneData::lppshow->getEquationCount());
@@ -289,13 +287,10 @@ int main() {
         SceneData::lppshow = new Display();
         SceneData::worldOrigin = new WorldGridDisplay();
     } catch (std::exception &ioerr) {
-        delete SceneData::lppshow;
-        delete SceneData::worldOrigin;
         // Might get to segfault
         return logCriticalError("Failed to compile required shaders");
     }
 
-    // SceneData::lppshow->setObjectiveFunction({0, 0, 0, 0});
     SceneData::lppshow->objectiveFunction = {0, 0, 0, 0};
 
     // ???
@@ -311,11 +306,10 @@ int main() {
         glClearColor(worldColor.x, worldColor.y, worldColor.z, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // XXX: wonky with the built-in callback, maybe because data races?
-        //      Shouldn't happen though, I imagine the callbacks are executed
-        //      during glfwPollEvents();
-        //      well it says that right in the description that they don't
-        //      necessary get called when glfwPollEvents(); is executed
+        /** XXX: The mouse sometimes just keeps its state for a few seconds or even frames
+         * if we don't do that. Could be because ImGui takes over and doesn't run the mouse
+         * events. We could try using callbacks now that we consider its mouse capture.
+         */
         glfwMouseCallback(mainWindow);
         updateProcessDraw(mainWindow, camera, deltaTime);
 

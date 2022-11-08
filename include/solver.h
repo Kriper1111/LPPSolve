@@ -28,21 +28,17 @@ class LinearProgrammingProblem {
 
     public:
     glm::vec4 objectiveFunction;
+    bool doMinimize = true;
 
     LinearProgrammingProblem();
 
     int getEquationCount();
 
-    void setObjectiveFunction(glm::vec4 objectiveFunction);
-    const glm::vec4 getObjectiveFunction();
-
-    bool doMinimize = true;
-
     int addLimitPlane(glm::vec4 constraints);
-    void editLimitPlane(int planeIndex, glm::vec4 constraints);
     glm::vec4 getLimitPlane(int planeIndex);
-    void removeLimitPlane(int planeIndex);
+    void editLimitPlane(int planeIndex, glm::vec4 constraints);
     void removeLimitPlane();
+    void removeLimitPlane(int planeIndex);
 
     void solve();
 
@@ -54,14 +50,14 @@ class LinearProgrammingProblem {
 
 class Display:public LinearProgrammingProblem {
     private:
-    static std::shared_ptr<Object> planeObject;
-    static std::shared_ptr<Shader> planeShader;
+    std::shared_ptr<Object> planeObject;
+    std::shared_ptr<Shader> planeShader;
     
     std::shared_ptr<Object> solutionObject;
     std::vector<glm::mat4> planeTransforms;
 
-    static void createPlaneObject();
-    static void createPlaneShader();
+    void createPlaneObject();
+    void createPlaneShader();
 
     void recalculatePlane(int planeIndex);
     void rebindAttributes();
@@ -83,13 +79,13 @@ class Display:public LinearProgrammingProblem {
 
 class WorldGridDisplay {
     private:
-    static std::shared_ptr<Object> gridObject;
-    static std::shared_ptr<Object> axisObject;
-    static std::shared_ptr<Shader> gridShader;
-    static std::shared_ptr<Shader> axisShader;
+    std::shared_ptr<Object> gridObject;
+    std::shared_ptr<Object> axisObject;
+    std::shared_ptr<Shader> gridShader;
+    std::shared_ptr<Shader> axisShader;
 
-    static void createObjects();
-    static void createShaders();
+    void createObjects();
+    void createShaders();
 
     public:
     bool gridEnabled = false;

@@ -39,9 +39,6 @@ const glm::vec3 worldUp({0, 0, 1});
 // class Display {
 // private:
 
-std::shared_ptr<Object> Display::planeObject;
-std::shared_ptr<Shader> Display::planeShader;
-
 void Display::createPlaneObject() {
     Display::planeObject.reset(new Object());
 
@@ -144,11 +141,6 @@ Display::Display() {
     this->showPlanesAtAll = true;
 };
 
-// int Display::getEquationCount() {
-//     this->collectPointless();
-//     return LinearProgrammingProblem::getEquationCount();
-// }
-
 void Display::render(Camera* camera) {
     if (planeTransforms.size() == 0) return;
     glBindVertexArray(planeObject->objectData);
@@ -187,7 +179,7 @@ void Display::render(Camera* camera) {
     this->planeShader->setUniform("planeTransform", glm::mat4(1));
     glDrawElements(GL_TRIANGLES, this->solutionObject->vertexCount, GL_UNSIGNED_INT, 0);
 
-    // XXX: render solution vector too
+    // TODO: render solution vector too
 };
 
 Display::~Display() {
@@ -199,10 +191,10 @@ Display::~Display() {
 
 // class WorldGridDisplay {
 //     private:
-std::shared_ptr<Object> WorldGridDisplay::gridObject;
-std::shared_ptr<Object> WorldGridDisplay::axisObject;
-std::shared_ptr<Shader> WorldGridDisplay::gridShader;
-std::shared_ptr<Shader> WorldGridDisplay::axisShader;
+// std::shared_ptr<Object> WorldGridDisplay::gridObject;
+// std::shared_ptr<Object> WorldGridDisplay::axisObject;
+// std::shared_ptr<Shader> WorldGridDisplay::gridShader;
+// std::shared_ptr<Shader> WorldGridDisplay::axisShader;
 
 void WorldGridDisplay::createObjects() {
     WorldGridDisplay::gridObject.reset(new Object());

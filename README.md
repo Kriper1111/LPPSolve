@@ -44,7 +44,7 @@ Keyboard controls:
 |[KeyR]|Zoom in<sup>[1]</sup>    |
 |[KeyF]|Zoom out<sup>[1]</sup>   |
 
-## Credit<sup>[1]</sup>s, Licenses, Afterthoughts
+## Credits, Licenses, Afterthoughts
 This program uses and relies on other open-source libraries. you can check their respective licenses in their repositories, linked in the dependency list.
 This program uses generated GLAD OpenGL bindings (at least I think that's the term). They fall under CC0 license, except for certain parts of Khronos EGL specs, which fall under the MIT License.
 
