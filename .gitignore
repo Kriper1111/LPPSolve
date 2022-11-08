@@ -12,6 +12,7 @@ include/baked_shaders.h
 
 objects
 /LPPShow*
+/run-tests*
 
 *.mtl
 *.old

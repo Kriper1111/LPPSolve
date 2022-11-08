@@ -67,10 +67,16 @@ ifeq ($(configuration),optimized)
 	CXXFLAGS += -DUSE_BAKED_SHADERS -O3
 endif
 
+ifeq ($(configuration),cum)
+	CXXFLAGS += -g -D_GLIBCXX_DEBUG
+endif
+
 ############################
 # TARGETS
 ############################
 objects/%.o:src/%.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+objects/%.o:tests/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 objects/%.o:thirdparty/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -86,6 +92,9 @@ include/bake%.h: $(SHADERS)
 
 all: object-folder $(EXECUTABLE_NAME)
 	@echo "Build done for $(EXECUTABLE_NAME) v$(EXECUTABLE_VERSION)"
+
+run-tests: objects/tests.o objects/solver.o
+	$(CXX) -o $@ $^ -g -D_GLIBCXX_DEBUG $(LIBS)
 
 bake: include/baked_shaders.h
 
