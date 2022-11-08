@@ -5,6 +5,7 @@
 #include <glad/glad.h>
 
 #include "assets.h"
+#include "camera.h"
 #include "glm/gtx/string_cast.hpp"
 #include "solver.h"
 
@@ -81,8 +82,7 @@ std::vector<size_t> getIndices(const std::vector<float> vertices) {
     return convexHull.getIndexBuffer();
 }
 
-void generateSolutionObject(Object* object, const dd_MatrixPtr vform) {
-    std::vector<float> vertices = getVertices(vform);
+void generateSolutionObject(Object* object, const std::vector<float> vertices) {
     quickhull::QuickHull<float> qh;
 
     auto convexHull = qh.getConvexHull(vertices.data(), vertices.size() / 3, true, true);
@@ -97,136 +97,38 @@ void generateSolutionObject(Object* object, const dd_MatrixPtr vform) {
 
 #endif // USE_CDDLIB
 
-/**
- * FIXME: This whole thing isn't thread-safe. At all. Which is a candidate
- * to a change, don't want to hang rendering for too long with calculations.
-*/
-// class LinearProgrammingProblemDisplay {
-//  private:
-
-std::shared_ptr<Object> LinearProgrammingProblemDisplay::planeObject;
-std::shared_ptr<Shader> LinearProgrammingProblemDisplay::planeShader;
-
-void LinearProgrammingProblemDisplay::createPlaneObject() {
-    LinearProgrammingProblemDisplay::planeObject.reset(new Object());
-
-    VertexAttributePosition vertexData[] = {
-        {-1.0, -1.0, 0.0},
-        {-1.0,  1.0, 0.0},
-        { 1.0, -1.0, 0.0},
-        { 1.0,  1.0, 0.0}
-    };
-
-    int indices[] = {
-        0, 1, 3,
-        0, 3, 2
-    };
-
-    fromVertexData(planeObject.get(), vertexData, 4, indices, 6);
-}
-
-void LinearProgrammingProblemDisplay::createPlaneShader() {
-    #ifdef USE_BAKED_SHADERS
-    LinearProgrammingProblemDisplay::planeShader.reset(Shader::fromSource(shaders::vertex.plane_vert, shaders::fragment.default_frag));
-    #else
-    LinearProgrammingProblemDisplay::planeShader.reset(new Shader("assets/plane.vert", "assets/default.frag"));
-    #endif
-}
-
-void LinearProgrammingProblemDisplay::collectPointless() {
+// class LinearProgrammingProblem {
+// protected:
+void LinearProgrammingProblem::collectPointless() {
     // It never gets better, does it?
     // I hope they're sorted
-    for (const int index : this->pointlessEquations) {
+    for (const int index : this->pointlessEquations)
         this->removeLimitPlane(index);
-    }
     this->pointlessEquations.clear();
 }
 
-void LinearProgrammingProblemDisplay::recalculatePlane(int planeIndex) {
-    glm::vec4 planeEquation = planeEquations[planeIndex];
-    glm::vec3 planeNormal = glm::normalize(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z));
-
-    // std::cout << "Editing: " << planeIndex << " " << glm::to_string(planeEquation) << std::endl;
-
-    // float lengthSquared = glm::pow(planeEquation.x, 2) +
-    //                       glm::pow(planeEquation.y, 2) +
-    //                       glm::pow(planeEquation.z, 2);
-    // float lengthDoubled = glm::length(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z)) * 2;
-    float distanceToLine = planeEquation.w / glm::length(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z));
-    // So I was kind of correct with the guesses.. Kind of.
-    // Really shows how much easier it is when you actually think before writing code and
-    //      making any assumptions based off of a simplifed example in Blender.
-    // It's worse than I thought
-    // It's trigonometry (oh no)
-    // Update: I'm extra stupid right now. It's just basic vector things.
-
-    glm::mat4 planeTransform = glm::mat4(1);
-    if (worldUp == glm::abs(planeNormal)) {
-        /** HACK: This is done to properly orient the plane when it's aligned
-         *          with the world axis -- in this case it's hardcoded to Z+
-         *        We modify *up* value instead of *right*
-         *        But we're better off merging it with the default workflow
-         *        E.g. have a default *right* vector and fall back to that
-         *          if planeNormal and worldUp align. *how would we check it though*
-         *        Probably via the abs method, can't think of anything good right now
-         */
-        planeTransform[1] = { 0, -planeNormal.z, 0, 0 };
-    } else {
-        glm::vec3 right = glm::normalize(glm::cross(planeNormal, worldUp));
-        glm::vec3 up = glm::normalize(glm::cross(right, planeNormal));
-
-        planeTransform[0] = { right, 0 };
-        planeTransform[1] = { up, 0 };
-        planeTransform[2] = { planeNormal, 0 };
-    }
-
-    planeTransform[3] = { planeNormal * distanceToLine, 1 };
-
-    planeTransform = glm::scale(planeTransform, { 10.0, 10.0, 10.0 });
-
-    if (planeIndex == planeTransforms.size()) { planeTransforms.push_back(planeTransform); }
-    else { planeTransforms[planeIndex] = planeTransform; }
-
-    rebindAttributes();
-}
-// TODO: Implement with instanced rendering
-void LinearProgrammingProblemDisplay::rebindAttributes() {};
 //  public:
+LinearProgrammingProblem::LinearProgrammingProblem() {};
+LinearProgrammingProblem::~LinearProgrammingProblem() {};
 
-LinearProgrammingProblemDisplay::LinearProgrammingProblemDisplay() {
-    if (!LinearProgrammingProblemDisplay::planeObject) createPlaneObject();
-    if (!LinearProgrammingProblemDisplay::planeShader) createPlaneShader();
-};
-
-int LinearProgrammingProblemDisplay::getEquationCount() {
+int LinearProgrammingProblem::getEquationCount() {
     this->collectPointless();
     return planeEquations.size();
 }
 
-void LinearProgrammingProblemDisplay::setObjectiveFunction(glm::vec4 objectiveFunction) { this->objectiveFunction = objectiveFunction; }
-const glm::vec4 LinearProgrammingProblemDisplay::getObjectiveFunction() { return this->objectiveFunction; }
-
-// DEPRECATE
-int LinearProgrammingProblemDisplay::addLimitPlane(float* constraints) {
-    return addLimitPlane(glm::vec4(constraints[0], constraints[1], constraints[2], constraints[3])); // BAD
-}
-int LinearProgrammingProblemDisplay::addLimitPlane(glm::vec4 constraints) {
+int LinearProgrammingProblem::addLimitPlane(glm::vec4 constraints) {
     if (constraints.x != 0 || constraints.y != 0 || constraints.z != 0 || constraints.w != 0) {
         planeEquations.push_back(constraints);
-        visibleEquations.push_back(true);
+        // visibleEquations.push_back(true);
         recalculatePlane(planeEquations.size() - 1);
     }
     return planeEquations.size();
 }
 
 // @throws: std::out_of_range
-glm::vec4 LinearProgrammingProblemDisplay::getLimitPlane(int planeIndex) { return planeEquations.at(planeIndex); }
+glm::vec4 LinearProgrammingProblem::getLimitPlane(int planeIndex) { return planeEquations.at(planeIndex); }
 
-// DEPRECATE
-void LinearProgrammingProblemDisplay::editLimitPlane(int planeIndex, float* constraints) {
-    editLimitPlane(planeIndex, glm::vec4(constraints[0], constraints[1], constraints[2], constraints[3])); // BAD
-}
-void LinearProgrammingProblemDisplay::editLimitPlane(int planeIndex, glm::vec4 constraints) {
+void LinearProgrammingProblem::editLimitPlane(int planeIndex, glm::vec4 constraints) {
     planeEquations[planeIndex] = constraints;
     recalculatePlane(planeIndex);
     if (constraints.x == 0 && constraints.y == 0 && constraints.z == 0 && constraints.w == 0) {
@@ -234,18 +136,14 @@ void LinearProgrammingProblemDisplay::editLimitPlane(int planeIndex, glm::vec4 c
     }
 }
 
-void LinearProgrammingProblemDisplay::removeLimitPlane() {
+void LinearProgrammingProblem::removeLimitPlane() {
     planeEquations.pop_back();
-    planeTransforms.pop_back();
-    visibleEquations.pop_back();
-    rebindAttributes();
+    // visibleEquations.pop_back();
 }
-void LinearProgrammingProblemDisplay::removeLimitPlane(int planeIndex) {
-    if (planeIndex < 0 || planeIndex >= planeTransforms.size()) return;
+void LinearProgrammingProblem::removeLimitPlane(int planeIndex) {
+    if (planeIndex < 0 || planeIndex >= planeEquations.size()) return;
     planeEquations.erase(planeEquations.begin() + planeIndex);
-    planeTransforms.erase(planeTransforms.begin() + planeIndex);
-    visibleEquations.erase(visibleEquations.begin() + planeIndex);
-    rebindAttributes();
+    // visibleEquations.erase(visibleEquations.begin() + planeIndex);
 }
 
 template <typename dd_Type>
@@ -253,7 +151,7 @@ using dd_unique_ptr = std::unique_ptr<dd_Type, void(*)(dd_Type*)>;
 
 // Solves the given LPP and return boolean if a solution was found
 // @throws std::runtime_error if there's a dd error
-void LinearProgrammingProblemDisplay::solve() {
+void LinearProgrammingProblem::solve() {
     // Yes we use #ifdef and I know it's bad, but I have to build it somehow on Windows first.
     #ifdef USE_CDDLIB
     // XXX: This is less likely to throw a segfault than plainly deleting them, but who knows
@@ -267,10 +165,6 @@ void LinearProgrammingProblemDisplay::solve() {
     try {
     dd_set_global_constants();
 
-    // XXX: potential memory leak?
-    // I think std::vector will take care of floats/ints inside of the old one
-    // Or maybe the reassignment operator will do that.
-    // Maybe it's just best if I have a .reset() function??
     solution = Solution();
 
     constraintMatrix.reset(dd_CreateMatrix(3 + this->planeEquations.size(), 4));
@@ -324,27 +218,163 @@ void LinearProgrammingProblemDisplay::solve() {
     solution.optimalValue = linearProgrammingProblem->optvalue[0];
     solution.optimalVector = createVector(linearProgrammingProblem->sol, linearProgrammingProblem->d);
     solution.didMinimize = linearProgrammingProblem->objective == dd_LPmin;
-    solution.object.reset(new Object());
-    generateSolutionObject(solution.object.get(), verticesMatrix.get());
+    solution.polyhedraVertices = getVertices(verticesMatrix.get());
+    onSolutionSolved();
 
     } catch (std::runtime_error &dd_error) {
         dd_free_global_constants();
         throw dd_error;
     }
-    std::cout << "solve(): Cleaning up" << std::endl;
     dd_free_global_constants();
     #endif
 };
 
-const LinearProgrammingProblemDisplay::Solution* LinearProgrammingProblemDisplay::getSolution() {
+const LinearProgrammingProblem::Solution* LinearProgrammingProblem::getSolution() {
     return &this->solution;
 }
 
-void LinearProgrammingProblemDisplay::renderLimitPlanes(glm::mat4 view, glm::mat4 projection) {
+/**
+ * FIXME: This whole thing isn't thread-safe. At all. Which is a candidate
+ * to a change, don't want to hang rendering for too long with calculations.
+*/
+// class Display {
+// private:
+
+std::shared_ptr<Object> Display::planeObject;
+std::shared_ptr<Shader> Display::planeShader;
+
+void Display::createPlaneObject() {
+    Display::planeObject.reset(new Object());
+
+    VertexAttributePosition vertexData[] = {
+        {-1.0, -1.0, 0.0},
+        {-1.0,  1.0, 0.0},
+        { 1.0, -1.0, 0.0},
+        { 1.0,  1.0, 0.0}
+    };
+
+    int indices[] = {
+        0, 1, 3,
+        0, 3, 2
+    };
+
+    fromVertexData(planeObject.get(), vertexData, 4, indices, 6);
+}
+
+void Display::createPlaneShader() {
+    #ifdef USE_BAKED_SHADERS
+    Display::planeShader.reset(Shader::fromSource(shaders::vertex.plane_vert, shaders::fragment.default_frag));
+    #else
+    Display::planeShader.reset(new Shader("assets/plane.vert", "assets/default.frag"));
+    #endif
+}
+
+void Display::recalculatePlane(int planeIndex) {
+    glm::vec4 planeEquation = planeEquations[planeIndex];
+    glm::vec3 planeNormal = glm::normalize(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z));
+
+    // std::cout << "Editing: " << planeIndex << " " << glm::to_string(planeEquation) << std::endl;
+
+    // float lengthSquared = glm::pow(planeEquation.x, 2) +
+    //                       glm::pow(planeEquation.y, 2) +
+    //                       glm::pow(planeEquation.z, 2);
+    // float lengthDoubled = glm::length(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z)) * 2;
+    float distanceToLine = planeEquation.w / glm::length(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z));
+    // So I was kind of correct with the guesses.. Kind of.
+    // Really shows how much easier it is when you actually think before writing code and
+    //      making any assumptions based off of a simplifed example in Blender.
+    // It's worse than I thought
+    // It's trigonometry (oh no)
+    // Update: I'm extra stupid right now. It's just basic vector things.
+
+    glm::mat4 planeTransform = glm::mat4(1);
+    if (worldUp == glm::abs(planeNormal)) {
+        /** HACK: This is done to properly orient the plane when it's aligned
+         *          with the world axis -- in this case it's hardcoded to Z+
+         *        We modify *up* value instead of *right*
+         *        But we're better off merging it with the default workflow
+         *        E.g. have a default *right* vector and fall back to that
+         *          if planeNormal and worldUp align. *how would we check it though*
+         *        Probably via the abs method, can't think of anything good right now
+         */
+        planeTransform[1] = { 0, -planeNormal.z, 0, 0 };
+    } else {
+        glm::vec3 right = glm::normalize(glm::cross(planeNormal, worldUp));
+        glm::vec3 up = glm::normalize(glm::cross(right, planeNormal));
+
+        planeTransform[0] = { right, 0 };
+        planeTransform[1] = { up, 0 };
+        planeTransform[2] = { planeNormal, 0 };
+    }
+
+    planeTransform[3] = { planeNormal * distanceToLine, 1 };
+
+    planeTransform = glm::scale(planeTransform, { 10.0, 10.0, 10.0 });
+
+    if (planeIndex == planeTransforms.size()) { planeTransforms.push_back(planeTransform); }
+    else { planeTransforms[planeIndex] = planeTransform; }
+
+    rebindAttributes();
+}
+// TODO: Implement with instanced rendering
+void Display::rebindAttributes() {};
+//  public:
+
+Display::Display() {
+    if (!Display::planeObject) createPlaneObject();
+    if (!Display::planeShader) createPlaneShader();
+};
+
+int Display::getEquationCount() {
+    this->collectPointless();
+    return LinearProgrammingProblem::getEquationCount();
+}
+
+// int Display::addLimitPlane(glm::vec4 constraints) {
+//     if (constraints.x != 0 || constraints.y != 0 || constraints.z != 0 || constraints.w != 0) {
+//         planeEquations.push_back(constraints);
+//         visibleEquations.push_back(true);
+//         recalculatePlane(planeEquations.size() - 1);
+//     }
+//     return planeEquations.size();
+// }
+
+// // DEPRECATE
+// void Display::editLimitPlane(int planeIndex, float* constraints) {
+//     editLimitPlane(planeIndex, glm::vec4(constraints[0], constraints[1], constraints[2], constraints[3])); // BAD
+// }
+// void Display::editLimitPlane(int planeIndex, glm::vec4 constraints) {
+//     planeEquations[planeIndex] = constraints;
+//     recalculatePlane(planeIndex);
+//     if (constraints.x == 0 && constraints.y == 0 && constraints.z == 0 && constraints.w == 0) {
+//         this->pointlessEquations.push_back(planeIndex);
+//     }
+// }
+
+// void Display::removeLimitPlane() {
+//     planeEquations.pop_back();
+//     planeTransforms.pop_back();
+//     visibleEquations.pop_back();
+//     rebindAttributes();
+// }
+// void Display::removeLimitPlane(int planeIndex) {
+//     if (planeIndex < 0 || planeIndex >= planeTransforms.size()) return;
+//     planeEquations.erase(planeEquations.begin() + planeIndex);
+//     planeTransforms.erase(planeTransforms.begin() + planeIndex);
+//     visibleEquations.erase(visibleEquations.begin() + planeIndex);
+//     rebindAttributes();
+// }
+
+void Display::onSolutionSolved() {
+    solutionObject.reset(new Object());
+    generateSolutionObject(solutionObject.get(), solution.polyhedraVertices);
+}
+
+void Display::render(Camera* camera) {
     if (planeTransforms.size() == 0) return;
     glBindVertexArray(planeObject->objectData);
     planeShader->activate();
-    planeShader->setTransform(projection, view);
+    planeShader->setTransform(camera->getProjection(), camera->getView());
     /** TODO: Instanced rendering of plane limits
      * This will require:
      * - The plane transformation buffer [GL]
@@ -364,25 +394,25 @@ void LinearProgrammingProblemDisplay::renderLimitPlanes(glm::mat4 view, glm::mat
      */
     // glDrawElementsInstanced(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0, planeTransforms.size());
     for (int planeIndex = 0; planeIndex < planeTransforms.size(); planeIndex++) {
-        if (!visibleEquations[planeIndex]) continue;
+        // if (!visibleEquations[planeIndex]) continue;
         planeShader->setUniform("planeTransform", planeTransforms[planeIndex]);
         glDrawElements(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0);
     }
-}
-void LinearProgrammingProblemDisplay::renderAcceptableValues(glm::mat4 view, glm::mat4 projection) {
-    if (!this->solution.isSolved || !this->solution.object) return;
-    glBindVertexArray(this->solution.object->objectData);
-    this->planeShader->activate();
-    this->planeShader->setTransform(projection, view);
-    this->planeShader->setUniform("planeTransform", glm::mat4(1));
-    glDrawElements(GL_TRIANGLES, this->solution.object->vertexCount, GL_UNSIGNED_INT, 0);
-};
-void LinearProgrammingProblemDisplay::renderSolution() {};
 
-LinearProgrammingProblemDisplay::~LinearProgrammingProblemDisplay() {
-    LinearProgrammingProblemDisplay::solution.object.reset();
-    LinearProgrammingProblemDisplay::planeObject.reset();
-    LinearProgrammingProblemDisplay::planeShader.reset();
+    if (!this->solution.isSolved || !this->solutionObject) return;
+    glBindVertexArray(this->solutionObject->objectData);
+    this->planeShader->activate();
+    this->planeShader->setTransform(camera->getProjection(), camera->getView());
+    this->planeShader->setUniform("planeTransform", glm::mat4(1));
+    glDrawElements(GL_TRIANGLES, this->solutionObject->vertexCount, GL_UNSIGNED_INT, 0);
+
+    // XXX: render solution vector too
+};
+
+Display::~Display() {
+    Display::solutionObject.reset();
+    Display::planeObject.reset();
+    Display::planeShader.reset();
 };
 // };
 

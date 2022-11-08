@@ -16,6 +16,7 @@ const float movementSpeed = 2.5f;
 ImVec2 windowPosition = { 600, 0 };
 ImVec2 windowSize = { 384, 720 };
 ImVec4 worldColor = { 0.364, 0.674, 0.764, 1.0 };
+const char* const minmax[2] = { "min", "max" };
 
 struct MouseState {
     bool leftMouseButton;
@@ -33,7 +34,7 @@ namespace SceneData {
     bool showPlanes = true; // FIXME: merge into display proper once testing phase is over
     bool allowEditCamera = false;
     bool showDebugOverlay = false;
-    LinearProgrammingProblemDisplay* limits;
+    Display* lppshow;
     WorldGridDisplay* worldOrigin;
     Camera *sceneCamera;
 }
@@ -123,63 +124,55 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::SliderFloat("Grid scale", &SceneData::worldOrigin->zoomScale, 0.1f, 10.0f);
     }
 
-    ImGui::Text("Total planes: %d", SceneData::limits->getEquationCount());
-    if (ImGui::Button("Add plane") && SceneData::limits->getEquationCount() < 256) {
-        SceneData::limits->addLimitPlane({0, 0, 1, 0});
+    ImGui::Text("Total planes: %d", SceneData::lppshow->getEquationCount());
+    if (ImGui::Button("Add plane") && SceneData::lppshow->getEquationCount() < 256) {
+        SceneData::lppshow->addLimitPlane({0, 0, 1, 0});
     }
     ImGui::SameLine();
-    if (ImGui::Button("Remove plane") && SceneData::limits->getEquationCount() > 0) {
-        SceneData::limits->removeLimitPlane();
+    if (ImGui::Button("Remove plane") && SceneData::lppshow->getEquationCount() > 0) {
+        SceneData::lppshow->removeLimitPlane();
     }
     ImGui::Checkbox("Show planes", &SceneData::showPlanes);
     ImGui::Separator();
 
-    glm::vec4 objectiveFunctionEq = SceneData::limits->getObjectiveFunction();
     ImGui::Text("Objective function:");
-    if(ImGui::InputFloat4("##objective", &objectiveFunctionEq.x))
-        SceneData::limits->setObjectiveFunction(objectiveFunctionEq);
+    ImGui::InputFloat4("##objective", &SceneData::lppshow->objectiveFunction.x);
     ImGui::SameLine(); ImGui::Text("->"); ImGui::SameLine();
-    auto doMinimize = SceneData::limits->doMinimize;
+    auto doMinimize = SceneData::lppshow->doMinimize;
     int currentItem = (int) doMinimize;
 
     // XXX: This solution is much cleaner but lacks clear localization support
     ImGui::PushItemWidth(50.0f);
-    if (ImGui::Combo("##min", &currentItem, "min\0max\0"))
-        SceneData::limits -> doMinimize = !doMinimize;
+    if (ImGui::Combo("##min", &currentItem, minmax, 2))
+        SceneData::lppshow -> doMinimize = !doMinimize;
     ImGui::PopItemWidth();
 
-    // if(ImGui::BeginCombo("##minmax", doMinimize ? "min" : "max")) {
-    //     if (ImGui::Selectable("min", doMinimize))
-    //         SceneData::limits->doMinimize = !doMinimize;
-    //     if (ImGui::Selectable("max", !doMinimize))
-    //         SceneData::limits->doMinimize = !doMinimize;
-    //     ImGui::EndCombo();
-    // }
     ImGui::Separator();
 
     // TODO: Make into a scrollbox
-    for (int planeIndex = 0; planeIndex < SceneData::limits->getEquationCount(); planeIndex++) {
-        glm::vec4 planeEquationOrigin = SceneData::limits->getLimitPlane(planeIndex);
+    for (int planeIndex = 0; planeIndex < SceneData::lppshow->getEquationCount(); planeIndex++) {
+        glm::vec4 planeEquationOrigin = SceneData::lppshow->getLimitPlane(planeIndex);
         ImGui::PushID(planeIndex);
         // XXX: Do we want to use std::vector<bool> optimization or fall back to Plane objects?
-        bool isVisible = SceneData::limits->visibleEquations[planeIndex];
-        if(ImGui::Checkbox("##vis", &isVisible))
-            SceneData::limits->visibleEquations[planeIndex] = isVisible;
-        ImGui::SameLine(); ImGui::Text("Plane: "); ImGui::SameLine();
+        // bool isVisible = SceneData::lppshow->visibleEquations[planeIndex];
+        // if(ImGui::Checkbox("##vis", &isVisible))
+        //     SceneData::lppshow->visibleEquations[planeIndex] = isVisible;
+        // ImGui::SameLine();
+        ImGui::Text("Plane: "); ImGui::SameLine();
         if (ImGui::InputFloat4("##vec", &planeEquationOrigin[0])) {
-            SceneData::limits->editLimitPlane(planeIndex, planeEquationOrigin);
+            SceneData::lppshow->editLimitPlane(planeIndex, planeEquationOrigin);
         }
         ImGui::PopID();
     }
 
     if (ImGui::Button("Solve")) {
         try {
-            SceneData::limits->solve();
+            SceneData::lppshow->solve();
         } catch (std::runtime_error &dd_error) {
             std::cerr << "Faile to solve equation: " << dd_error.what() << std::endl;
         }
     }
-    auto solution = SceneData::limits->getSolution();
+    auto solution = SceneData::lppshow->getSolution();
     if (solution->isErrored) {
         ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, "Failed to solve the equation: %s", solution->errorString);
     } else if (solution->isSolved) {
@@ -200,8 +193,9 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     if (SceneData::canMoveCamera && !(iio.WantCaptureKeyboard || iio.WantCaptureMouse)) {
         moveCamera(camera, window, timeStep);
     }
-    if (SceneData::showPlanes) SceneData::limits->renderLimitPlanes(camera->getView(), camera->getProjection());
-    if (solution->isSolved) SceneData::limits->renderAcceptableValues(camera->getView(), camera->getProjection());
+    SceneData::lppshow->render(camera);
+    // if (SceneData::showPlanes) SceneData::lppshow->renderLimitPlanes(camera->getView(), camera->getProjection());
+    // if (solution->isSolved) SceneData::lppshow->renderAcceptableValues(camera->getView(), camera->getProjection());
     SceneData::worldOrigin->render(camera->getView(), camera->getProjection());
 
     ImGui::Render();
@@ -293,16 +287,17 @@ int main() {
     SceneData::sceneCamera = camera;
 
     try {
-        SceneData::limits = new LinearProgrammingProblemDisplay();
+        SceneData::lppshow = new Display();
         SceneData::worldOrigin = new WorldGridDisplay();
     } catch (std::exception &ioerr) {
-        delete SceneData::limits;
+        delete SceneData::lppshow;
         delete SceneData::worldOrigin;
         // Might get to segfault
         return logCriticalError("Failed to compile required shaders");
     }
 
-    SceneData::limits->setObjectiveFunction({0, 0, 0, 0});
+    // SceneData::lppshow->setObjectiveFunction({0, 0, 0, 0});
+    SceneData::lppshow->objectiveFunction = {0, 0, 0, 0};
 
     // ???
     glfwWindowResizeCallback(mainWindow, windowWidth, windowHeight);
@@ -332,7 +327,7 @@ int main() {
 
     // We have to delete them before we deinit glfw and exit the program scope (and consequently opengl)
     // As otherwise we attempt to asl now unloaded GL context to deallocate the object and shader buffers
-    delete SceneData::limits;
+    delete SceneData::lppshow;
     delete SceneData::worldOrigin;
     glfwTerminate();
 }
