@@ -11,7 +11,7 @@ INCLUDE_DIR = include
 THIRDPARTY_INCLUDE = thirdparty
 IMGUI_DIR = $(THIRDPARTY_INCLUDE)/imgui
 
-SOURCES_BASE = $(SOURCES_DIR)/assets.cpp $(SOURCES_DIR)/camera.cpp $(SOURCES_DIR)/LPPShow.cpp $(SOURCES_DIR)/solver.cpp
+SOURCES_BASE = $(SOURCES_DIR)/assets.cpp $(SOURCES_DIR)/camera.cpp $(SOURCES_DIR)/LPPShow.cpp $(SOURCES_DIR)/solver.cpp $(SOURCES_DIR)/display.cpp
 SOURCES_THIRDPARTY = $(THIRDPARTY_INCLUDE)/quickhull/QuickHull.cpp
 SOURCES_THIRDPARTY += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
 SOURCES_THIRDPARTY += $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp

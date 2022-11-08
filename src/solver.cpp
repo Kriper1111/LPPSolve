@@ -94,6 +94,7 @@ std::vector<float> getVertices(dd_MatrixPtr vform) {
 */
 // class LinearProgrammingProblem {
 // protected:
+
 void LinearProgrammingProblem::collectPointless() {
     // It never gets better, does it?
     // I hope they're sorted
@@ -103,6 +104,7 @@ void LinearProgrammingProblem::collectPointless() {
 }
 
 //  public:
+
 LinearProgrammingProblem::LinearProgrammingProblem() {
     this->planeEquations = std::vector<glm::vec4>();
     this->pointlessEquations = std::vector<int>();
@@ -120,8 +122,8 @@ int LinearProgrammingProblem::getEquationCount() {
 int LinearProgrammingProblem::addLimitPlane(glm::vec4 constraints) {
     if (constraints.x != 0 || constraints.y != 0 || constraints.z != 0 || constraints.w != 0) {
         planeEquations.push_back(constraints);
-        // visibleEquations.push_back(true);
-        recalculatePlane(planeEquations.size() - 1);
+        // recalculatePlane(planeEquations.size() - 1);
+        onPlaneAdded(planeEquations.size() - 1);
     }
     return planeEquations.size();
 }
@@ -131,20 +133,20 @@ glm::vec4 LinearProgrammingProblem::getLimitPlane(int planeIndex) { return plane
 
 void LinearProgrammingProblem::editLimitPlane(int planeIndex, glm::vec4 constraints) {
     planeEquations[planeIndex] = constraints;
-    recalculatePlane(planeIndex);
-    if (constraints.x == 0 && constraints.y == 0 && constraints.z == 0 && constraints.w == 0) {
+    onPlaneUpdated(planeIndex);
+    // recalculatePlane(planeIndex);
+    if (constraints.x == 0 && constraints.y == 0 && constraints.z == 0 && constraints.w == 0)
         this->pointlessEquations.push_back(planeIndex);
-    }
 }
 
 void LinearProgrammingProblem::removeLimitPlane() {
     planeEquations.pop_back();
-    // visibleEquations.pop_back();
+    onPlaneRemoved(planeEquations.size());
 }
 void LinearProgrammingProblem::removeLimitPlane(int planeIndex) {
     if (planeIndex < 0 || planeIndex >= planeEquations.size()) return;
     planeEquations.erase(planeEquations.begin() + planeIndex);
-    // visibleEquations.erase(visibleEquations.begin() + planeIndex);
+    onPlaneRemoved(planeIndex);
 }
 
 template <typename dd_Type>
@@ -164,6 +166,7 @@ using dd_unique_ptr = std::unique_ptr<dd_Type, void(*)(dd_Type*)>;
  * @throws std::runtime_error if there's something really wrong with the provided system
  */
 void LinearProgrammingProblem::solve() {
+    this->collectPointless();
     // Yes we use #ifdef and I know it's bad, but I have to build it somehow on Windows first.
     #ifdef USE_CDDLIB
     /**

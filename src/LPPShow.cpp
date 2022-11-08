@@ -132,7 +132,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     if (ImGui::Button("Remove plane") && SceneData::lppshow->getEquationCount() > 0) {
         SceneData::lppshow->removeLimitPlane();
     }
-    ImGui::Checkbox("Show planes", &SceneData::showPlanes);
+    ImGui::Checkbox("Show planes", &SceneData::lppshow->showPlanesAtAll);
     ImGui::Separator();
 
     ImGui::Text("Objective function:");
@@ -154,11 +154,10 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         glm::vec4 planeEquationOrigin = SceneData::lppshow->getLimitPlane(planeIndex);
         ImGui::PushID(planeIndex);
         // XXX: Do we want to use std::vector<bool> optimization or fall back to Plane objects?
-        // bool isVisible = SceneData::lppshow->visibleEquations[planeIndex];
-        // if(ImGui::Checkbox("##vis", &isVisible))
-        //     SceneData::lppshow->visibleEquations[planeIndex] = isVisible;
-        // ImGui::SameLine();
-        ImGui::Text("Plane: "); ImGui::SameLine();
+        bool isVisible = SceneData::lppshow->visibleEquations[planeIndex];
+        if(ImGui::Checkbox("##vis", &isVisible))
+            SceneData::lppshow->visibleEquations[planeIndex] = isVisible;
+        ImGui::SameLine(); ImGui::Text("Plane: "); ImGui::SameLine();
         if (ImGui::InputFloat4("##vec", &planeEquationOrigin[0])) {
             SceneData::lppshow->editLimitPlane(planeIndex, planeEquationOrigin);
         }
@@ -178,6 +177,8 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     } else if (solution->isSolved) {
         ImGui::Text("Optimal value: %.4f", solution->optimalValue);
         ImGui::Text("Optimal plan: %.3fx1 %.3fx2 %.3fx3 %.3f", solution->optimalVector);
+    } else if (!solution->isErrored && !solution->isSolved && !solution->statusString.empty()) {
+        ImGui::Text("Solution status: %s", solution->statusString.c_str());
     }
 
     #ifdef DEBUG
@@ -190,12 +191,10 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui::End();
 
     auto iio = ImGui::GetIO();
-    if (SceneData::canMoveCamera && !(iio.WantCaptureKeyboard || iio.WantCaptureMouse)) {
+    if (SceneData::canMoveCamera && !(iio.WantCaptureKeyboard || iio.WantCaptureMouse))
         moveCamera(camera, window, timeStep);
-    }
+
     SceneData::lppshow->render(camera);
-    // if (SceneData::showPlanes) SceneData::lppshow->renderLimitPlanes(camera->getView(), camera->getProjection());
-    // if (solution->isSolved) SceneData::lppshow->renderAcceptableValues(camera->getView(), camera->getProjection());
     SceneData::worldOrigin->render(camera->getView(), camera->getProjection());
 
     ImGui::Render();

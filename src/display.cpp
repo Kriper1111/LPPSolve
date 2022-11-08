@@ -117,22 +117,37 @@ void Display::recalculatePlane(int planeIndex) {
 }
 // TODO: Implement with instanced rendering
 void Display::rebindAttributes() {};
+void Display::onSolutionSolved() {
+    solutionObject.reset(new Object());
+    generateSolutionObject(solutionObject.get(), solution.polyhedraVertices);
+}
+
+void Display::onPlaneAdded(int planeIndex) {
+    visibleEquations.push_back(true);
+    recalculatePlane(planeIndex);
+}
+
+void Display::onPlaneUpdated(int planeIndex) {
+    recalculatePlane(planeIndex);
+}
+
+void Display::onPlaneRemoved(int planeIndex) {
+    visibleEquations.erase(visibleEquations.begin() + planeIndex);
+    planeTransforms.erase(planeTransforms.begin() + planeIndex);
+}
+
 //  public:
 
 Display::Display() {
     if (!Display::planeObject) createPlaneObject();
     if (!Display::planeShader) createPlaneShader();
+    this->showPlanesAtAll = true;
 };
 
-int Display::getEquationCount() {
-    this->collectPointless();
-    return LinearProgrammingProblem::getEquationCount();
-}
-
-void Display::onSolutionSolved() {
-    solutionObject.reset(new Object());
-    generateSolutionObject(solutionObject.get(), solution.polyhedraVertices);
-}
+// int Display::getEquationCount() {
+//     this->collectPointless();
+//     return LinearProgrammingProblem::getEquationCount();
+// }
 
 void Display::render(Camera* camera) {
     if (planeTransforms.size() == 0) return;
@@ -157,10 +172,12 @@ void Display::render(Camera* camera) {
      * Do we have to re-link the whole object?
      */
     // glDrawElementsInstanced(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0, planeTransforms.size());
+    if (showPlanesAtAll) {
     for (int planeIndex = 0; planeIndex < planeTransforms.size(); planeIndex++) {
-        // if (!visibleEquations[planeIndex]) continue;
+        if (!visibleEquations[planeIndex]) continue;
         planeShader->setUniform("planeTransform", planeTransforms[planeIndex]);
         glDrawElements(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0);
+    }
     }
 
     if (!this->solution.isSolved || !this->solutionObject) return;

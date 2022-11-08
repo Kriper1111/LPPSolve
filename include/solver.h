@@ -19,15 +19,19 @@ class LinearProgrammingProblem {
     Solution solution;
 
     void collectPointless();
-    virtual void recalculatePlane(int planeIndex) {};
+    
+    // virtual "events" for Display compatibility
     virtual void onSolutionSolved() {};
+    virtual void onPlaneAdded(int planeIndex) {};
+    virtual void onPlaneUpdated(int planeIndex) {};
+    virtual void onPlaneRemoved(int planeIndex) {};
 
     public:
     glm::vec4 objectiveFunction;
 
     LinearProgrammingProblem();
 
-    virtual int getEquationCount();
+    int getEquationCount();
 
     void setObjectiveFunction(glm::vec4 objectiveFunction);
     const glm::vec4 getObjectiveFunction();
@@ -62,13 +66,16 @@ class Display:public LinearProgrammingProblem {
     void recalculatePlane(int planeIndex);
     void rebindAttributes();
     void onSolutionSolved();
+    void onPlaneAdded(int planeIndex);
+    void onPlaneUpdated(int planeIndex);
+    void onPlaneRemoved(int planeIndex);
 
     public:
     std::vector<bool> visibleEquations; // We could maybe merge that into one flag?
+    bool showPlanesAtAll;
 
     Display();
 
-    int getEquationCount();
     void render(Camera* camera);
 
     ~Display();
