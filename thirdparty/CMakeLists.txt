@@ -28,10 +28,11 @@ if (WIN32)
     # XXX: Could we move that to the build step maybe??
     # Via ExternalProject
 
+    file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/libraries/")
     file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/thirdparty/touches/")
     if(NOT EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/touches/imgui-${IMGUI_VERSION}")
         message("ImGui will now be downloaded")
-        file(DOWNLOAD https://github.com/ocornut/imgui/archive/refs/tags/${IMGUI_VERSION}.zip
+        file(DOWNLOAD https://github.com/ocornut/imgui/archive/refs/tags/v${IMGUI_VERSION}.zip
             "${CMAKE_SOURCE_DIR}/tmp/imgui-${IMGUI_VERSION}.zip"
             EXPECTED_HASH SHA256=81087a74599e5890a07b636887cee73a7dc1a9eb9e1f19a4a0d82a76090bf4c2
             SHOW_PROGRESS
