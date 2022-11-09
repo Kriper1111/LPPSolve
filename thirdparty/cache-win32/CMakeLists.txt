@@ -66,10 +66,9 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/touches/glfw-${GLFW_VERSION}")
         "${CMAKE_SOURCE_DIR}/libraries/glfw"
     )
 
-    file(GLOB "${CMAKE_SOURCE_DIR}/tmp/glfw-${GLFW_VERSION}/lib-vc2022/*" GLFW_VISUAL_C_LISTS)
-    file(COPY
-        "${GLFW_VISUAL_C_LISTS}"
-        "${CMAKE_SOURCE_DIR}/libraries/"
+    file(GLOB GLFW_VISUAL_C_LISTS "${CMAKE_SOURCE_DIR}/tmp/glfw-${GLFW_VERSION}/lib-vc2022/*")
+    file(COPY "${GLFW_VISUAL_C_LISTS}"
+        DESTINATION "${CMAKE_SOURCE_DIR}/libraries/"
     )
 
     file(TOUCH "${CMAKE_SOURCE_DIR}/thirdparty/touches/glfw-${GLFW_VERSION}")
