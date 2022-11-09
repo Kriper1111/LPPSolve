@@ -22,8 +22,8 @@ jobs:
         path: thirdparty/imgui
     
     # Could also just use CMake for downloading the archives, but cache is still needed
-    -if: ${{ steps.cache-imgui.outputs.cache-hit != 'true' }}
-      name: Retrieve - imgui from source
+    - name: Retrieve - imgui from source
+      if: ${{ steps.cache-imgui.outputs.cache-hit != 'true' }}
       run: |
         curl -sSL https://github.com/ocornut/imgui/archive/refs/tags/v1.88.zip -o /tmp/imgui.zip
         unzip /tmp/imgui.zip -d ./thirdparty
