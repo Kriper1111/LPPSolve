@@ -74,9 +74,25 @@ jobs:
         submodules: true
 
     - name: vcpkg - Install dependencies
-    - uses: lukka/run-vcpkg@v7
+      uses: lukka/run-vcpkg@v7
       with:
         vcpkgArguments: "glfw3:x64-windows glm:x64-windows"
+
+    - name: Cache - imgui from source
+      id: cache-imgui
+      uses: actions/cache@v3.0.11
+      with:
+        key: version-1.88
+        path: thirdparty/imgui
+    
+    # Could also just use CMake for downloading the archives, but cache is still needed
+    - name: Retrieve - imgui from source
+      if: ${{ steps.cache-imgui.outputs.cache-hit != 'true' }}
+      shell: bash # Save myself some headaches with pwsh
+      run: |
+        curl -sSL https://github.com/ocornut/imgui/archive/refs/tags/v1.88.zip -o /tmp/imgui.zip
+        unzip /tmp/imgui.zip -d ./thirdparty
+        mv ./thirdparty/imgui-1.88 ./thirdparty/imgui
 
     - name: CMake - configure
       run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DUSE_CDDLIB=off -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake
