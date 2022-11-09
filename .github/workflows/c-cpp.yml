@@ -15,7 +15,7 @@ jobs:
     - name: Apt - Install uncompileable dependencies
       run: |
         sudo apt-get update -qq
-        sudo apt get install --no-install-recommends -y libglfw3-dev libcdd-dev libglm-dev
+        sudo apt-get install --no-install-recommends -y libglfw3-dev libcdd-dev libglm-dev
     
     - name: Cache - imgui from source
       id: cache-imgui
