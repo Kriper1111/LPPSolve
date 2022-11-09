@@ -84,11 +84,13 @@ jobs:
     - name: CMake - build
       run: |
         cmake --build ${{github.workspace}}\build --config ${{env.CMAKE_BUILD_TYPE}}
-        cmake --install ${{github.workspace}}\build
+
+    - name: CommandLine - Look around
+      run: tree ${{github.workspace}}\build /F
 
     - name: Actions - Emit artifact
       uses: actions/upload-artifact@v3
       with:
         name: dist
         path: |
-          dist/
+          ${{github.workspace}}\build\Release
