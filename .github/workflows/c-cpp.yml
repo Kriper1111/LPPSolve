@@ -55,6 +55,14 @@ jobs:
         name: dist-linux
         path: ${{github.workspace}}/dist-linux.tar
 
+  vcpkg-create-cache:
+    runs-on: windows-latest
+
+    steps:
+      - uses: lukka/run-vcpkg@v7
+        with:
+          vcpkgArguments: "glfw3:x64-windows glm:x64-windows"
+
   build-windows:
     runs-on: windows-latest
     
@@ -65,22 +73,17 @@ jobs:
       with:
         submodules: true
 
-    - name: Test - env vars
-      run: |
-        echo %VCPKG_INSTALLATION_ROOT%
-        echo $VCPKG_INSTALLATION_ROOT
-        echo ${{ env.VCPKG_INSTALLATION_ROOT }}
-
     - name: vcpkg - Install dependencies
-      run: |
-        vcpkg install glfw3 glm
+    - uses: lukka/run-vcpkg@v7
+      with:
+        vcpkgArguments: "glfw3:x64-windows glm:x64-windows"
 
     - name: CMake - configure
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DUSE_CDDLIB=off -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_INSTALLATION_ROOT }}/scripts/buildsystems/vcpkg.cmake
+      run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DUSE_CDDLIB=off -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT\scripts\buildsystems\vcpkg.cmake
     - name: CMake - build
       run: |
-        cmake --build ${{github.workspace}}/build --config ${{env.CMAKE_BUILD_TYPE}}
-        cmake --install ${{github.workspace}}/build
+        cmake --build ${{github.workspace}}\build --config ${{env.CMAKE_BUILD_TYPE}}
+        cmake --install ${{github.workspace}}\build
 
     - name: Actions - Emit artifact
       uses: actions/upload-artifact@v3
