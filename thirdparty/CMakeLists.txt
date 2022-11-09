@@ -77,6 +77,11 @@ if (WIN32)
             "${CMAKE_SOURCE_DIR}/libraries/glfw"
         )
 
+        file(RENAME
+            "${CMAKE_SOURCE_DIR}/tmp/glfw-${GLFW_VERSION}/lib-vc2022/"
+            "${CMAKE_SOURCE_DIR}/libraries/glfw-visualc"
+        )
+
         file(TOUCH "${CMAKE_SOURCE_DIR}/thirdparty/touches/glfw-${GLFW_VERSION}")
     endif(NOT EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/touches/glfw-${GLFW_VERSION}")
 
