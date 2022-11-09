@@ -57,6 +57,27 @@ jobs:
         name: dist-linux
         path: ${{github.workspace}}/dist-linux.tar
 
+  # cache-dependencies:
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #   - uses: actions/checkout@v3
+    
+  #   - name: Cache - Windows uncompileable dependencies
+  #     id: cache-windows-thirdparty
+  #     uses: actions/cache@v3.0.11
+  #     with:
+  #       key: thirdparty-imgui${{ env.IMGUI_VERSION }}-glfw${{ env.GLFW_VERSION }}-glm${{ env.GLM_VERSION }}
+  #       path: |
+  #         thirdparty/touches
+  #         thirdparty/GLFW
+  #         thirdparty/glm
+  #         thirdparty/imgui
+  #         libraries/glfw
+
+  #   - name: CMake - configure dependencies
+  #     run: cmake -B ${{github.workspace}}\deps -S ${{github.workspace}}\thirdparty\cache-win32
+
   build-windows:
     runs-on: windows-latest
 
