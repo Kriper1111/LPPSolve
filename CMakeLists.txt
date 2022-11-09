@@ -43,6 +43,9 @@ if (WIN32)
     list(APPEND LIBRARIES opengl32 gdi32 glfw3)
     list(APPEND LIBRARIES -static)
     target_link_directories(LPPShow PUBLIC libraries) # Fallback
+    # I have nothing.
+    # Plastic world has won.
+    target_link_directories(LPPShow PUBLIC libraries/glfw-vc2022)
 endif()
 
 if (UNIX AND NOT APPLE)

@@ -63,12 +63,11 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/thirdparty/touches/glfw-${GLFW_VERSION}")
     message("GLFW libraries will now be emplaced")
     file(RENAME
         "${CMAKE_SOURCE_DIR}/tmp/glfw-${GLFW_VERSION}/lib-mingw-w64/"
-        "${CMAKE_SOURCE_DIR}/libraries/glfw"
+        "${CMAKE_SOURCE_DIR}/libraries/glfw-mingw-w64"
     )
-
-    file(GLOB GLFW_VISUAL_C_LISTS "${CMAKE_SOURCE_DIR}/tmp/glfw-${GLFW_VERSION}/lib-vc2022/*")
-    file(COPY "${GLFW_VISUAL_C_LISTS}"
-        DESTINATION "${CMAKE_SOURCE_DIR}/libraries/"
+    file(RENAME
+        "${CMAKE_SOURCE_DIR}/tmp/glfw-${GLFW_VERSION}/lib-vc2022/"
+        "${CMAKE_SOURCE_DIR}/libraries/glfw-vc2022"
     )
 
     file(TOUCH "${CMAKE_SOURCE_DIR}/thirdparty/touches/glfw-${GLFW_VERSION}")
