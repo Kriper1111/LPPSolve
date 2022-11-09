@@ -32,12 +32,23 @@ if (CMAKE_BUILD_TYPE MATCHES "Release" OR BAKE_SHADERS)
     add_dependencies(LPPShow bake)
 endif()
 
-set(LIBRARIES framework glad dl glfw imgui)
+set(LIBRARIES framework glad imgui)
 
 if(USE_CDDLIB)
     list(APPEND LIBRARIES quickhull cddlib)
 endif()
 
+if (WIN32)
+    list(APPEND LIBRARIES opengl32 gdi32 glfw3)
+    list(APPEND LIBRARIES -static)
+    target_link_directories(LPPShow PUBLIC libraries) # Fallback
+endif()
+
+if (UNIX AND NOT APPLE)
+    list(APPEND LIBRARIES glfw)
+endif()
+
 target_link_libraries(LPPShow PUBLIC ${LIBRARIES})
+target_link_libraries(LPPShow PUBLIC rt m dl)
 
 install(TARGETS LPPShow DESTINATION "${CMAKE_SOURCE_DIR}/dist")

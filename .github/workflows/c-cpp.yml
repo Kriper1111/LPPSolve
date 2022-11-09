@@ -9,7 +9,7 @@ env:
   CMAKE_BUILD_TYPE: Debug
 
 jobs:
-  build:
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
@@ -45,28 +45,39 @@ jobs:
       run: cmake --build ${{github.workspace}}/build --config ${{env.CMAKE_BUILD_TYPE}}
 
     - name: Tar - Package artifact
-      run: tar -cvf ${{github.workspace}}/dist-linux.tar ${{github.workspace}}/assets/ ${{github.workspace}}/build/LPPShow
+      run: |
+        cmake --install ${{github.workspace}}/build
+        tar -cvf ${{github.workspace}}/dist-linux.tar -C ${{github.workspace}} ./dist
     - name: Actions - Emit artifact
       uses: actions/upload-artifact@v3
       with:
         name: dist-linux
         path: ${{github.workspace}}/dist-linux.tar
 
-  #build-windows:
-    #runs-on: windows-latest
+  build-windows:
+    runs-on: windows-latest
     
-    #vcpkg install glfw3 glm
-    #steps:
-    #- uses: actions/checkout@v3
-    #- name: Install dependencies
-      #run: |
-        #pacman -Suy glfw3 glm
-    #- name: CMake: generate & build
-      #run: cmake --build ./
-    #- name: Emit artifact
-      #uses: actions/upload-artifact@v3
-      #with:
-        #name: dist
-        #path: |
-          #assets
-          #LPPShow.exe
+    # vcpkg install glfw3 glm
+    # pacman -Suy glfw3 glm
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: vcpkg - Install dependencies
+      run: |
+        vcpkg install glfw3 glm
+
+    - name: CMake - configure
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DUSE_CDDLIB=off
+    - name: CMake - build
+      run: |
+        cmake --build ${{github.workspace}}/build --config ${{env.CMAKE_BUILD_TYPE}}
+        cmake --install ${{github.workspace}}/build
+
+    - name: Actions - Emit artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist
+        path: |
+          dist/
