@@ -49,10 +49,9 @@ if (WIN32)
 endif()
 
 if (UNIX AND NOT APPLE)
-    list(APPEND LIBRARIES glfw)
+    list(APPEND LIBRARIES glfw rt m dl)
 endif()
 
 target_link_libraries(LPPShow PUBLIC ${LIBRARIES})
-target_link_libraries(LPPShow PUBLIC rt m dl)
 
 install(TARGETS LPPShow DESTINATION "${CMAKE_SOURCE_DIR}/dist")
