@@ -5,6 +5,9 @@ on:
   push:
     branches: [ "cmake" ]
 
+env:
+  CMAKE_BUILD_TYPE: Debug
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -32,15 +35,20 @@ jobs:
         unzip /tmp/imgui.zip -d ./thirdparty
         mv ./thirdparty/imgui-1.88 ./thirdparty/imgui
 
-    - name: CMake - configure & build
-      run: cmake --build .
+    # Shamelessly borrowed from an example CMake action. Probably better than I could've done myself
+    # ..evidently
+    - name: CMake - configure
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}}
+    - name: CMake - build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.CMAKE_BUILD_TYPE}}
+
     - name: Tar - Package artifact
-      run: tar -cvf dist-linux.tar assets/ LPPShow
+      run: tar -cvf ${{github.workspace}}/dist-linux.tar ${{github.workspace}}/assets/ ${{github.workspace}}/build/LPPShow
     - name: Actions - Emit artifact
       uses: actions/upload-artifact@v3
       with:
         name: dist-linux
-        path: dist-linux.tar
+        path: ${{github.workspace}}/dist-linux.tar
 
   #build-windows:
     #runs-on: windows-latest
