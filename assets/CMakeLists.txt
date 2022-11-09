@@ -1,7 +1,6 @@
-find_package(Python3 REQUIRED)
-# find_package(PythonInterp3 REQUIRED)
-
 if (CMAKE_BUILD_TYPE MATCHES "Release" OR BAKE_SHADERS)
+    find_package(Python3 REQUIRED)
+
     message("Using PYTHON_EXECUTABLE = ${Python3_EXECUTABLE}")
     message("COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/preconfigure/bake_obj.py ${CMAKE_SOURCE_DIR}/assets/* ${CMAKE_SOURCE_DIR}/include/baked_shaders.h")
     add_custom_target(

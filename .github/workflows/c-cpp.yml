@@ -1,0 +1,59 @@
+name: Building, CI Even
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Apt - Install uncompileable dependencies
+      run: |
+        sudo apt-get update -qq
+        sudo apt get install --no-install-recommends -y libglfw3-dev libcdd-dev libglm-dev
+    
+    - name: Cache - imgui from source
+      id: cache-imgui
+      uses: actions/cache@v3.0.11
+      with:
+        key: version-1.88
+        path: thirdparty/imgui
+    
+    # Could also just use CMake for downloading the archives, but cache is still needed
+    -if: ${{ steps.cache-imgui.outputs.cache-hit != 'true' }}
+      name: Retrieve - imgui from source
+      run: |
+        curl -sSL https://github.com/ocornut/imgui/archive/refs/tags/v1.88.zip -o /tmp/imgui.zip
+        unzip /tmp/imgui.zip -d ./thirdparty
+        mv ./thirdparty/imgui-1.88 ./thirdparty/imgui
+
+    - name: CMake - configure & build
+      run: cmake --build .
+    - name: Tar - Package artifact
+      run: tar -cvf dist-linux.tar assets/ LPPShow
+    - name: Actions - Emit artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist-linux
+        path: dist-linux.tar
+
+  #build-windows:
+    #runs-on: windows-latest
+    
+    #vcpkg install glfw3 glm
+    #steps:
+    #- uses: actions/checkout@v3
+    #- name: Install dependencies
+      #run: |
+        #pacman -Suy glfw3 glm
+    #- name: CMake: generate & build
+      #run: cmake --build ./
+    #- name: Emit artifact
+      #uses: actions/upload-artifact@v3
+      #with:
+        #name: dist
+        #path: |
+          #assets
+          #LPPShow.exe
