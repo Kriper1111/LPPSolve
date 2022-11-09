@@ -9,7 +9,7 @@ class Camera {
     glm::vec3 mRotation;
     glm::vec3 mUp;
 
-    bool isOrthographic;
+    bool isOrthographic = false;
 
     int viewHeight; // XXX: Will cause problems with orthographic view and resizing
     int viewWidth;
