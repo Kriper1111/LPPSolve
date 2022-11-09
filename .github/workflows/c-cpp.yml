@@ -112,6 +112,7 @@ jobs:
     - name: Actions - Emit artifact
       uses: actions/upload-artifact@v3
       with:
-        name: dist
+        name: dist-windows
         path: |
-          ${{github.workspace}}\build\Release
+          ${{github.workspace}}\assets
+          ${{github.workspace}}\build\Debug
