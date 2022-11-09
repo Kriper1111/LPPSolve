@@ -69,7 +69,7 @@ jobs:
         vcpkg install glfw3 glm
 
     - name: CMake - configure
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DUSE_CDDLIB=off
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DUSE_CDDLIB=off -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
     - name: CMake - build
       run: |
         cmake --build ${{github.workspace}}/build --config ${{env.CMAKE_BUILD_TYPE}}
