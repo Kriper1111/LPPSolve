@@ -3,7 +3,10 @@ name: Building, CI Even
 on:
   workflow_dispatch:
   push:
-    branches: [ "cmake" ]
+    branches:
+    - "cmake"
+    tags:
+    - "version-*"
 
 env:
   CMAKE_BUILD_TYPE: Debug
@@ -25,7 +28,7 @@ jobs:
         sudo apt-get update -qq
         sudo apt-get install --no-install-recommends -y libglfw3-dev libcdd-dev libglm-dev
 
-    - name: Cache - imgui from source
+    - name: Cache - ImGui from source
       id: cache-imgui
       uses: actions/cache@v3.0.11
       with:
@@ -33,7 +36,7 @@ jobs:
         path: thirdparty/imgui
 
     # Could also just use CMake for downloading the archives, but cache is still needed
-    - name: Retrieve - imgui from source
+    - name: Retrieve - ImGui from source
       if: ${{ steps.cache-imgui.outputs.cache-hit != 'true' }}
       run: |
         curl -sSL https://github.com/ocornut/imgui/archive/refs/tags/v1.88.zip -o /tmp/imgui.zip
@@ -42,9 +45,9 @@ jobs:
 
     # Shamelessly borrowed from an example CMake action. Probably better than I could've done myself
     # ..evidently
-    - name: CMake - configure
+    - name: CMake - Configure
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}}
-    - name: CMake - build
+    - name: CMake - Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.CMAKE_BUILD_TYPE}}
 
     - name: Tar - Package artifact
@@ -78,11 +81,11 @@ jobs:
   #   - name: CMake - configure dependencies
   #     run: cmake -B ${{github.workspace}}\deps -S ${{github.workspace}}\thirdparty\cache-win32
 
+  # This one will be ran only on non-snapshot builds, since it's slower and more of a PITA
   build-windows:
     runs-on: windows-latest
+    if: ${{ !endsWith(github.ref_name, 'snapshot') }}
 
-    # vcpkg install glfw3 glm
-    # pacman -Suy glfw3 glm
     steps:
     - uses: actions/checkout@v3
       with:
@@ -100,9 +103,9 @@ jobs:
           thirdparty/imgui
           libraries/
 
-    - name: CMake - configure
+    - name: CMake - Configure
       run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DUSE_CDDLIB=off
-    - name: CMake - build
+    - name: CMake - Build
       run: |
         cmake --build ${{github.workspace}}\build --config ${{env.CMAKE_BUILD_TYPE}}
 
