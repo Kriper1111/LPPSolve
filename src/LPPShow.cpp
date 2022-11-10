@@ -57,11 +57,30 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
     float vertical = (glfwGetKey(inputWindow, GLFW_KEY_W) - glfwGetKey(inputWindow, GLFW_KEY_S))
                      + (glfwGetKey(inputWindow, GLFW_KEY_UP) - glfwGetKey(inputWindow, GLFW_KEY_DOWN));
 
+    float snapToTop = glfwGetKey(inputWindow, GLFW_KEY_KP_7);
+    float snapToLeft = glfwGetKey(inputWindow, GLFW_KEY_KP_1);
+    float snapToRight = glfwGetKey(inputWindow, GLFW_KEY_KP_3);
 
-    if (horizontal || vertical) {
+    if (snapToRight) {
+        camera->teleportTo(camera->lookDepth, 0, 0);
+        camera->rotate(0, 0, -90);
+        camera->setOrtography();
+    } else if (snapToLeft) {
+        camera->teleportTo(0, -camera->lookDepth, 0);
+        camera->rotate(0, 0, 0);
+        camera->setOrtography();
+    } else if (snapToTop) {
+        camera->teleportTo(0, 0, camera->lookDepth);
+        camera->rotate(-89.9, 0, 0);
+        camera->setOrtography();
+    }
+    
+    if (snapToLeft || snapToRight || snapToTop) {
+        camera->setOrtography();
+    } else if (horizontal || vertical) {
         // BUG: seems to be inverted on Windows for some reason.
         camera->orbit(horizontal * movementSpeed * speedMod, -vertical * movementSpeed * speedMod);
-        // camera->setPerspective();
+        camera->setPerspective();
     }
 }
 
@@ -70,6 +89,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    // TODO: Make collapsing too, maybe?
     ImGui::Begin("Planes", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::SetWindowPos(windowPosition);
     ImGui::SetWindowSize(windowSize);
@@ -91,6 +111,11 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::SliderFloat("Look insensitivity", &camera->lookInSensitivity, 1.0f, 50.0f);
         ImGui::SliderFloat("Look depth", &camera->lookDepth, 0.0f, 100.0f);
         ImGui::Checkbox("Allow editing camera values", &SceneData::allowEditCamera);
+
+        // Ortho
+        float orthographicScale = camera->getOrthographicScale();
+        if(ImGui::SliderFloat("Orthographic scale", &orthographicScale, 0.0f, 100.0f))
+            camera->setOrthographicScale(orthographicScale);
         bool isOrtho = camera->useOrthography();
         if (ImGui::Checkbox("Use orthography", &isOrtho)) {
             camera->useOrthography(isOrtho);
@@ -99,17 +124,17 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         if (ImGui::Button("up X View")) {
             camera->teleportTo(camera->lookDepth, 0, 0);
             camera->rotate(0, 0, -90);
-            // camera->setOrtography();
+            camera->setOrtography();
         }
         if (ImGui::Button("down Y View")) {
             camera->teleportTo(0, -camera->lookDepth, 0);
             camera->rotate(0, 0, 0);
-            // camera->setOrtography();
+            camera->setOrtography();
         }
         if (ImGui::Button("down Z view")) {
             camera->teleportTo(0, 0, camera->lookDepth);
-            camera->rotate(-89.5, 0, 0);
-            // camera->setOrtography();
+            camera->rotate(-89.9, 0, 0);
+            camera->setOrtography();
         }
     }
 
