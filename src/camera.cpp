@@ -33,7 +33,7 @@ void Camera::applyRotation() {
 
 void Camera::recalcProjection() {
     if (this->isOrthographic)
-        this->projectionMatrix = glm::ortho(-1.0f * orthographicScale, 1.0f * orthographicScale, -1.0f * orthographicScale, 1.0f * orthographicScale, nearPlane, farPlane);
+        this->projectionMatrix = glm::ortho(-aspectRatio * orthographicScale, aspectRatio * orthographicScale, -1.0f * orthographicScale, 1.0f * orthographicScale, nearPlane, farPlane);
     else
         this->projectionMatrix = glm::perspective(glm::radians(fieldOfView), aspectRatio, nearPlane, farPlane);
 }
