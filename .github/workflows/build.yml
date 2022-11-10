@@ -107,7 +107,7 @@ jobs:
       run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DUSE_CDDLIB=off
     - name: CMake - Build
       run: |
-        cmake --build ${{github.workspace}}\build --config ${{env.CMAKE_BUILD_TYPE}}
+        cmake --build ${{github.workspace}}\build --config Release
 
     - name: CommandLine - Look around
       run: tree ${{github.workspace}}\build /F
@@ -118,4 +118,4 @@ jobs:
         name: dist-windows
         path: |
           ${{github.workspace}}\assets
-          ${{github.workspace}}\build\Debug
+          ${{github.workspace}}\build\Release

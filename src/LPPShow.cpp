@@ -276,6 +276,8 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glFrontFace(GL_CW);
 
+    glfwSwapInterval(1);
+
     ////////////
     //// INIT IMGUI
     ////////////
