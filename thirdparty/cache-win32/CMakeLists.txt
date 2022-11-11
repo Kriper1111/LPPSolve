@@ -23,8 +23,8 @@ ExternalProject_Add(cddlib
     URL_HASH SHA256=70dffdb3369b8704dc75428a1b3c42ab9047b81ce039f12f427e2eb2b1b0dee2
     BUILD_IN_SOURCE on
 
-    CONFIGURE_COMMAND "./configure" "--disable-dependency-tracking" "--prefix=${UNWANTED_FILES_PREFIX}" "--includedir=${CMAKE_SOURCE_DIR}/thirdparty" "--libdir=${CMAKE_SOURCE_DIR}/libraries"
-    BUILD_COMMAND "make" "CFLAGS='-fno-stack-check' '-fno-stack-protector' '-mno-stack-arg-probe'" # FIXME: VERY VERY VERY VERY BAD
+    CONFIGURE_COMMAND "bash" -c "./configure" "--disable-dependency-tracking" "--prefix=${UNWANTED_FILES_PREFIX}" "--includedir=${CMAKE_SOURCE_DIR}/thirdparty" "--libdir=${CMAKE_SOURCE_DIR}/libraries"
+    BUILD_COMMAND "bash" -c "make" "CFLAGS='-fno-stack-check' '-fno-stack-protector' '-mno-stack-arg-probe'" # FIXME: VERY VERY VERY VERY BAD
 )
 ExternalProject_Add_Step(cddlib compat
     COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/libraries/libcdd.a" "${CMAKE_SOURCE_DIR}/libraries/cdd.lib"
