@@ -8,6 +8,16 @@ else() # Has proper package detection
     find_package(glm REQUIRED)
 endif(WIN32)
 
+# Here be bears
+FetchContent_Declare(imgui
+    URL https://github.com/ocornut/imgui/archive/refs/tags/v1.88.zip
+    URL_HASH SHA256=81087a74599e5890a07b636887cee73a7dc1a9eb9e1f19a4a0d82a76090bf4c2
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/thirdparty/imgui"
+    PREFIX "${CMAKE_SOURCE_DIR}/external_projects"
+)
+message("Fecthing ImGui")
+FetchContent_MakeAvailable(imgui)
+
 set(IMGUI_SOURCES
     imgui/imgui.cpp imgui/backends/imgui_impl_glfw.cpp imgui/backends/imgui_impl_opengl3.cpp
     imgui/imgui_draw.cpp imgui/imgui_tables.cpp imgui/imgui_widgets.cpp
@@ -15,9 +25,6 @@ set(IMGUI_SOURCES
 add_library(imgui STATIC ${IMGUI_SOURCES})
 target_include_directories(imgui PUBLIC "")
 target_include_directories(imgui PUBLIC "imgui")
-if (WIN32)
-    add_dependencies(imgui imgui_fetch)
-endif(WIN32)
 
 if(USE_CDDLIB)
     add_library(quickhull STATIC "quickhull/QuickHull.cpp")

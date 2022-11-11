@@ -33,16 +33,10 @@ jobs:
       id: cache-imgui
       uses: actions/cache@v3.0.11
       with:
-        key: version-1.88
-        path: thirdparty/imgui
-
-    # Could also just use CMake for downloading the archives, but cache is still needed
-    - name: Retrieve - ImGui from source
-      if: ${{ steps.cache-imgui.outputs.cache-hit != 'true' }}
-      run: |
-        curl -sSL https://github.com/ocornut/imgui/archive/refs/tags/v1.88.zip -o /tmp/imgui.zip
-        unzip /tmp/imgui.zip -d ./thirdparty
-        mv ./thirdparty/imgui-1.88 ./thirdparty/imgui
+        key: version-fc-1.88
+        path: |
+          thirdparty/imgui
+          external_projects/src/imgui-populate-stamp
 
     # Shamelessly borrowed from an example CMake action. Probably better than I could've done myself
     # ..evidently
@@ -60,27 +54,6 @@ jobs:
       with:
         name: dist-linux
         path: ${{github.workspace}}/dist-linux.tar
-
-  # cache-dependencies:
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #   - uses: actions/checkout@v3
-    
-  #   - name: Cache - Windows uncompileable dependencies
-  #     id: cache-windows-thirdparty
-  #     uses: actions/cache@v3.0.11
-  #     with:
-  #       key: thirdparty-imgui${{ env.IMGUI_VERSION }}-glfw${{ env.GLFW_VERSION }}-glm${{ env.GLM_VERSION }}
-  #       path: |
-  #         thirdparty/touches
-  #         thirdparty/GLFW
-  #         thirdparty/glm
-  #         thirdparty/imgui
-  #         libraries/
-
-  #   - name: CMake - configure dependencies
-  #     run: cmake -B ${{github.workspace}}\deps -S ${{github.workspace}}\thirdparty\cache-win32
 
   # This one will be ran only on non-snapshot builds, since it's slower and more of a PITA
   build-windows:
@@ -102,10 +75,8 @@ jobs:
 
     - name: CMake - Configure
       run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DUSE_BAKED_SHADERS=on
-      # shell: bash
     - name: CMake - Build
       run: cmake --build ${{github.workspace}}\build --config Release
-      # shell: bash
 
     - name: CommandLine - Look around
       run: tree ${{github.workspace}}\build /F

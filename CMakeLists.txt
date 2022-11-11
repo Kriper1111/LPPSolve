@@ -4,6 +4,7 @@ file(STRINGS "version" projectVersion LIMIT_COUNT 1)
 project(LPPShow VERSION ${projectVersion})
 
 include(ExternalProject)
+include(FetchContent)
 
 option(USE_CDDLIB "Use cddlib and enable compute step" OFF)
 option(USE_OBJ_LOADER "Use wavefront OBJ Loader (shouldn't be necessary)" OFF)
