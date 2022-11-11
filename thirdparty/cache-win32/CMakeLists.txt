@@ -34,7 +34,7 @@ ExternalProject_Add(dep_cddlib
 #       compilers/shells installed in, say, "C:/Program Files/"
 ExternalProject_Get_Property(dep_cddlib SOURCE_DIR)
 ExternalProject_Add_Step(dep_cddlib prebuild
-    COMMAND "bash" -c "sed -i -f '${CMAKE_SOURCE_DIR}/thirdparty/cache-win32/sed.txt '${SOURCE_DIR}/lib-src/Makefile' '${SOURCE_DIR}/src/Makefile'"
+    COMMAND "bash" -c "sed -i -f '${CMAKE_SOURCE_DIR}/thirdparty/cache-win32/sed.txt' '${SOURCE_DIR}/lib-src/Makefile' '${SOURCE_DIR}/src/Makefile'"
     DEPENDEES "configure"
     DEPENDERS "build"
 )
