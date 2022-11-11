@@ -28,7 +28,7 @@ ExternalProject_Add(dep_cddlib
     BUILD_IN_SOURCE on
 
     CONFIGURE_COMMAND "bash" -c "./configure --disable-dependency-tracking --prefix=${UNWANTED_FILES_PREFIX} --includedir=${CMAKE_SOURCE_DIR}/thirdparty --libdir=${CMAKE_SOURCE_DIR}/libraries"
-    BUILD_COMMAND "bash" -c "make CFLAGS='-fno-stack-check' '-fno-stack-protector' '-mno-stack-arg-probe'"# FIXME: VERY VERY VERY VERY BAD
+    BUILD_COMMAND "bash" -c "make CFLAGS='-fno-stack-check -fno-stack-protector -mno-stack-arg-probe'"# FIXME: VERY VERY VERY VERY BAD
 )
 # HACK: While CMake port haven't consolidated yet, we have to use 'sed' to make autoconf be more friendly towards
 #       compilers/shells installed in, say, "C:/Program Files/"
