@@ -244,10 +244,6 @@ int main() {
     //// INIT GLFW
     ////////////
 
-    #ifdef PRINT_HELLO
-    std::cout << "Hello!" << std::endl;
-    #endif
-
     if(glfwInit() == GLFW_FALSE) { std::cerr << "Failed to init GLFW" << std::endl; return -1; }
 
     glfwSetErrorCallback(glfwErrorCallback);
@@ -331,7 +327,6 @@ int main() {
         glfwMouseCallback(mainWindow);
         updateProcessDraw(mainWindow, camera, deltaTime);
 
-        // FIXME: Needs VSync on Windows
         glfwSwapBuffers(mainWindow);
         glfwPollEvents();
     }

@@ -7,11 +7,12 @@
 #include "assets.h"
 #include "glm/gtx/string_cast.hpp"
 #include "solver.h"
+#include "config.h"
 
 #ifdef USE_CDDLIB
 #define REFLECT(var) #var
-#include <cdd/setoper.h>
-#include <cdd/cdd.h>
+#include <cddlib/setoper.h>
+#include <cddlib/cdd.h>
 
 #include <quickhull/QuickHull.hpp>
 #endif
