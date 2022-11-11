@@ -12,6 +12,7 @@ include/baked_shaders.h
 dist
 build
 objects
+external_projects
 /LPPShow*
 
 *.mtl

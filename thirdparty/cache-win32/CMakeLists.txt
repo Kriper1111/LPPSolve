@@ -16,6 +16,10 @@ set(UNWANTED_FILES_PREFIX "${CMAKE_SOURCE_DIR}/tmp")
 
 set_directory_properties(PROPERTIES EP_BASE "${CMAKE_SOURCE_DIR}/external_projects")
 
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
 # We only need includes and libraries
 # and ${CMAKE_SOURCE_DIR}/tmp will not get cached by actions, hopefully.
 ExternalProject_Add(cddlib
@@ -39,24 +43,16 @@ ExternalProject_Add(imgui_fetch
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/thirdparty/imgui"
     CONFIGURE_COMMAND "" BUILD_COMMAND "" INSTALL_COMMAND ""
 )
-set(IMGUI_SOURCES
-    thirdparty/imgui/imgui.cpp thirdparty/imgui/backends/imgui_impl_glfw.cpp thirdparty/imgui/backends/imgui_impl_opengl3.cpp
-    thirdparty/imgui/imgui_draw.cpp thirdparty/imgui/imgui_tables.cpp thirdparty/imgui/imgui_widgets.cpp
-)
-add_library(imgui STATIC ${IMGUI_SOURCES})
-target_include_directories(imgui PUBLIC "thirdparty/")
-target_include_directories(imgui PUBLIC "thirdparty/imgui")
-add_dependencies(imgui imgui_fetch)
 
 # Download and unpack
-ExternalProject_Add(glfw
+ExternalProject_Add(glfw_fetch
     URL https://github.com/glfw/glfw/releases/download/3.3.8/glfw-3.3.8.bin.WIN64.zip
     URL_HASH SHA256=7851c068b63c3cebf11a3b52c9e7dbdb6159afe32666b0aad268e4a258a9bdd1
     CONFIGURE_COMMAND "" BUILD_COMMAND "" INSTALL_COMMAND ""
 )
-ExternalProject_Get_Property(glfw SOURCE_DIR)
+ExternalProject_Get_Property(glfw_fetch SOURCE_DIR)
 # Download and unpack
-ExternalProject_Add_Step(glfw shuffle
+ExternalProject_Add_Step(glfw_fetch shuffle
     COMMAND "${CMAKE_COMMAND}" -E rename "${SOURCE_DIR}/lib-mingw-w64" "${CMAKE_SOURCE_DIR}/libraries/glfw-mingw-w64"
     COMMAND "${CMAKE_COMMAND}" -E rename "${SOURCE_DIR}/lib-vc2017" "${CMAKE_SOURCE_DIR}/libraries/glfw-vc2017"
     COMMAND "${CMAKE_COMMAND}" -E rename "${SOURCE_DIR}/lib-vc2019" "${CMAKE_SOURCE_DIR}/libraries/glfw-vc2019"

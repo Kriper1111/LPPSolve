@@ -1,31 +1,12 @@
 add_library(glad STATIC "glad.c")
 target_include_directories(glad PUBLIC "")
 
-# ExternalProject_Add(imgui
-#     URL https://github.com/ocornut/imgui/archive/refs/tags/v1.88.zip
-#     URL_HASH SHA256=81087a74599e5890a07b636887cee73a7dc1a9eb9e1f19a4a0d82a76090bf4c2
-#     # DOWNLOAD_EXTRACT_TIMESTAMP on
-#     SOURCE_DIR imgui
-#     CONFIGURE_COMMAND ""
-#     BUILD_COMMAND ""
-#     INSTALL_COMMAND ""
-# )
-
 if (WIN32)
     add_subdirectory("cache-win32")
 else() # Has proper package detection
     find_package(glfw3 REQUIRED)
     find_package(glm REQUIRED)
-endif()
-# ExternalProject_Add(imgui
-#     URL https://github.com/ocornut/imgui/archive/refs/tags/v1.88.zip
-#     URL_HASH SHA256=81087a74599e5890a07b636887cee73a7dc1a9eb9e1f19a4a0d82a76090bf4c2
-#     # DOWNLOAD_EXTRACT_TIMESTAMP on
-#     SOURCE_DIR imgui
-#     CONFIGURE_COMMAND ""
-#     BUILD_COMMAND ""
-#     INSTALL_COMMAND ""
-# )
+endif(WIN32)
 
 set(IMGUI_SOURCES
     imgui/imgui.cpp imgui/backends/imgui_impl_glfw.cpp imgui/backends/imgui_impl_opengl3.cpp
@@ -34,6 +15,9 @@ set(IMGUI_SOURCES
 add_library(imgui STATIC ${IMGUI_SOURCES})
 target_include_directories(imgui PUBLIC "")
 target_include_directories(imgui PUBLIC "imgui")
+if (WIN32)
+    add_dependencies(imgui imgui_fetch)
+endif(WIN32)
 
 if(USE_CDDLIB)
     add_library(quickhull STATIC "quickhull/QuickHull.cpp")
