@@ -26,6 +26,10 @@ add_library(imgui STATIC ${IMGUI_SOURCES})
 target_include_directories(imgui PUBLIC "")
 target_include_directories(imgui PUBLIC "imgui")
 
+if (WIN32)
+    add_dependencies(imgui dep_glfw) # GLFW is satisfied on Linux by apt
+endif(WIN32)
+
 if(USE_CDDLIB)
     add_library(quickhull STATIC "quickhull/QuickHull.cpp")
     target_include_directories(quickhull PUBLIC "thirdparty/quickhull/")
