@@ -153,6 +153,13 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::Checkbox("Show planes", &SceneData::lppshow->showPlanesAtAll);
         ImGui::Checkbox("Show solution volume", &SceneData::lppshow->showSolutionVolume);
         ImGui::Checkbox("Show solution wireframe", &SceneData::lppshow->showSolutionWireframe);
+        ImGui::SliderFloat("Solution wireframe thickness", &SceneData::lppshow->wireThickness, 1.0f, 5.0f);
+
+        ImGuiColorEditFlags shaderPickerFlags = ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_NoInputs;
+        ImGui::ColorEdit3("Solution volume", &SceneData::lppshow->solutionColor.x, shaderPickerFlags);
+        ImGui::ColorEdit3("Solution wireframe", &SceneData::lppshow->solutionWireframeColor.x, shaderPickerFlags);
+        ImGui::ColorEdit3("Plane right direction", &SceneData::lppshow->constraintPositiveColor.x, shaderPickerFlags);
+        ImGui::ColorEdit3("Plane wrong direction", &SceneData::lppshow->constraintNegativeColor.x, shaderPickerFlags);
     }
 
     ImGui::Text("Total planes: %d", SceneData::lppshow->getEquationCount());
@@ -206,8 +213,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, "Failed to solve the equation: %s", solution->errorString);
     } else if (solution->isSolved) {
         ImGui::Text("Optimal value: %.4f", solution->optimalValue);
-        ImGui::Text("Optimal plan: %.3fx1 %.3fx2 %.3fx3 %.3f", solution->optimalVector);
-        ImGui::Text("Solution status: %s", solution->statusString.c_str());
+        ImGui::Text("Optimal plan: %.3fx1 %.3fx2 %.3fx3 %.3f", &solution->optimalVector.x);
     } else if (!solution->isErrored && !solution->isSolved && !solution->statusString.empty()) {
         ImGui::Text("Solution status: %s", solution->statusString.c_str());
     }

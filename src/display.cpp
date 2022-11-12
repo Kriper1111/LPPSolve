@@ -78,8 +78,8 @@ void Display::createPlaneObject() {
 
 void Display::createPlaneShader() {
     #ifdef USE_BAKED_SHADERS
-    Display::planeShader.reset(Shader::fromSource(shaders::vertex.plane_vert, shaders::fragment.default_frag));
-    Display::solutionShader.reset(new Shader("assets/default.vert", "assets/default.frag"));
+    Display::planeShader.reset(Shader::fromSource(shaders::vertex.plane_vert, shaders::fragment.plane_frag));
+    Display::solutionShader.reset(Shader::fromSource(shaders::vertex.default_vert, shaders::fragment.default_frag));
     #else
     Display::planeShader.reset(new Shader("assets/plane.vert", "assets/plane.frag"));
     Display::solutionShader.reset(new Shader("assets/default.vert", "assets/default.frag"));
@@ -194,6 +194,8 @@ void Display::render(Camera* camera) {
         planeShader->setUniform("planeTransform", planeTransforms[planeIndex]);
         planeShader->setUniform("stripeScale", stripeFrequency);
         planeShader->setUniform("stripeWidth", stripeWidth);
+        planeShader->setUniform("positiveColor", constraintPositiveColor);
+        planeShader->setUniform("negativeColor", constraintNegativeColor);
         glDrawElements(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0);
     }
     }
@@ -202,12 +204,19 @@ void Display::render(Camera* camera) {
     this->solutionShader->activate();
     this->solutionShader->setTransform(camera->getProjection(), camera->getView());
     if(this->showSolutionVolume) {
+        this->solutionShader->setUniform("vertexColor", solutionColor);
         glBindVertexArray(this->solutionObject->objectData);
         glDrawElements(GL_TRIANGLES, this->solutionObject->vertexCount, GL_UNSIGNED_INT, 0);
     }
     if(this->showSolutionWireframe) {
+        this->solutionShader->setUniform("vertexColor", solutionWireframeColor);
+        glLineWidth(this->wireThickness);
+        glEnable(GL_POLYGON_OFFSET_LINE);
+        glPolygonOffset(-1.0, -11.0);
         glBindVertexArray(this->solutionWireframe->objectData);
         glDrawElements(GL_LINES, this->solutionWireframe->vertexCount, GL_UNSIGNED_INT, 0);
+        glDisable(GL_POLYGON_OFFSET_LINE);
+        glLineWidth(1.0);
     }
     }
 
@@ -286,11 +295,11 @@ void WorldGridDisplay::createObjects() {
 
 void WorldGridDisplay::createShaders() {
     #ifdef USE_BAKED_SHADERS
-    WorldGridDisplay::gridShader.reset(Shader::fromSource(shaders::vertex.grid_vert, shaders::fragment.grid_frag));
-    // WorldGridDisplay::axisShader.reset(Shader::fromSource(shaders::vertex.default_vert, shaders::fragment.default_frag));
+    WorldGridDisplay::gridShader.reset(Shader::fromSource(shaders::vertex.grid_vert, shaders::fragment.default_frag));
+    WorldGridDisplay::axisShader.reset(Shader::fromSource(shaders::vertex.axis_vert, shaders::fragment.axis_frag));
     #else
-    WorldGridDisplay::gridShader.reset(new Shader("assets/grid.vert", "assets/grid.frag"));
-    // WorldGridDisplay::axisShader.reset(new Shader("assets/default.vert", "assets/default.frag"));
+    WorldGridDisplay::gridShader.reset(new Shader("assets/grid.vert", "assets/default.frag"));
+    WorldGridDisplay::axisShader.reset(new Shader("assets/axis.vert", "assets/axis.frag"));
     #endif
 }
 
@@ -312,18 +321,14 @@ void WorldGridDisplay::render(glm::mat4 view, glm::mat4 projection) {
     if (gridEnabled) {
         gridShader->activate();
         gridShader->setTransform(projection, view);
+        gridShader->setUniform("gridScale", zoomScale);
 
         glBindVertexArray(gridObject->objectData);
-        gridShader->setUniform("gridScale", zoomScale / 2.0);
-        glDrawElements(GL_LINES, gridObject->vertexCount, GL_UNSIGNED_INT, 0);
-        gridShader->setUniform("gridScale", zoomScale);
-        glDrawElements(GL_LINES, gridObject->vertexCount, GL_UNSIGNED_INT, 0);
-        gridShader->setUniform("gridScale", zoomScale * 2.0);
         glDrawElements(GL_LINES, gridObject->vertexCount, GL_UNSIGNED_INT, 0);
     }
     if (axisEnabled) {
-        gridShader->activate();
-        gridShader->setTransform(projection, view);
+        axisShader->activate();
+        axisShader->setTransform(projection, view);
         glBindVertexArray(axisObject->objectData);
         glDrawElements(GL_LINES, axisObject->vertexCount, GL_UNSIGNED_INT, 0);
     }

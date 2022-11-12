@@ -76,6 +76,11 @@ class Display:public LinearProgrammingProblem {
     bool showSolutionWireframe = true;
     float stripeFrequency = 10.0;
     float stripeWidth = 0.5;
+    float wireThickness = 1.0;
+    glm::vec3 constraintPositiveColor = {0.0, 0.0, 1.0};
+    glm::vec3 constraintNegativeColor = {1.0, 0.0, 0.0};
+    glm::vec3 solutionColor = {1.0, 0.746282, 0.043526};
+    glm::vec3 solutionWireframeColor = {0.8, 0.095672, 0.019807};
 
     Display();
 
