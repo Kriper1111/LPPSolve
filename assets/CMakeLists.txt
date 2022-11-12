@@ -1,13 +1,17 @@
-if (CMAKE_BUILD_TYPE MATCHES "Release" OR USE_BAKED_SHADERS)
+if (USE_BAKED_SHADERS)
     find_package(Python3 REQUIRED)
 
     file(GLOB UNBAKED_SHADERS ${CMAKE_SOURCE_DIR}/assets/*.vert ${CMAKE_SOURCE_DIR}/assets/*.frag)
-    add_custom_target(
-        bake ALL
-        BYPRODUCTS "{CMAKE_SOURCE_DIR}/include/baked_shaders.h"
-        COMMAND "${Python3_EXECUTABLE}" ${CMAKE_SOURCE_DIR}/preconfigure/bake_shaders.py ${UNBAKED_SHADERS} ${CMAKE_SOURCE_DIR}/include/baked_shaders.h
-        DEPENDS ${UNBAKED_SHADERS}
-        COMMENT "Baking shaders"
+    # XXX: still rebuilds every time
+    add_custom_command(
+        OUTPUT "{CMAKE_SOURCE_DIR}/include/baked_shaders.h"
+        DEPENDS "${UNBAKED_SHADERS}"
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/preconfigure/bake_shaders.py" ${UNBAKED_SHADERS} "${CMAKE_SOURCE_DIR}/include/baked_shaders.h"
+        COMMENT "[Ba]king [S]haders"
+        VERBATIM
+    )
+    add_custom_target(bake
+        DEPENDS "{CMAKE_SOURCE_DIR}/include/baked_shaders.h"
     )
 else()
     install(
@@ -23,4 +27,4 @@ else()
         DESTINATION "${PROJECT_BINARY_DIR}"
         PATTERN PATTERN "*.txt" EXCLUDE
     )
-endif(CMAKE_BUILD_TYPE MATCHES "Release" OR USE_BAKED_SHADERS)
+endif(USE_BAKED_SHADERS)

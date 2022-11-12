@@ -76,6 +76,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui::SetWindowSize(windowSize);
 
     if (ImGui::CollapsingHeader("Camera controls")) {
+        #ifdef DEBUG
         if (SceneData::allowEditCamera) {
             auto cameraLocation = camera->getCameraLocation();
             auto cameraRotation = camera->getCameraRotation();
@@ -96,6 +97,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         if (ImGui::Checkbox("Use orthography", &isOrtho)) {
             camera->useOrthography(isOrtho);
         }
+        #endif
 
         if (ImGui::Button("up X View")) {
             camera->teleportTo(camera->lookDepth, 0, 0);
@@ -305,6 +307,10 @@ int main() {
     }
 
     SceneData::limits->setObjectiveFunction({0, 0, 0, 0});
+    #ifndef DEBUG
+    ImGuiIO& iio = ImGui::GetIO(); (void) iio; // what does that do?
+    iio.IniFilename = NULL;
+    #endif
 
     // ???
     glfwWindowResizeCallback(mainWindow, windowWidth, windowHeight);

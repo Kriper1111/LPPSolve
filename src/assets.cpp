@@ -133,7 +133,7 @@ std::string readFileDry(const char* filename) {
         fileBuffer = reader.str();
     }
     catch (std::ifstream::failure err) {
-        std::cout << "Failed to read text file " << filename << std::endl;
+        std::cerr << "Failed to read text file " << filename << std::endl;
         throw err;
     }
     return fileBuffer;
@@ -150,8 +150,8 @@ GLuint Shader::compileShader(const char* text, GLenum shaderType) {
     glGetShaderiv(shaderPtr, GL_COMPILE_STATUS, &succ);
     if (!succ) {
         glGetShaderInfoLog(shaderPtr, 512, NULL, Shader::sCompileLog);
-        std::cout << "Failed to build a shader: " << std::endl << Shader::sCompileLog << std::endl;
-        std::cout << "Shader text: " << text << std::endl;
+        std::cerr << "Failed to build a shader: " << std::endl << Shader::sCompileLog << std::endl;
+        std::cerr << "Shader text: " << text << std::endl;
         return -1;
     }
     return shaderPtr;
@@ -159,7 +159,7 @@ GLuint Shader::compileShader(const char* text, GLenum shaderType) {
 
 GLuint Shader::linkProgram(GLuint vertexStage, GLuint fragmentStage) {
     if (vertexStage == -1 || fragmentStage == -1) {
-        std::cout << "Unable to link a shader program: Failed to build shaders" << std::endl;
+        std::cerr << "Unable to link a shader program: Failed to build shaders" << std::endl;
         return 0;
     }
     GLuint shaderProgram = glCreateProgram();
@@ -171,7 +171,7 @@ GLuint Shader::linkProgram(GLuint vertexStage, GLuint fragmentStage) {
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &linkSuccess);
     if (!linkSuccess) {
         glGetProgramInfoLog(shaderProgram, 512, NULL, Shader::sCompileLog);
-        std::cout << "Failed to link a shader program: " << std::endl << Shader::sCompileLog << std::endl;
+        std::cerr << "Failed to link a shader program: " << std::endl << Shader::sCompileLog << std::endl;
         glDeleteProgram(shaderProgram);
         shaderProgram = 0;
     }
