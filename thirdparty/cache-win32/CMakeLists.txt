@@ -20,29 +20,21 @@ if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
 endif()
 
-# We only need includes and libraries
-# and ${CMAKE_SOURCE_DIR}/tmp will not get cached by actions, hopefully.
+# we're using vsamy's fork for no good reason other than "i'm not confident my cmake adapter would work"
 ExternalProject_Add(dep_cddlib
-    URL https://github.com/cddlib/cddlib/releases/download/0.94m/cddlib-0.94m.tar.gz
-    URL_HASH SHA256=70dffdb3369b8704dc75428a1b3c42ab9047b81ce039f12f427e2eb2b1b0dee2
+    GIT_REPOSITORY https://github.com/vsamy/cddlib
+    GIT_TAG master
+    GIT_SHALLOW on
     BUILD_IN_SOURCE on
-
-    CONFIGURE_COMMAND "bash" -c "./configure --disable-dependency-tracking --prefix=${UNWANTED_FILES_PREFIX} --includedir=${CMAKE_SOURCE_DIR}/thirdparty --libdir=${CMAKE_SOURCE_DIR}/libraries"
-    BUILD_COMMAND "bash" -c "make CFLAGS='-fno-stack-check -fno-stack-protector -mno-stack-arg-probe'"# FIXME: VERY VERY VERY VERY BAD
+    CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_SOURCE_DIR}/tmp" "-DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_SOURCE_DIR}/tmp/include" "-DCMAKE_INSTALL_LIBDIR=${CMAKE_SOURCE_DIR}/tmp/lib"
 )
-# HACK: While CMake port haven't consolidated yet, we have to use 'sed' to make autoconf be more friendly towards
-#       compilers/shells installed in, say, "C:/Program Files/"
-ExternalProject_Get_Property(dep_cddlib SOURCE_DIR)
-ExternalProject_Add_Step(dep_cddlib prebuild
-    COMMAND "bash" -c "sed -i -f '${CMAKE_SOURCE_DIR}/thirdparty/cache-win32/sed.txt' '${SOURCE_DIR}/lib-src/Makefile' '${SOURCE_DIR}/src/Makefile'"
-    DEPENDEES "configure"
-    DEPENDERS "build"
-)
+# we still have to do this though
 ExternalProject_Add_Step(dep_cddlib compat
-    COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_SOURCE_DIR}/libraries/libcdd.a" "${CMAKE_SOURCE_DIR}/libraries/cdd.lib"
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_SOURCE_DIR}/tmp/lib/" "${CMAKE_SOURCE_DIR}/libraries/"
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_SOURCE_DIR}/tmp/include/cdd" "${CMAKE_SOURCE_DIR}/thirdparty/cdd"
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_SOURCE_DIR}/tmp/include/cdd" "${CMAKE_SOURCE_DIR}/thirdparty/cddlib"
     DEPENDEES "install"
 )
-# So the final layout looks like CONFIGURE -> PREBUILD -> BUILD -> INSTALL -> COMPAT
 
 # Download and unpack
 ExternalProject_Add(dep_glfw

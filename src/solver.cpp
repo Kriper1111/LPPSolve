@@ -11,8 +11,8 @@
 
 #ifdef USE_CDDLIB
 #define REFLECT(var) #var
-#include <cddlib/setoper.h>
-#include <cddlib/cdd.h>
+#include <cdd/setoper.h>
+#include <cdd/cdd.h>
 
 #include <quickhull/QuickHull.hpp>
 #endif
