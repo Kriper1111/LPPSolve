@@ -13,8 +13,8 @@
 
 
 const float movementSpeed = 2.5f;
-ImVec2 windowPosition = { 600, 0 };
-ImVec2 windowSize = { 384, 720 };
+ImVec2 imguiWindowPosition = { 980, 0 };
+ImVec2 imguiWindowSize = { 320, 720 };
 ImVec4 worldColor = { 0.364, 0.674, 0.764, 1.0 };
 const char* const minmax[2] = { "min", "max" };
 
@@ -52,10 +52,12 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
     float speedMod = (glfwGetKey(inputWindow, GLFW_KEY_LEFT_SHIFT) | glfwGetKey(inputWindow, GLFW_KEY_RIGHT_SHIFT)) ? 4.0f : 1.0f;
     speedMod *= timeStep * 1000.0f;
 
-    float horizontal = (glfwGetKey(inputWindow, GLFW_KEY_D) - glfwGetKey(inputWindow, GLFW_KEY_A))
+    float horizontal = (glfwGetKey(inputWindow, GLFW_KEY_A) - glfwGetKey(inputWindow, GLFW_KEY_D))
                      + (glfwGetKey(inputWindow, GLFW_KEY_LEFT) - glfwGetKey(inputWindow, GLFW_KEY_RIGHT));
     float vertical = (glfwGetKey(inputWindow, GLFW_KEY_W) - glfwGetKey(inputWindow, GLFW_KEY_S))
-                     + (glfwGetKey(inputWindow, GLFW_KEY_UP) - glfwGetKey(inputWindow, GLFW_KEY_DOWN));
+                   + (glfwGetKey(inputWindow, GLFW_KEY_UP) - glfwGetKey(inputWindow, GLFW_KEY_DOWN));
+
+    float zoom = (glfwGetKey(inputWindow, GLFW_KEY_R) - glfwGetKey(inputWindow, GLFW_KEY_F));
 
     float snapToTop = glfwGetKey(inputWindow, GLFW_KEY_KP_7);
     float snapToLeft = glfwGetKey(inputWindow, GLFW_KEY_KP_1);
@@ -78,9 +80,12 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
     if (snapToLeft || snapToRight || snapToTop) {
         camera->setOrtography();
     } else if (horizontal || vertical) {
-        // BUG: seems to be inverted on Windows for some reason.
         camera->orbit(horizontal * movementSpeed * speedMod, -vertical * movementSpeed * speedMod);
         camera->setPerspective();
+    }
+    if (zoom) {
+        
+        // camera->zoom(0, zoom * speedMod);
     }
 }
 
@@ -91,8 +96,8 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
 
     // TODO: Make collapsing too, maybe?
     ImGui::Begin("Planes", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
-    ImGui::SetWindowPos(windowPosition);
-    ImGui::SetWindowSize(windowSize);
+    ImGui::SetWindowPos(imguiWindowPosition);
+    ImGui::SetWindowSize(imguiWindowSize);
 
     if (ImGui::CollapsingHeader("Camera controls")) {
         if (SceneData::allowEditCamera) {
@@ -138,28 +143,34 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         }
     }
 
-    if (ImGui::CollapsingHeader("World settings")) {
-        #ifdef DEBUG
-        ImGui::ColorPicker4("World color", &worldColor.x, ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoAlpha);
-        #endif
+    if (ImGui::CollapsingHeader("Display options")) {
         ImGui::Checkbox("Show grid", &SceneData::worldOrigin->gridEnabled);
         ImGui::Checkbox("Show world axis", &SceneData::worldOrigin->axisEnabled);
-        ImGui::InputFloat("Grid scale", &SceneData::worldOrigin->zoomScale, 0.1f, 0.25f);
-    }
+        ImGui::InputFloat("Grid scale", &SceneData::worldOrigin->gridScale, 0.10f, 0.25f);
+        ImGui::InputFloat("Grid width", &SceneData::worldOrigin->gridWidth, 0.01f, 0.015f);
+        ImGui::Separator();
 
-    if (ImGui::CollapsingHeader("Display options")) {
-        ImGui::SliderFloat("Plane stripe width", &SceneData::lppshow->stripeWidth, 0.0f, 1.0f);
-        ImGui::SliderFloat("Plane stripe frequency", &SceneData::lppshow->stripeFrequency, 1.0f, 100.0f);
-        ImGui::Checkbox("Show planes", &SceneData::lppshow->showPlanesAtAll);
-        ImGui::Checkbox("Show solution volume", &SceneData::lppshow->showSolutionVolume);
-        ImGui::Checkbox("Show solution wireframe", &SceneData::lppshow->showSolutionWireframe);
-        ImGui::SliderFloat("Solution wireframe thickness", &SceneData::lppshow->wireThickness, 1.0f, 5.0f);
+        if (ImGui::CollapsingHeader("Solution")) {
+            ImGui::SliderFloat("Plane stripe width", &SceneData::lppshow->stripeWidth, 0.0f, 1.0f);
+            ImGui::SliderFloat("Plane stripe frequency", &SceneData::lppshow->stripeFrequency, 1.0f, 100.0f);
+            ImGui::SliderFloat("Solution wireframe thickness", &SceneData::lppshow->wireThickness, 1.0f, 5.0f);
+            ImGui::Checkbox("Show planes", &SceneData::lppshow->showPlanesAtAll);
+            ImGui::Checkbox("Show solution volume", &SceneData::lppshow->showSolutionVolume);
+            ImGui::Checkbox("Show solution wireframe", &SceneData::lppshow->showSolutionWireframe);
+            ImGui::Separator();
+        }
 
-        ImGuiColorEditFlags shaderPickerFlags = ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_NoInputs;
-        ImGui::ColorEdit3("Solution volume", &SceneData::lppshow->solutionColor.x, shaderPickerFlags);
-        ImGui::ColorEdit3("Solution wireframe", &SceneData::lppshow->solutionWireframeColor.x, shaderPickerFlags);
-        ImGui::ColorEdit3("Plane right direction", &SceneData::lppshow->constraintPositiveColor.x, shaderPickerFlags);
-        ImGui::ColorEdit3("Plane wrong direction", &SceneData::lppshow->constraintNegativeColor.x, shaderPickerFlags);
+        if (ImGui::CollapsingHeader("Colors")) {
+            ImGuiColorEditFlags shaderPickerFlags = ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_NoInputs;
+            #ifdef DEBUG
+            ImGui::ColorPicker3("World color", &worldColor.x, shaderPickerFlags);
+            #endif
+            ImGui::ColorEdit3("Solution volume", &SceneData::lppshow->solutionColor.x, shaderPickerFlags);
+            ImGui::ColorEdit3("Solution wireframe", &SceneData::lppshow->solutionWireframeColor.x, shaderPickerFlags);
+            ImGui::ColorEdit3("Plane right direction", &SceneData::lppshow->constraintPositiveColor.x, shaderPickerFlags);
+            ImGui::ColorEdit3("Plane wrong direction", &SceneData::lppshow->constraintNegativeColor.x, shaderPickerFlags);
+        }
+        ImGui::Separator();
     }
 
     ImGui::Text("Total planes: %d", SceneData::lppshow->getEquationCount());
@@ -239,11 +250,11 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
 }
 
 void glfwWindowResizeCallback(GLFWwindow *window, int width, int height) {
-    windowSize.x = width * 0.4;
-    windowSize.y = height;
+    imguiWindowSize.x = width * 0.25;
+    imguiWindowSize.y = height;
 
-    windowPosition.x = width - windowSize.x;
-    windowPosition.y = 0; // height - windowSize.y;
+    imguiWindowPosition.x = width - imguiWindowSize.x;
+    imguiWindowPosition.y = 0; // height - imguiWindowSize.y;
 }
 
 void glfwMouseCallback(GLFWwindow* window, double positionX, double positionY) {
@@ -282,7 +293,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     // OpenGL 3.3 core
 
-    int windowWidth = 960;
+    int windowWidth = 1280;
     int windowHeight = 720;
 
     GLFWwindow* mainWindow = glfwCreateWindow(windowWidth, windowHeight, "Linear Programming Problem: Show", NULL, NULL);
@@ -298,7 +309,7 @@ int main() {
     ////////////
     //// INIT OPENGL
     ////////////
-    glViewport(0, 0, windowWidth, windowHeight);
+    glViewport(0, 0, windowWidth - imguiWindowSize.x, windowHeight);
     glEnable(GL_DEPTH_TEST);
     glFrontFace(GL_CW);
 
@@ -314,7 +325,7 @@ int main() {
     ////////////
     //// SCENE SETUP
     ////////////
-    Camera* camera = new Camera(windowWidth, windowHeight);
+    Camera* camera = new Camera(windowWidth - imguiWindowSize.x, windowHeight);
     camera->teleportTo(7.35889, 6.92579, 4.95831);
     camera->rotate(-26.4407, 0.0, -133.3081);
     // 7.35889 m, -6.92579 m, 4.95831 m // X, -Y, Z

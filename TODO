@@ -23,13 +23,8 @@ I'll remove the descriptions of targets once they're done.
     --  requires some clever thinks with grid scaling
         Also, like, actual sync between WorldGridDisplay and just Display.
         Numbers, dashes, all this stuff are yet to be addressed.
-[ ] Orthographic camera snapping
+[+] Orthographic camera snapping
     --  Think Blender, but worse in UI and UX.
-          So there's probably a button, best case scenario a UI button
-          that snaps your camera to a top-down view and switches it to orthographic
-          projection.
-    --  It's somewhat implemented right now, except I can't get ortho to work
-          properly. Really no ideas.
 [ ] GitHub Actions workflow for crossplatform builds
     --  Slowly occuring in `cmake` branch
     --  Definitely will hit the rate limit implementing

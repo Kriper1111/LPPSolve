@@ -225,6 +225,9 @@ template <>
 void Shader::setUniform<double>(const char*name, double uniformValue) { glUniform1f(glGetUniformLocation(this->pShaderProgram, name), uniformValue); }
 
 template<>
+void Shader::setUniform<glm::vec2>(const char*name, glm::vec2 uniformValue) { glUniform2f(glGetUniformLocation(this->pShaderProgram, name), uniformValue.x, uniformValue.y); }
+
+template<>
 void Shader::setUniform<glm::vec3>(const char*name, glm::vec3 uniformValue) { glUniform3f(glGetUniformLocation(this->pShaderProgram, name), uniformValue.x, uniformValue.y, uniformValue.z); }
 
 template<>

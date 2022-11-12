@@ -23,6 +23,7 @@ OBJS_BASE = $(addprefix objects/, $(addsuffix .o, $(basename $(notdir $(SOURCES_
 OBJS_THIRDPARTY = $(addprefix objects/, $(addsuffix .o, $(basename $(notdir $(SOURCES_THIRDPARTY)))))
 
 OBJS = $(OBJS_BASE) $(OBJS_THIRDPARTY)
+DEPS = $(OBJS:%.o=%.d)
 
 SHADERS = $(wildcard assets/*.vert) $(wildcard assets/*.frag)
 
@@ -75,7 +76,7 @@ endif
 # TARGETS
 ############################
 objects/%.o:src/%.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) -MMD -c -o $@ $<
 objects/%.o:tests/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 objects/%.o:thirdparty/%.c
@@ -92,6 +93,8 @@ include/bake%.h: $(SHADERS)
 
 all: object-folder $(EXECUTABLE_NAME)
 	@echo "Build done for $(EXECUTABLE_NAME) v$(EXECUTABLE_VERSION)"
+
+-include $(DEPS)
 
 run-tests: objects/tests.o objects/solver.o
 	$(CXX) -o $@ $^ -g -D_GLIBCXX_DEBUG $(LIBS)

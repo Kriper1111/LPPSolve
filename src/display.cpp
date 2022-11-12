@@ -234,34 +234,23 @@ Display::~Display() {
 
 // class WorldGridDisplay {
 //     private:
-// std::shared_ptr<Object> WorldGridDisplay::gridObject;
-// std::shared_ptr<Object> WorldGridDisplay::axisObject;
-// std::shared_ptr<Shader> WorldGridDisplay::gridShader;
-// std::shared_ptr<Shader> WorldGridDisplay::axisShader;
 
 void WorldGridDisplay::createObjects() {
     WorldGridDisplay::gridObject.reset(new Object());
 
-    // 11 vertices per side, 4 sides
-    // Yes those 4 extra could get reduced
-    // But, for your consideration: I can't be assed
-    // XXX: Let me know if precisely *this* allocation will be the cause of an OOM
-    VertexAttributePosition gridVertexData[44];
-    int gridIndices[44];
-    for (int x = 0; x <= 10; x++) {
-        gridIndices[2 * x] = x;
-        gridIndices[2 * x + 1] = 11 + x;
-        gridVertexData[ 0 + x] = { x - 5.0f, -5.0f, 0.0f };
-        gridVertexData[11 + x] = { x - 5.0f,  5.0f, 0.0f };
-    }
-    for (int y = 0; y <= 10; y++) {
-        gridIndices[22 + (2 * y)] = 22 + y;
-        gridIndices[22 + (2 * y) + 1] = 33 + y;
-        gridVertexData[22 + y] = { -5.0f, y - 5.0f, 0.0f };
-        gridVertexData[33 + y] = {  5.0f, y - 5.0f, 0.0f };
-    }
+    VertexAttributePosition gridVertexData[] = {
+        {-1.0, -1.0, 0.0},
+        {-1.0,  1.0, 0.0},
+        { 1.0, -1.0, 0.0},
+        { 1.0,  1.0, 0.0}
+    };
 
-    fromVertexData(WorldGridDisplay::gridObject.get(), gridVertexData, 44, gridIndices, 44);
+    int gridIndices[] = {
+        0, 1, 3,
+        0, 3, 2
+    };
+
+    fromVertexData(WorldGridDisplay::gridObject.get(), gridVertexData, 4, gridIndices, 6);
 
     /** FIXME: Compact either manual object creation or shaders into less *objects*
      * Right now I have to use two different shaders for basically the same generic object
@@ -295,10 +284,10 @@ void WorldGridDisplay::createObjects() {
 
 void WorldGridDisplay::createShaders() {
     #ifdef USE_BAKED_SHADERS
-    WorldGridDisplay::gridShader.reset(Shader::fromSource(shaders::vertex.grid_vert, shaders::fragment.default_frag));
+    WorldGridDisplay::gridShader.reset(Shader::fromSource(shaders::vertex.grid_vert, shaders::fragment.grid_frag));
     WorldGridDisplay::axisShader.reset(Shader::fromSource(shaders::vertex.axis_vert, shaders::fragment.axis_frag));
     #else
-    WorldGridDisplay::gridShader.reset(new Shader("assets/grid.vert", "assets/default.frag"));
+    WorldGridDisplay::gridShader.reset(new Shader("assets/grid.vert", "assets/grid.frag"));
     WorldGridDisplay::axisShader.reset(new Shader("assets/axis.vert", "assets/axis.frag"));
     #endif
 }
@@ -312,19 +301,24 @@ WorldGridDisplay::WorldGridDisplay() {
 }
 
 void WorldGridDisplay::zoomGrid(float amount) {
-    zoomScale += amount;
-    while (zoomScale > 2.0) zoomScale -= 2.0;
-    while (zoomScale < 1.0) zoomScale += 1.0;
+    gridScale += amount;
+    while (gridScale > 2.0) gridScale -= 2.0;
+    while (gridScale < 1.0) gridScale += 1.0;
 }
 
 void WorldGridDisplay::render(glm::mat4 view, glm::mat4 projection) {
     if (gridEnabled) {
         gridShader->activate();
         gridShader->setTransform(projection, view);
-        gridShader->setUniform("gridScale", zoomScale);
+        gridShader->setUniform("gridScale", gridScale);
+        gridShader->setUniform("strokeWidth", gridWidth);
+        gridShader->setUniform("gridOffset[0]", glm::vec2({ 1.0,  1.0}));
+        gridShader->setUniform("gridOffset[1]", glm::vec2({ 1.0, -1.0}));
+        gridShader->setUniform("gridOffset[2]", glm::vec2({-1.0,  1.0}));
+        gridShader->setUniform("gridOffset[3]", glm::vec2({-1.0, -1.0}));
 
         glBindVertexArray(gridObject->objectData);
-        glDrawElements(GL_LINES, gridObject->vertexCount, GL_UNSIGNED_INT, 0);
+        glDrawElementsInstanced(GL_TRIANGLES, gridObject->vertexCount, GL_UNSIGNED_INT, 0, 4);
     }
     if (axisEnabled) {
         axisShader->activate();

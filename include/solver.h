@@ -100,10 +100,11 @@ class WorldGridDisplay {
     void createShaders();
 
     public:
-    bool gridEnabled = false;
+    bool gridEnabled = true;
     bool axisEnabled = true;
 
-    float zoomScale = 1.0;
+    float gridScale = 1.0;
+    float gridWidth = 0.05;
 
     WorldGridDisplay();
 
