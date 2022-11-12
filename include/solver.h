@@ -11,6 +11,7 @@ class LinearProgrammingProblem {
         std::string errorString;
         std::string statusString;
         std::vector<float> polyhedraVertices;
+        std::vector<std::vector<int>> adjacency;
     };
 
     protected:
@@ -52,8 +53,10 @@ class Display:public LinearProgrammingProblem {
     private:
     std::shared_ptr<Object> planeObject;
     std::shared_ptr<Shader> planeShader;
-    
+
+    std::shared_ptr<Shader> solutionShader;    
     std::shared_ptr<Object> solutionObject;
+    std::shared_ptr<Object> solutionWireframe;
     std::vector<glm::mat4> planeTransforms;
 
     void createPlaneObject();
@@ -68,7 +71,11 @@ class Display:public LinearProgrammingProblem {
 
     public:
     std::vector<bool> visibleEquations; // We could maybe merge that into one flag?
-    bool showPlanesAtAll;
+    bool showPlanesAtAll = true;
+    bool showSolutionVolume = true;
+    bool showSolutionWireframe = true;
+    float stripeFrequency = 10.0;
+    float stripeWidth = 0.5;
 
     Display();
 

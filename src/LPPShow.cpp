@@ -147,6 +147,14 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::InputFloat("Grid scale", &SceneData::worldOrigin->zoomScale, 0.1f, 0.25f);
     }
 
+    if (ImGui::CollapsingHeader("Display options")) {
+        ImGui::SliderFloat("Plane stripe width", &SceneData::lppshow->stripeWidth, 0.0f, 1.0f);
+        ImGui::SliderFloat("Plane stripe frequency", &SceneData::lppshow->stripeFrequency, 1.0f, 100.0f);
+        ImGui::Checkbox("Show planes", &SceneData::lppshow->showPlanesAtAll);
+        ImGui::Checkbox("Show solution volume", &SceneData::lppshow->showSolutionVolume);
+        ImGui::Checkbox("Show solution wireframe", &SceneData::lppshow->showSolutionWireframe);
+    }
+
     ImGui::Text("Total planes: %d", SceneData::lppshow->getEquationCount());
     if (ImGui::Button("Add plane") && SceneData::lppshow->getEquationCount() < 256) {
         SceneData::lppshow->addLimitPlane({0, 0, 1, 0});
@@ -155,14 +163,13 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     if (ImGui::Button("Remove plane") && SceneData::lppshow->getEquationCount() > 0) {
         SceneData::lppshow->removeLimitPlane();
     }
-    ImGui::Checkbox("Show planes", &SceneData::lppshow->showPlanesAtAll);
     ImGui::Separator();
 
     ImGui::Text("Objective function:");
     ImGui::InputFloat4("##objective", &SceneData::lppshow->objectiveFunction.x);
     ImGui::SameLine(); ImGui::Text("->"); ImGui::SameLine();
     auto doMinimize = SceneData::lppshow->doMinimize;
-    int currentItem = (int) doMinimize;
+    int currentItem = (int) !doMinimize;
 
     // XXX: This solution is much cleaner but lacks clear localization support
     ImGui::PushItemWidth(50.0f);
@@ -200,6 +207,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     } else if (solution->isSolved) {
         ImGui::Text("Optimal value: %.4f", solution->optimalValue);
         ImGui::Text("Optimal plan: %.3fx1 %.3fx2 %.3fx3 %.3f", solution->optimalVector);
+        ImGui::Text("Solution status: %s", solution->statusString.c_str());
     } else if (!solution->isErrored && !solution->isSolved && !solution->statusString.empty()) {
         ImGui::Text("Solution status: %s", solution->statusString.c_str());
     }

@@ -12,7 +12,7 @@ uniform mat4 view = mat4(1.0);
 
 void main()
 {
-    texCoords = vec2(0);
+    texCoords = vec2(aPos.x, aPos.y);
     vec4 transformedPlane = planeTransform * vec4(aPos, 1.0);
     gl_Position = projection * view * transform * transformedPlane;
 }

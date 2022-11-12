@@ -30,8 +30,27 @@ void generateSolutionObject(Object* object, const std::vector<float> vertices) {
 
     fromVertexData(object, vertices.data(), vertices.size(), indices.data(), (int)indexBuffer.size());
 }
-#else 
+
+void generateSolutionWireframe(Object* object, const std::vector<float> vertices, const std::vector<std::vector<int>> adjacency) {
+    std::vector<int> indices;
+
+    for (int vertex_a = 0; vertex_a < adjacency.size(); vertex_a++) {
+        const auto adjacent = adjacency[vertex_a];
+        for (int vtx = 0; vtx < adjacent.size(); vtx++) {
+            int vertex_b = adjacent[vtx] - 1;
+            if (vertex_a <= vertex_b) {
+                indices.push_back(vertex_a);
+                indices.push_back(vertex_b);
+            }
+        }
+    }
+
+    fromVertexData(object, vertices.data(), vertices.size(), indices.data(), (int)indices.size());
+}
+
+#else
 void generateSolutionObject(Object* object, const std::vector<float> vertices) {};
+void generateSolutionWireframe(Object* object, const std::vector<float> vertices, const std::vector<std::vector<int>> adjacency) {};
 #endif
 
 const glm::vec3 worldUp({0, 0, 1});
@@ -60,8 +79,10 @@ void Display::createPlaneObject() {
 void Display::createPlaneShader() {
     #ifdef USE_BAKED_SHADERS
     Display::planeShader.reset(Shader::fromSource(shaders::vertex.plane_vert, shaders::fragment.default_frag));
+    Display::solutionShader.reset(new Shader("assets/default.vert", "assets/default.frag"));
     #else
-    Display::planeShader.reset(new Shader("assets/plane.vert", "assets/default.frag"));
+    Display::planeShader.reset(new Shader("assets/plane.vert", "assets/plane.frag"));
+    Display::solutionShader.reset(new Shader("assets/default.vert", "assets/default.frag"));
     #endif
 }
 
@@ -115,7 +136,9 @@ void Display::recalculatePlane(int planeIndex) {
 // TODO: Implement with instanced rendering
 void Display::rebindAttributes() {};
 void Display::onSolutionSolved() {
+    solutionWireframe.reset(new Object());
     solutionObject.reset(new Object());
+    generateSolutionWireframe(solutionWireframe.get(), solution.polyhedraVertices, solution.adjacency);
     generateSolutionObject(solutionObject.get(), solution.polyhedraVertices);
 }
 
@@ -139,6 +162,7 @@ Display::Display() {
     if (!Display::planeObject) createPlaneObject();
     if (!Display::planeShader) createPlaneShader();
     this->showPlanesAtAll = true;
+    this->visibleEquations = std::vector<bool>();
 };
 
 void Display::render(Camera* camera) {
@@ -168,22 +192,32 @@ void Display::render(Camera* camera) {
     for (int planeIndex = 0; planeIndex < planeTransforms.size(); planeIndex++) {
         if (!visibleEquations[planeIndex]) continue;
         planeShader->setUniform("planeTransform", planeTransforms[planeIndex]);
+        planeShader->setUniform("stripeScale", stripeFrequency);
+        planeShader->setUniform("stripeWidth", stripeWidth);
         glDrawElements(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0);
     }
     }
 
-    if (!this->solution.isSolved || !this->solutionObject) return;
-    glBindVertexArray(this->solutionObject->objectData);
-    this->planeShader->activate();
-    this->planeShader->setTransform(camera->getProjection(), camera->getView());
-    this->planeShader->setUniform("planeTransform", glm::mat4(1));
-    glDrawElements(GL_TRIANGLES, this->solutionObject->vertexCount, GL_UNSIGNED_INT, 0);
+    if (this->solution.isSolved && this->solutionObject) {
+    this->solutionShader->activate();
+    this->solutionShader->setTransform(camera->getProjection(), camera->getView());
+    if(this->showSolutionVolume) {
+        glBindVertexArray(this->solutionObject->objectData);
+        glDrawElements(GL_TRIANGLES, this->solutionObject->vertexCount, GL_UNSIGNED_INT, 0);
+    }
+    if(this->showSolutionWireframe) {
+        glBindVertexArray(this->solutionWireframe->objectData);
+        glDrawElements(GL_LINES, this->solutionWireframe->vertexCount, GL_UNSIGNED_INT, 0);
+    }
+    }
 
     // TODO: render solution vector too
 };
 
 Display::~Display() {
+    Display::solutionShader.reset();
     Display::solutionObject.reset();
+    Display::solutionWireframe.reset();
     Display::planeObject.reset();
     Display::planeShader.reset();
 };

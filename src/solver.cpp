@@ -86,6 +86,24 @@ std::vector<float> getVertices(dd_MatrixPtr vform) {
     return vertices;
 }
 
+std::vector<std::vector<int>> getAdjacency(dd_SetFamilyPtr adj) {
+    std::vector<std::vector<int>> adjacency;
+    for (int vertex = 0; vertex < adj->famsize; vertex++) {
+        std::vector<int> vertex_adjacent;
+
+		long cardinality = set_card(adj->set[vertex]);
+		bool invert = adj->setsize - cardinality >= cardinality;
+		for (int elemt = 1; elemt <= adj->set[vertex][0]; elemt++) {
+			if (set_member(elemt, adj->set[vertex]) == invert)
+				vertex_adjacent.push_back(elemt);
+		}
+
+        if (vertex_adjacent.size() > 0)
+            adjacency.push_back(vertex_adjacent);
+    }
+    return adjacency;
+}
+
 #endif // USE_CDDLIB
 
 /**
@@ -174,6 +192,7 @@ void LinearProgrammingProblem::solve() {
     dd_unique_ptr<dd_LPType>    linearProgrammingProblem(nullptr, dd_FreeLPData);
     dd_unique_ptr<dd_MatrixType> constraintMatrix(nullptr, dd_FreeMatrix);
     dd_unique_ptr<dd_MatrixType> verticesMatrix(nullptr, dd_FreeMatrix);
+    dd_unique_ptr<dd_SetFamilyType> adjacency(nullptr, dd_FreeSetFamily);
     dd_unique_ptr<dd_PolyhedraType> polyhedra(nullptr, dd_FreePolyhedra);
     dd_ErrorType error;
     try {
@@ -228,6 +247,7 @@ void LinearProgrammingProblem::solve() {
     throw_dd_error(error);
 
     verticesMatrix.reset(dd_CopyGenerators(polyhedra.get()));
+    adjacency.reset(dd_CopyAdjacency(polyhedra.get()));
 
     solution.isSolved = linearProgrammingProblem->LPS == dd_LPStatusType::dd_Optimal;
     solution.statusString = reflect_lp_status(linearProgrammingProblem->LPS);
@@ -235,6 +255,7 @@ void LinearProgrammingProblem::solve() {
     solution.optimalVector = createVector(linearProgrammingProblem->sol, linearProgrammingProblem->d);
     solution.didMinimize = linearProgrammingProblem->objective == dd_LPmin;
     solution.polyhedraVertices = getVertices(verticesMatrix.get());
+    solution.adjacency = getAdjacency(adjacency.get());
     onSolutionSolved();
 
     } catch (std::runtime_error &dd_error) {
