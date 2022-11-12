@@ -53,11 +53,11 @@ ExternalProject_Add(dep_glfw
 ExternalProject_Get_Property(dep_glfw SOURCE_DIR)
 ExternalProject_Add_Step(dep_glfw shuffle
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/libraries"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${SOURCE_DIR}/lib-mingw-w64" "${CMAKE_SOURCE_DIR}/libraries/glfw-mingw-w64"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${SOURCE_DIR}/lib-vc2017" "${CMAKE_SOURCE_DIR}/libraries/glfw-vc2017"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${SOURCE_DIR}/lib-vc2019" "${CMAKE_SOURCE_DIR}/libraries/glfw-vc2019"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${SOURCE_DIR}/lib-vc2022" "${CMAKE_SOURCE_DIR}/libraries/glfw-vc2022"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${SOURCE_DIR}/include/GLFW" "${CMAKE_SOURCE_DIR}/thirdparty/GLFW"
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${SOURCE_DIR}/lib-mingw-w64" "${CMAKE_SOURCE_DIR}/libraries/glfw-mingw-w64"
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${SOURCE_DIR}/lib-vc2017" "${CMAKE_SOURCE_DIR}/libraries/glfw-vc2017"
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${SOURCE_DIR}/lib-vc2019" "${CMAKE_SOURCE_DIR}/libraries/glfw-vc2019"
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${SOURCE_DIR}/lib-vc2022" "${CMAKE_SOURCE_DIR}/libraries/glfw-vc2022"
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${SOURCE_DIR}/include/GLFW" "${CMAKE_SOURCE_DIR}/thirdparty/GLFW"
     DEPENDEES "install"
 )
 
@@ -69,6 +69,6 @@ ExternalProject_Add(dep_glm
 )
 ExternalProject_Get_Property(dep_glm SOURCE_DIR)
 ExternalProject_Add_Step(dep_glm shuffle
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${SOURCE_DIR}/glm" "${CMAKE_SOURCE_DIR}/thirdparty/glm"
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${SOURCE_DIR}/glm" "${CMAKE_SOURCE_DIR}/thirdparty/glm"
     DEPENDEES "install"
 )

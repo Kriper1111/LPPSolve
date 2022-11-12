@@ -62,10 +62,13 @@ if (WIN32)
     # Either way, we have to separate the link libraries because yes. Either here or better yet, during configure step.
     if (CMAKE_GENERATOR MATCHES "Visual Studio 2022")
         target_link_directories(LPPShow PUBLIC libraries/glfw-vc2022)
+        list(APPEND LIBRARIES legacy_stdio_definitions)
     elseif (CMAKE_GENERATOR MATCHES "Visual Studio 2019")
         target_link_directories(LPPShow PUBLIC libraries/glfw-vc2019)
+        list(APPEND LIBRARIES legacy_stdio_definitions)
     elseif (CMAKE_GENERATOR MATCHES "Visual Studio 2017")
         target_link_directories(LPPShow PUBLIC libraries/glfw-vc2017)
+        list(APPEND LIBRARIES legacy_stdio_definitions)
     elseif(CMAKE_GENERATOR MATCHES "MinGW Makefiles")
         list(APPEND LIBRARIES -static) # Force static links only on MinGW, because VC is magic, apparently
         target_link_directories(LPPShow PUBLIC libraries/glfw-mingw-w64)
