@@ -11,6 +11,7 @@ option(USE_OBJ_LOADER "Use wavefront OBJ Loader (shouldn't be necessary)" OFF)
 option(USE_BAKED_SHADERS "Bake in shaders for easier distribution" OFF)
 
 message("Building LPPShow version ${projectVersion} mode: ${CMAKE_BUILD_TYPE}")
+message("Using ${CMAKE_GENERATOR} as the generator.")
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DDEBUG)
@@ -72,6 +73,9 @@ if (WIN32)
     elseif(CMAKE_GENERATOR MATCHES "MinGW Makefiles")
         list(APPEND LIBRARIES -static) # Force static links only on MinGW, because VC is magic, apparently
         target_link_directories(LPPShow PUBLIC libraries/glfw-mingw-w64)
+    else()
+        target_link_directories(LPPShow PUBLIC libraries/glfw-vc2022)
+        list(APPEND LIBRARIES legacy_stdio_definitions)
     endif()
 elseif(UNIX AND NOT APPLE)
     list(APPEND LIBRARIES rt m dl)
