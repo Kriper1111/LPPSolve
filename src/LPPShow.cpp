@@ -16,6 +16,7 @@ const float movementSpeed = 2.5f;
 ImVec2 windowPosition = { 600, 0 };
 ImVec2 windowSize = { 384, 720 };
 ImVec4 worldColor = { 0.364, 0.674, 0.764, 1.0 };
+const char* const minmax[2] = { "min", "max" };
 
 struct MouseState {
     bool leftMouseButton;
@@ -30,10 +31,9 @@ struct MouseState {
 
 namespace SceneData {
     bool canMoveCamera = true;
-    bool showPlanes = true; // FIXME: merge into display proper once testing phase is over
     bool allowEditCamera = false;
     bool showDebugOverlay = false;
-    LinearProgrammingProblemDisplay* limits;
+    Display* lppshow;
     WorldGridDisplay* worldOrigin;
     Camera *sceneCamera;
 }
@@ -44,7 +44,6 @@ void glfwErrorCallback(int error, const char* description) {
 
 int logCriticalError(const char* description) {
     std::cerr << "Critical: " << description << std::endl;
-    // if(SceneData::hasOpenGlContext)
     glfwTerminate();
     return -1;
 }
@@ -58,11 +57,30 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
     float vertical = (glfwGetKey(inputWindow, GLFW_KEY_W) - glfwGetKey(inputWindow, GLFW_KEY_S))
                      + (glfwGetKey(inputWindow, GLFW_KEY_UP) - glfwGetKey(inputWindow, GLFW_KEY_DOWN));
 
+    float snapToTop = glfwGetKey(inputWindow, GLFW_KEY_KP_7);
+    float snapToLeft = glfwGetKey(inputWindow, GLFW_KEY_KP_1);
+    float snapToRight = glfwGetKey(inputWindow, GLFW_KEY_KP_3);
 
-    if (horizontal || vertical) {
+    if (snapToRight) {
+        camera->teleportTo(camera->lookDepth, 0, 0);
+        camera->rotate(0, 0, -90);
+        camera->setOrtography();
+    } else if (snapToLeft) {
+        camera->teleportTo(0, -camera->lookDepth, 0);
+        camera->rotate(0, 0, 0);
+        camera->setOrtography();
+    } else if (snapToTop) {
+        camera->teleportTo(0, 0, camera->lookDepth);
+        camera->rotate(-89.9, 0, 0);
+        camera->setOrtography();
+    }
+    
+    if (snapToLeft || snapToRight || snapToTop) {
+        camera->setOrtography();
+    } else if (horizontal || vertical) {
         // BUG: seems to be inverted on Windows for some reason.
         camera->orbit(horizontal * movementSpeed * speedMod, -vertical * movementSpeed * speedMod);
-        // camera->setPerspective();
+        camera->setPerspective();
     }
 }
 
@@ -71,6 +89,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    // TODO: Make collapsing too, maybe?
     ImGui::Begin("Planes", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::SetWindowPos(windowPosition);
     ImGui::SetWindowSize(windowSize);
@@ -93,6 +112,11 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::SliderFloat("Look insensitivity", &camera->lookInSensitivity, 1.0f, 50.0f);
         ImGui::SliderFloat("Look depth", &camera->lookDepth, 0.0f, 100.0f);
         ImGui::Checkbox("Allow editing camera values", &SceneData::allowEditCamera);
+
+        // Ortho
+        float orthographicScale = camera->getOrthographicScale();
+        if(ImGui::SliderFloat("Orthographic scale", &orthographicScale, 0.0f, 100.0f))
+            camera->setOrthographicScale(orthographicScale);
         bool isOrtho = camera->useOrthography();
         if (ImGui::Checkbox("Use orthography", &isOrtho)) {
             camera->useOrthography(isOrtho);
@@ -102,17 +126,17 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         if (ImGui::Button("up X View")) {
             camera->teleportTo(camera->lookDepth, 0, 0);
             camera->rotate(0, 0, -90);
-            // camera->setOrtography();
+            camera->setOrtography();
         }
         if (ImGui::Button("down Y View")) {
             camera->teleportTo(0, -camera->lookDepth, 0);
             camera->rotate(0, 0, 0);
-            // camera->setOrtography();
+            camera->setOrtography();
         }
         if (ImGui::Button("down Z view")) {
             camera->teleportTo(0, 0, camera->lookDepth);
-            camera->rotate(-89.5, 0, 0);
-            // camera->setOrtography();
+            camera->rotate(-89.9, 0, 0);
+            camera->setOrtography();
         }
     }
 
@@ -122,71 +146,64 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         #endif
         ImGui::Checkbox("Show grid", &SceneData::worldOrigin->gridEnabled);
         ImGui::Checkbox("Show world axis", &SceneData::worldOrigin->axisEnabled);
-        ImGui::SliderFloat("Grid scale", &SceneData::worldOrigin->zoomScale, 0.1f, 10.0f);
+        ImGui::InputFloat("Grid scale", &SceneData::worldOrigin->zoomScale, 0.1f, 0.25f);
     }
 
-    ImGui::Text("Total planes: %d", SceneData::limits->getEquationCount());
-    if (ImGui::Button("Add plane") && SceneData::limits->getEquationCount() < 256) {
-        SceneData::limits->addLimitPlane({0, 0, 1, 0});
+    ImGui::Text("Total planes: %d", SceneData::lppshow->getEquationCount());
+    if (ImGui::Button("Add plane") && SceneData::lppshow->getEquationCount() < 256) {
+        SceneData::lppshow->addLimitPlane({0, 0, 1, 0});
     }
     ImGui::SameLine();
-    if (ImGui::Button("Remove plane") && SceneData::limits->getEquationCount() > 0) {
-        SceneData::limits->removeLimitPlane();
+    if (ImGui::Button("Remove plane") && SceneData::lppshow->getEquationCount() > 0) {
+        SceneData::lppshow->removeLimitPlane();
     }
-    ImGui::Checkbox("Show planes", &SceneData::showPlanes);
+    ImGui::Checkbox("Show planes", &SceneData::lppshow->showPlanesAtAll);
     ImGui::Separator();
 
-    glm::vec4 objectiveFunctionEq = SceneData::limits->getObjectiveFunction();
     ImGui::Text("Objective function:");
-    if(ImGui::InputFloat4("##objective", &objectiveFunctionEq.x))
-        SceneData::limits->setObjectiveFunction(objectiveFunctionEq);
+    ImGui::InputFloat4("##objective", &SceneData::lppshow->objectiveFunction.x);
     ImGui::SameLine(); ImGui::Text("->"); ImGui::SameLine();
-    auto doMinimize = SceneData::limits->doMinimize;
+    auto doMinimize = SceneData::lppshow->doMinimize;
     int currentItem = (int) doMinimize;
 
     // XXX: This solution is much cleaner but lacks clear localization support
     ImGui::PushItemWidth(50.0f);
-    if (ImGui::Combo("##min", &currentItem, "min\0max\0"))
-        SceneData::limits -> doMinimize = !doMinimize;
+    if (ImGui::Combo("##min", &currentItem, minmax, 2))
+        SceneData::lppshow -> doMinimize = !doMinimize;
     ImGui::PopItemWidth();
 
-    // if(ImGui::BeginCombo("##minmax", doMinimize ? "min" : "max")) {
-    //     if (ImGui::Selectable("min", doMinimize))
-    //         SceneData::limits->doMinimize = !doMinimize;
-    //     if (ImGui::Selectable("max", !doMinimize))
-    //         SceneData::limits->doMinimize = !doMinimize;
-    //     ImGui::EndCombo();
-    // }
     ImGui::Separator();
 
     // TODO: Make into a scrollbox
-    for (int planeIndex = 0; planeIndex < SceneData::limits->getEquationCount(); planeIndex++) {
-        glm::vec4 planeEquationOrigin = SceneData::limits->getLimitPlane(planeIndex);
+    for (int planeIndex = 0; planeIndex < SceneData::lppshow->getEquationCount(); planeIndex++) {
+        glm::vec4 planeEquationOrigin = SceneData::lppshow->getLimitPlane(planeIndex);
         ImGui::PushID(planeIndex);
         // XXX: Do we want to use std::vector<bool> optimization or fall back to Plane objects?
-        bool isVisible = SceneData::limits->visibleEquations[planeIndex];
+        bool isVisible = SceneData::lppshow->visibleEquations[planeIndex];
         if(ImGui::Checkbox("##vis", &isVisible))
-            SceneData::limits->visibleEquations[planeIndex] = isVisible;
+            SceneData::lppshow->visibleEquations[planeIndex] = isVisible;
         ImGui::SameLine(); ImGui::Text("Plane: "); ImGui::SameLine();
         if (ImGui::InputFloat4("##vec", &planeEquationOrigin[0])) {
-            SceneData::limits->editLimitPlane(planeIndex, planeEquationOrigin);
+            SceneData::lppshow->editLimitPlane(planeIndex, planeEquationOrigin);
         }
         ImGui::PopID();
     }
 
     if (ImGui::Button("Solve")) {
         try {
-            SceneData::limits->solve();
+            SceneData::lppshow->solve();
         } catch (std::runtime_error &dd_error) {
             std::cerr << "Faile to solve equation: " << dd_error.what() << std::endl;
         }
     }
-    auto solution = SceneData::limits->getSolution();
+    auto solution = SceneData::lppshow->getSolution();
     if (solution->isErrored) {
         ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, "Failed to solve the equation: %s", solution->errorString);
     } else if (solution->isSolved) {
         ImGui::Text("Optimal value: %.4f", solution->optimalValue);
         ImGui::Text("Optimal plan: %.3fx1 %.3fx2 %.3fx3 %.3f", solution->optimalVector);
+    } else if (!solution->isErrored && !solution->isSolved && !solution->statusString.empty()) {
+        ImGui::Text("Solution status: %s", solution->statusString.c_str());
     }
 
     #ifdef DEBUG
@@ -199,11 +216,10 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui::End();
 
     auto iio = ImGui::GetIO();
-    if (SceneData::canMoveCamera && !(iio.WantCaptureKeyboard || iio.WantCaptureMouse)) {
+    if (SceneData::canMoveCamera && !(iio.WantCaptureKeyboard || iio.WantCaptureMouse))
         moveCamera(camera, window, timeStep);
-    }
-    if (SceneData::showPlanes) SceneData::limits->renderLimitPlanes(camera->getView(), camera->getProjection());
-    if (solution->isSolved) SceneData::limits->renderAcceptableValues(camera->getView(), camera->getProjection());
+
+    SceneData::lppshow->render(camera);
     SceneData::worldOrigin->render(camera->getView(), camera->getProjection());
 
     ImGui::Render();
@@ -297,16 +313,14 @@ int main() {
     SceneData::sceneCamera = camera;
 
     try {
-        SceneData::limits = new LinearProgrammingProblemDisplay();
+        SceneData::lppshow = new Display();
         SceneData::worldOrigin = new WorldGridDisplay();
     } catch (std::exception &ioerr) {
-        delete SceneData::limits;
-        delete SceneData::worldOrigin;
         // Might get to segfault
         return logCriticalError("Failed to compile required shaders");
     }
 
-    SceneData::limits->setObjectiveFunction({0, 0, 0, 0});
+    SceneData::lppshow->objectiveFunction = {0, 0, 0, 0};
     #ifndef DEBUG
     ImGuiIO& iio = ImGui::GetIO(); (void) iio; // what does that do?
     iio.IniFilename = NULL;
@@ -325,11 +339,10 @@ int main() {
         glClearColor(worldColor.x, worldColor.y, worldColor.z, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // XXX: wonky with the built-in callback, maybe because data races?
-        //      Shouldn't happen though, I imagine the callbacks are executed
-        //      during glfwPollEvents();
-        //      well it says that right in the description that they don't
-        //      necessary get called when glfwPollEvents(); is executed
+        /** XXX: The mouse sometimes just keeps its state for a few seconds or even frames
+         * if we don't do that. Could be because ImGui takes over and doesn't run the mouse
+         * events. We could try using callbacks now that we consider its mouse capture.
+         */
         glfwMouseCallback(mainWindow);
         updateProcessDraw(mainWindow, camera, deltaTime);
 
@@ -339,7 +352,7 @@ int main() {
 
     // We have to delete them before we deinit glfw and exit the program scope (and consequently opengl)
     // As otherwise we attempt to asl now unloaded GL context to deallocate the object and shader buffers
-    delete SceneData::limits;
+    delete SceneData::lppshow;
     delete SceneData::worldOrigin;
     glfwTerminate();
 }

@@ -11,7 +11,7 @@ INCLUDE_DIR = include
 THIRDPARTY_INCLUDE = thirdparty
 IMGUI_DIR = $(THIRDPARTY_INCLUDE)/imgui
 
-SOURCES_BASE = $(SOURCES_DIR)/assets.cpp $(SOURCES_DIR)/camera.cpp $(SOURCES_DIR)/LPPShow.cpp $(SOURCES_DIR)/solver.cpp
+SOURCES_BASE = $(SOURCES_DIR)/assets.cpp $(SOURCES_DIR)/camera.cpp $(SOURCES_DIR)/LPPShow.cpp $(SOURCES_DIR)/solver.cpp $(SOURCES_DIR)/display.cpp
 SOURCES_THIRDPARTY = $(THIRDPARTY_INCLUDE)/quickhull/QuickHull.cpp
 SOURCES_THIRDPARTY += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
 SOURCES_THIRDPARTY += $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
@@ -34,6 +34,7 @@ LIBS =
 # PLATFORM-SPECIFIC
 ############################
 PLATFORM := $(shell uname -s)
+# Not quite the same as cmake's build
 ifeq ($(PLATFORM),Linux)
 	LIBS += $(LINUX_GL_LIBS) `pkg-config --static --libs glfw3` `pkg-config --static --libs cddlib`
 	CXXFLAGS += `pkg-config --cflags glfw3` `pkg-config --cflags cddlib`
@@ -67,10 +68,16 @@ ifeq ($(configuration),optimized)
 	CXXFLAGS += -DUSE_BAKED_SHADERS -O3
 endif
 
+ifeq ($(configuration),cum)
+	CXXFLAGS += -g -D_GLIBCXX_DEBUG
+endif
+
 ############################
 # TARGETS
 ############################
 objects/%.o:src/%.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+objects/%.o:tests/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 objects/%.o:thirdparty/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -86,6 +93,9 @@ include/bake%.h: $(SHADERS)
 
 all: object-folder $(EXECUTABLE_NAME)
 	@echo "Build done for $(EXECUTABLE_NAME) v$(EXECUTABLE_VERSION)"
+
+run-tests: objects/tests.o objects/solver.o
+	$(CXX) -o $@ $^ -g -D_GLIBCXX_DEBUG $(LIBS)
 
 bake: include/baked_shaders.h
 

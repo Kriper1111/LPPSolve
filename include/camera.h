@@ -11,7 +11,7 @@ class Camera {
 
     bool isOrthographic = false;
 
-    int viewHeight; // XXX: Will cause problems with orthographic view and resizing
+    int viewHeight;
     int viewWidth;
     float fieldOfView;
     float aspectRatio;
@@ -23,11 +23,16 @@ class Camera {
 
     public:
     float lookInSensitivity = 15.0f;
+    float orthographicScale = 1.0;
     float lookDepth = 25.0f;
     Camera(int viewWidth, int viewHeight, float fov = 45.5f, float nearplane = 0.01f, float farplane = 100.0f);
     void changeFOV(float newFOV);
     void setOrtography();
     void setPerspective();
+
+    void setOrthographicScale(float scale); // getter because we need to recalc projection
+    float getOrthographicScale();
+
     void useOrthography(bool useOrthography);
     bool useOrthography();
 

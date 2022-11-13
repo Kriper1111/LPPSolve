@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.11)
 
-file(STRINGS "version" projectVersion LIMIT_COUNT 1)
-project(LPPShow VERSION ${projectVersion})
+file(STRINGS "version" REAL_VERSION LIMIT_COUNT 1)
+string(REGEX MATCH "([0-9]+.[0-9]+.[0-9]+)" SEMVER ${REAL_VERSION}) # Strips out metadata, but oh well
+project(LPPShow VERSION ${SEMVER})
 
 include(ExternalProject)
 include(FetchContent)
@@ -15,7 +16,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 message(VERBOSE "Listing useful enviroment details:")
-message(VERBOSE "* Building: LPPShow version ${projectVersion}")
+message(VERBOSE "* Building: LPPShow version ${REAL_VERSION}")
 message(VERBOSE "* Using mode: ${CMAKE_BUILD_TYPE}")
 message(VERBOSE "* Using generator: ${CMAKE_GENERATOR}")
 message(VERBOSE "* Is MSVC: ${MSVC}")
@@ -102,7 +103,7 @@ if(USE_CDDLIB)
     list(APPEND LIBRARIES quickhull ${CDDLIB_LIBRARY_NAME})
 endif()
 
-message("Will link to ${LIBRARIES}")
+message(VERBOSE "Will link to ${LIBRARIES}")
 target_link_libraries(LPPShow PUBLIC ${LIBRARIES})
 
 install(TARGETS LPPShow DESTINATION "${CMAKE_SOURCE_DIR}/dist")

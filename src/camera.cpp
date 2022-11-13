@@ -11,14 +11,14 @@ void Camera::applyRotation() {
     if (this->mRotation.z > 360) this->mRotation.z -= 360;
     if (this->mRotation.z < 0) this->mRotation.z += 360;
 
-    if (this->mRotation.x >  90) this->mRotation.x =  89.5;
-    if (this->mRotation.x < -90) this->mRotation.x = -89.5;
+    // XXX: Might cause problems with number precision
+    if (this->mRotation.x >  90) this->mRotation.x =  89.9;
+    if (this->mRotation.x < -90) this->mRotation.x = -89.9;
 
     // Yaw:
     direction.x = sin(glm::radians(this->mRotation.z)) * cos(glm::radians(this->mRotation.x));
     direction.y = cos(glm::radians(this->mRotation.z)) * cos(glm::radians(this->mRotation.x));
     // Pitch:
-    // XXX: weirdly flips the image when passes through 180
     direction.z = sin(glm::radians(this->mRotation.x));
     this->mDirection = glm::normalize(direction);
 
@@ -33,7 +33,7 @@ void Camera::applyRotation() {
 
 void Camera::recalcProjection() {
     if (this->isOrthographic)
-        this->projectionMatrix = glm::ortho(-viewWidth / 2.0, viewWidth / 2.0, viewHeight / 2.0, -viewHeight / 2.0, 0.0, 1.0);
+        this->projectionMatrix = glm::ortho(-aspectRatio * orthographicScale, aspectRatio * orthographicScale, -1.0f * orthographicScale, 1.0f * orthographicScale, nearPlane, farPlane);
     else
         this->projectionMatrix = glm::perspective(glm::radians(fieldOfView), aspectRatio, nearPlane, farPlane);
 }
@@ -73,6 +73,13 @@ void Camera::useOrthography(bool useOrthography) {
 }
 
 bool Camera::useOrthography() { return this->isOrthographic; }
+
+void Camera::setOrthographicScale(float scale) {
+    this->orthographicScale = scale;
+    if (this->isOrthographic) this->recalcProjection();
+}
+
+float Camera::getOrthographicScale() { return this->orthographicScale; }
 
 void Camera::rotate(float rotation) { rotate(rotation, rotation, rotation); }
 void Camera::rotate(float pitch, float roll, float yaw) {

@@ -9,9 +9,9 @@
 #include "config.h"
 
 Object::~Object() {
-    glDeleteBuffers(1, &this->vertexData);
-    glDeleteBuffers(1, &this->indices);
-    glDeleteBuffers(1, &this->objectData);
+    if (this->vertexData != 0) glDeleteBuffers(1, &this->vertexData);
+    if (this->indices != 0) glDeleteBuffers(1, &this->indices);
+    if (this->objectData != 0) glDeleteBuffers(1, &this->objectData);
 }
 
 #ifdef USE_OBJ_LOADER
@@ -204,7 +204,7 @@ Shader* Shader::fromSource(const char* vertexSource, const char* fragmentSource)
     return new Shader(shaderProgram);
 }
 
-Shader::~Shader() { glDeleteProgram(this->pShaderProgram); }
+Shader::~Shader() { if (this->pShaderProgram != 0) glDeleteProgram(this->pShaderProgram); }
 
 int Shader::checkCompileStatus() { return this->pShaderProgram != 0; }
 void Shader::activate() { glUseProgram(this->pShaderProgram); }

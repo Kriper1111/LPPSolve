@@ -3,19 +3,26 @@
 implementation. It's main goal is to be a post-it note for myself.
 I'll remove the descriptions of targets once they're done.
 
-[ ] Serialization or Unit tests
-    -- We could use support cddlib's .ine/.ext files for that,
+[ ] Serialization
+    --  We could use support cddlib's .ine/.ext files for that,
           those are pretty humanly readable. Would require writing a
           converter from their format to the plane constraints, meh.
           And then back to solve it. Meh, squared.
+[+] ..and Unit tests
+    --  Kind of cheating by splitting the previous point in two, but makes sense
 [+] Actual solution support
     --  At some point, we should think of dynamic signs
-          and quite possibly UI simplifications: hide zeroed out
-          variables and remove equations.
-        For latter, it's best if we collect them into a list,
-          and run over it after we finish editing.
+          and quite possibly UI simplifications. Maybe have a
+          placeholder row for them, where the user can click and start
+          typing a new vector.
+    --  The support for min/max selection is now implemented, but
+          it would be nice if the user could just pick >=/<= on their own
+          Like type it in or dropdown, though latter is.. objectively much
+          more lame.
 [ ] Actual zoom in support
     --  requires some clever thinks with grid scaling
+        Also, like, actual sync between WorldGridDisplay and just Display.
+        Numbers, dashes, all this stuff are yet to be addressed.
 [ ] Orthographic camera snapping
     --  Think Blender, but worse in UI and UX.
           So there's probably a button, best case scenario a UI button
@@ -24,20 +31,21 @@ I'll remove the descriptions of targets once they're done.
     --  It's somewhat implemented right now, except I can't get ortho to work
           properly. Really no ideas.
 [ ] GitHub Actions workflow for crossplatform builds
-    --  Probably requires movement towards the likes of CMake
+    --  Slowly occuring in `cmake` branch
     --  Definitely will hit the rate limit implementing
 [ ] "Optimized" limit plane rendering
     Meaning we'll collect the transform matrices into one buffer
       and use that for rendering the planes, instanced.
     Further reading:
-    - solver.cpp#L128
+    - comments somewhere in the display.cpp or solver.cpp
     - https://www.khronos.org/opengl/wiki/Buffer_Object_Streaming
     - https://learnopengl.com/Advanced-OpenGL/Instancing
 [ ] Updated manual Object generation from vertex data:
-    Follow FIXME in solver.cpp#L191
+    Follow FIXME in display.cpp somewhere
 [ ] Object file bake script
     --  And either `make baked` or include it into `make build`/`make release` targets
 [ ] CMake or just some tweaks to the Makefile.
+    --  WIP in cmake `branch`
     --  The Makefile is not quite release-ready. Best used by noone.
           I think the following "main" targets should be enough:
         - `make build` or `make release` for the release configuration
@@ -51,6 +59,7 @@ I'll remove the descriptions of targets once they're done.
           using CMake is not going to stop me from using the original Makefile for builds.
 [+] Quickhull via https://github.com/akuukka/quickhull from cddlib solutions.
 [+] Autoresize the window [0.1.0]
+[ ] Changelogs
 [ ] Fix world orientation
     --  I'm not quite sure what that's supposed to mean, but I think it means
           "I've got a hunch that this thing is rotated wrong" or something.

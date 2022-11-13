@@ -4,6 +4,8 @@
 __pycache__
 
 thirdparty/imgui
+thirdparty/cdd*
+libraries
 !thirdparty/glad*
 !thirdparty/KHR/
 
@@ -14,6 +16,7 @@ build
 objects
 external_projects
 /LPPShow*
+/run-tests*
 
 *.mtl
 *.old
