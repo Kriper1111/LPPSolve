@@ -20,22 +20,6 @@ if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
 endif()
 
-# we're using vsamy's fork for no good reason other than "i'm not confident my cmake adapter would work"
-ExternalProject_Add(dep_cddlib
-    GIT_REPOSITORY https://github.com/vsamy/cddlib
-    GIT_TAG master
-    GIT_SHALLOW on
-    BUILD_IN_SOURCE on
-    CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${CMAKE_SOURCE_DIR}/tmp" "-DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_SOURCE_DIR}/tmp/include" "-DCMAKE_INSTALL_LIBDIR=${CMAKE_SOURCE_DIR}/tmp/lib"
-)
-# we still have to do this though
-ExternalProject_Add_Step(dep_cddlib compat
-    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_SOURCE_DIR}/tmp/lib/" "${CMAKE_SOURCE_DIR}/libraries/"
-    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_SOURCE_DIR}/tmp/include/cdd" "${CMAKE_SOURCE_DIR}/thirdparty/cdd"
-    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_SOURCE_DIR}/tmp/include/cdd" "${CMAKE_SOURCE_DIR}/thirdparty/cddlib"
-    DEPENDEES "install"
-)
-
 # Download and unpack
 ExternalProject_Add(dep_glfw
     URL https://github.com/glfw/glfw/releases/download/3.3.8/glfw-3.3.8.bin.WIN64.zip

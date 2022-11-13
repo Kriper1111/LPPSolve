@@ -57,13 +57,14 @@ set(LIBRARIES framework glad imgui) # "Core" libraries, same *names* across all 
 
 # Linux defaults
 set(GLFW_LIBRARY_NAME "glfw")
-set(CDDLIB_LIBRARY_NAME "cdd")
+set(CDDLIB_LIBRARY_NAME "libcdd.a")
 
 # Now the real fun begins
 if (WIN32)
     message("Condolences.")
 
     set(GLFW_LIBRARY_NAME "glfw3")
+    set(CDDLIB_LIBRARY_NAME "cdd") # And hope it'll use .lib properly
 
     list(APPEND LIBRARIES opengl32 gdi32)
     target_link_directories(LPPShow PUBLIC libraries) # "Fallback", if anything goes wrong

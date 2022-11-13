@@ -27,16 +27,18 @@ jobs:
     - name: Apt - Install uncompileable dependencies
       run: |
         sudo apt-get update -qq
-        sudo apt-get install --no-install-recommends -y libglfw3-dev libcdd-dev libglm-dev
+        sudo apt-get install --no-install-recommends -y libglfw3-dev libglm-dev
 
-    - name: Cache - ImGui from source
-      id: cache-imgui
+    - name: Cache - Restore ImGui+cddlib from source
+      id: cache-imgui-cddlib
       uses: actions/cache@v3.0.11
       with:
-        key: version-fc-1.88
+        key: version-fc-cddlib${{ env.CDDLIB_VERSION }}-imgui${{ env.IMGUI_VERSION }}
         path: |
+          libraries/
+          thirdparty/cdd
           thirdparty/imgui
-          external_projects/src/imgui-populate-stamp
+          external_projects/
 
     # Shamelessly borrowed from an example CMake action. Probably better than I could've done myself
     # ..evidently
@@ -45,15 +47,11 @@ jobs:
     - name: CMake - Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.CMAKE_BUILD_TYPE}}
 
-    - name: Tar - Package artifact
-      run: |
-        cmake --install ${{github.workspace}}/build
-        tar -cvf ${{github.workspace}}/dist-linux.tar -C ${{github.workspace}} ./dist
     - name: Actions - Emit artifact
       uses: actions/upload-artifact@v3
       with:
         name: dist-linux
-        path: ${{github.workspace}}/dist-linux.tar
+        path: ${{github.workspace}}/build/LPPShow
 
   # This one will be ran only on non-snapshot builds, since it's slower and more of a PITA
   build-windows:
@@ -71,6 +69,7 @@ jobs:
       with:
         key: thirdparty-ep-cddlib${{ env.CDDLIB_VERSION }}-imgui${{ env.IMGUI_VERSION }}-glfw${{ env.GLFW_VERSION }}-glm${{ env.GLM_VERSION }}
         path: |
+          libraries/
           external_projects/
 
     - name: CMake - Configure
