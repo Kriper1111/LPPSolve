@@ -27,18 +27,16 @@ jobs:
     - name: Apt - Install uncompileable dependencies
       run: |
         sudo apt-get update -qq
-        sudo apt-get install --no-install-recommends -y libglfw3-dev libglm-dev
+        sudo apt-get install --no-install-recommends -y libglfw3-dev libcdd-dev libglm-dev
 
-    - name: Cache - Restore ImGui+cddlib from source
-      id: cache-imgui-cddlib
+    - name: Cache - ImGui from source
+      id: cache-imgui
       uses: actions/cache@v3.0.11
       with:
-        key: version-fc-cddlib${{ env.CDDLIB_VERSION }}-imgui${{ env.IMGUI_VERSION }}
+        key: version-fc-1.88
         path: |
-          libraries/
-          thirdparty/cdd
           thirdparty/imgui
-          external_projects/
+          external_projects/src/imgui-populate-stamp
 
     # Shamelessly borrowed from an example CMake action. Probably better than I could've done myself
     # ..evidently
