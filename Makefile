@@ -34,6 +34,7 @@ LIBS =
 # PLATFORM-SPECIFIC
 ############################
 PLATFORM := $(shell uname -s)
+# Not quite the same as cmake's build
 ifeq ($(PLATFORM),Linux)
 	LIBS += $(LINUX_GL_LIBS) `pkg-config --static --libs glfw3` `pkg-config --static --libs cddlib`
 	CXXFLAGS += `pkg-config --cflags glfw3` `pkg-config --cflags cddlib`

@@ -5,6 +5,7 @@
 #include "camera.h"
 #include "glm/glm.hpp"
 #include "solver.h"
+#include "config.h"
 
 #ifdef USE_CDDLIB
 #define REFLECT(var) #var

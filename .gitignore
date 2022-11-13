@@ -3,14 +3,18 @@
 
 __pycache__
 
-# thirdparty/*
 thirdparty/imgui
+thirdparty/cdd*
+libraries
 !thirdparty/glad*
 !thirdparty/KHR/
 
 include/baked_shaders.h
 
+dist
+build
 objects
+external_projects
 /LPPShow*
 /run-tests*
 

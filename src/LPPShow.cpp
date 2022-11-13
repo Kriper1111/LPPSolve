@@ -10,7 +10,7 @@
 #include "assets.h"
 #include "camera.h"
 #include "solver.h"
-
+#include "config.h"
 
 const float movementSpeed = 2.5f;
 ImVec2 windowPosition = { 600, 0 };
@@ -95,6 +95,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui::SetWindowSize(windowSize);
 
     if (ImGui::CollapsingHeader("Camera controls")) {
+        #ifdef DEBUG
         if (SceneData::allowEditCamera) {
             auto cameraLocation = camera->getCameraLocation();
             auto cameraRotation = camera->getCameraRotation();
@@ -120,6 +121,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         if (ImGui::Checkbox("Use orthography", &isOrtho)) {
             camera->useOrthography(isOrtho);
         }
+        #endif
 
         if (ImGui::Button("up X View")) {
             camera->teleportTo(camera->lookDepth, 0, 0);
@@ -288,6 +290,8 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glFrontFace(GL_CW);
 
+    glfwSwapInterval(1);
+
     ////////////
     //// INIT IMGUI
     ////////////
@@ -317,6 +321,10 @@ int main() {
     }
 
     SceneData::lppshow->objectiveFunction = {0, 0, 0, 0};
+    #ifndef DEBUG
+    ImGuiIO& iio = ImGui::GetIO(); (void) iio; // what does that do?
+    iio.IniFilename = NULL;
+    #endif
 
     // ???
     glfwWindowResizeCallback(mainWindow, windowWidth, windowHeight);
@@ -338,7 +346,6 @@ int main() {
         glfwMouseCallback(mainWindow);
         updateProcessDraw(mainWindow, camera, deltaTime);
 
-        // FIXME: Needs VSync on Windows
         glfwSwapBuffers(mainWindow);
         glfwPollEvents();
     }

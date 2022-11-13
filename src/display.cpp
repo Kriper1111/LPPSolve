@@ -290,6 +290,7 @@ void WorldGridDisplay::render(glm::mat4 view, glm::mat4 projection) {
     if (axisEnabled) {
         gridShader->activate();
         gridShader->setTransform(projection, view);
+        gridShader->setUniform("gridScale", 1.0);
         glBindVertexArray(axisObject->objectData);
         glDrawElements(GL_LINES, axisObject->vertexCount, GL_UNSIGNED_INT, 0);
     }
