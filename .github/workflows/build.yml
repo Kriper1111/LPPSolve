@@ -27,14 +27,20 @@ jobs:
     - name: Apt - Install uncompileable dependencies
       run: |
         sudo apt-get update -qq
-        sudo apt-get install --no-install-recommends -y libglfw3-dev libcdd-dev libglm-dev
+        sudo apt-get install --no-install-recommends -y libglfw3-dev libglm-dev
+
+    - name: CommandLine - Look at ldconfig
+      run: sudo ldconfig -p
 
     - name: Cache - ImGui from source
       id: cache-imgui
       uses: actions/cache@v3.0.11
       with:
-        key: version-fc-1.88
+        key: version-fc-imgui${{ env.IMGUI_VERSION }}-cddlib${{ env.CDDLIB_VERSION }}
         path: |
+          libraries/
+          thirdparty/cdd
+          thirdparty/cddlib
           thirdparty/imgui
           external_projects/src/imgui-populate-stamp
 

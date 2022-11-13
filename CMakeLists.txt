@@ -58,6 +58,7 @@ set(LIBRARIES framework glad imgui) # "Core" libraries, same *names* across all 
 # Linux defaults
 set(GLFW_LIBRARY_NAME "glfw")
 set(CDDLIB_LIBRARY_NAME "libcdd.a")
+target_link_directories(LPPShow PUBLIC libraries) # "Fallback", if anything goes wrong
 
 # Now the real fun begins
 if (WIN32)
@@ -67,7 +68,6 @@ if (WIN32)
     set(CDDLIB_LIBRARY_NAME "cdd") # And hope it'll use .lib properly
 
     list(APPEND LIBRARIES opengl32 gdi32)
-    target_link_directories(LPPShow PUBLIC libraries) # "Fallback", if anything goes wrong
 
     # I have nothing.
     # ///////////////////////////////////////
@@ -102,6 +102,7 @@ if(USE_CDDLIB)
     list(APPEND LIBRARIES quickhull ${CDDLIB_LIBRARY_NAME})
 endif()
 
+message("Will link to ${LIBRARIES}")
 target_link_libraries(LPPShow PUBLIC ${LIBRARIES})
 
 install(TARGETS LPPShow DESTINATION "${CMAKE_SOURCE_DIR}/dist")

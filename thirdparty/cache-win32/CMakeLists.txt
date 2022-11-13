@@ -20,21 +20,6 @@ if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
 endif()
 
-# I have finally got enough courage to push out my own cmake-enabled fork
-# Complete with (hopefully) proper path detections/fillings
-# So we can skip the shuffle step
-# Again, not a carbon copy, but close enough for my intents and purposes
-# We could also have probably just set -DBUILD_SHARED_LIBS=off and had 
-#   the previous script build static libs just as well.. BuuUUut hey we use
-#   latest version at least.
-ExternalProject_Add(dep_cddlib
-    GIT_REPOSITORY https://github.com/Kriper1111/cddlib-cmake
-    GIT_TAG master
-    GIT_SHALLOW on
-    BUILD_IN_SOURCE on
-    CMAKE_ARGS "-DCMAKE_INSTALL_PREFIX=${UNWANTED_FILES_PREFIX}" "-DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_SOURCE_DIR}/thirdparty" "-DCMAKE_INSTALL_LIBDIR=${CMAKE_SOURCE_DIR}/libraries" "-DCMAKE_INSTALL_DOCDIR=/tmp" "-DCMAKE_INSTALL_BINDIR=/tmp"
-)
-
 # Download and unpack
 ExternalProject_Add(dep_glfw
     URL https://github.com/glfw/glfw/releases/download/3.3.8/glfw-3.3.8.bin.WIN64.zip
