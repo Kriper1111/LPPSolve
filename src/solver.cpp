@@ -94,7 +94,7 @@ std::vector<std::vector<int>> getAdjacency(dd_SetFamilyPtr adj) {
 		long cardinality = set_card(adj->set[vertex]);
 		bool invert = adj->setsize - cardinality >= cardinality;
 		for (int elemt = 1; elemt <= adj->set[vertex][0]; elemt++) {
-			if (set_member(elemt, adj->set[vertex]) == invert)
+			if (set_member(elemt, adj->set[vertex]))
 				vertex_adjacent.push_back(elemt);
 		}
 
