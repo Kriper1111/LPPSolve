@@ -7,12 +7,16 @@
 #include <imgui/backends/imgui_impl_glfw.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
 
+#include <libintl.h>
+
 #include "assets.h"
 #include "camera.h"
 #include "solver.h"
 
+#define l10n(str) gettext(str)
 
 const float movementSpeed = 2.5f;
+const std::vector<std::string> locales = { "ru_RU", "en_US" };
 ImVec2 imguiWindowPosition = { 980, 0 };
 ImVec2 imguiWindowSize = { 320, 720 };
 ImVec4 worldColor = { 0.364, 0.674, 0.764, 1.0 };
@@ -30,12 +34,38 @@ struct MouseState {
 } mouseState;
 
 namespace SceneData {
+    int currentLocale = 0;
     bool canMoveCamera = true;
     bool allowEditCamera = false;
     bool showDebugOverlay = false;
     Display* lppshow;
     WorldGridDisplay* worldOrigin;
     Camera *sceneCamera;
+}
+
+void initL10N() {
+    setenv("LANGUAGE", "", 1);
+    setlocale(LC_ALL, "C.UTF-8");
+    setlocale(LC_MESSAGES, "C.UTF-8");
+
+    // TODO: Find all the locales and populate a vector with their names
+    for (const std::string locale : locales) {
+        bindtextdomain(locale.c_str(), "./locale");
+    }
+
+    textdomain(locales[0].c_str());
+}
+
+// XXX: Very unsafe (for work)
+void changeLocale(int localeID) {
+    try {
+        const std::string localeName = locales.at(localeID);
+        textdomain(localeName.c_str());
+        SceneData::currentLocale = localeID;
+        std::cout << "Set locale to " << localeName << std::endl;
+    } catch (std::out_of_range &err) {
+        std::cerr << "Unable to change locale to " << localeID << " of " << locales.size() << std::endl;
+    }
 }
 
 void glfwErrorCallback(int error, const char* description) {
@@ -95,11 +125,11 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui::NewFrame();
 
     // TODO: Make collapsing too, maybe?
-    ImGui::Begin("Planes", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+    ImGui::Begin(l10n("Planes"), nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
     ImGui::SetWindowPos(imguiWindowPosition);
     ImGui::SetWindowSize(imguiWindowSize);
 
-    if (ImGui::CollapsingHeader("Camera controls")) {
+    if (ImGui::CollapsingHeader(l10n("Camera controls"))) {
         if (SceneData::allowEditCamera) {
             auto cameraLocation = camera->getCameraLocation();
             auto cameraRotation = camera->getCameraRotation();
@@ -143,7 +173,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         }
     }
 
-    if (ImGui::CollapsingHeader("Display options")) {
+    if (ImGui::CollapsingHeader(l10n("Display options"))) {
         ImGui::Checkbox("Show grid", &SceneData::worldOrigin->gridEnabled);
         ImGui::Checkbox("Show world axis", &SceneData::worldOrigin->axisEnabled);
         ImGui::InputFloat("Grid scale", &SceneData::worldOrigin->gridScale, 0.10f, 0.25f);
@@ -171,19 +201,27 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             ImGui::ColorEdit3("Plane wrong direction", &SceneData::lppshow->constraintNegativeColor.x, shaderPickerFlags);
         }
         ImGui::Separator();
+        if (ImGui::BeginCombo("Language: ", locales[SceneData::currentLocale].c_str())) {
+            for (int localeID = 0; localeID < locales.size(); localeID ++) {
+                if (ImGui::Selectable(locales[localeID].c_str(), localeID == SceneData::currentLocale)) {
+                    changeLocale(localeID);
+                }
+            }
+            ImGui::EndCombo();
+        }
     }
 
     ImGui::Text("Total planes: %d", SceneData::lppshow->getEquationCount());
-    if (ImGui::Button("Add plane") && SceneData::lppshow->getEquationCount() < 256) {
+    if (ImGui::Button(l10n("Add plane")) && SceneData::lppshow->getEquationCount() < 256) {
         SceneData::lppshow->addLimitPlane({0, 0, 1, 0});
     }
     ImGui::SameLine();
-    if (ImGui::Button("Remove plane") && SceneData::lppshow->getEquationCount() > 0) {
+    if (ImGui::Button(l10n("Remove plane")) && SceneData::lppshow->getEquationCount() > 0) {
         SceneData::lppshow->removeLimitPlane();
     }
     ImGui::Separator();
 
-    ImGui::Text("Objective function:");
+    ImGui::Text(l10n("Objective function:"));
     ImGui::InputFloat4("##objective", &SceneData::lppshow->objectiveFunction.x);
     ImGui::SameLine(); ImGui::Text("->"); ImGui::SameLine();
     auto doMinimize = SceneData::lppshow->doMinimize;
@@ -212,7 +250,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::PopID();
     }
 
-    if (ImGui::Button("Solve")) {
+    if (ImGui::Button(l10n("Solve"))) {
         try {
             SceneData::lppshow->solve();
         } catch (std::runtime_error &dd_error) {
@@ -276,6 +314,8 @@ void glfwMouseCallback(GLFWwindow* window) {
 }
 
 int main() {
+    initL10N();
+
     // XXX: Make GLFW init thing into an object?
     // That way we could use auto-destructors without worrying about
     // deleting stray Objects after glfw has been deinitialized.
@@ -342,6 +382,15 @@ int main() {
     }
 
     SceneData::lppshow->objectiveFunction = {0, 0, 0, 0};
+    ImGuiIO& iio = ImGui::GetIO(); (void) iio;
+    ImVector<ImWchar> ranges;
+    ImFontGlyphRangesBuilder builder;
+    builder.AddRanges(iio.Fonts->GetGlyphRangesDefault());
+    builder.AddRanges(iio.Fonts->GetGlyphRangesCyrillic());
+    builder.BuildRanges(&ranges);
+
+    iio.Fonts->AddFontFromFileTTF("assets/DejaVuSansMono.ttf", 14, 0, ranges.Data);
+    iio.Fonts->Build();
 
     // ???
     glfwWindowResizeCallback(mainWindow, windowWidth, windowHeight);
