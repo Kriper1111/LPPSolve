@@ -41,7 +41,9 @@ if __name__ == "__main__":
     fragment_shaders = filter(lambda shader: shader[1] == "frag", shaders)
 
     with open(outfile, "w", encoding="utf8") as out:
-        out.write("#pragma once\n\n")
+        # out.write("#pragma once\n\n")
+        out.write("#ifndef _BAKED_SHADERS_H\n")
+        out.write("#define _BAKED_SHADERS_H\n\n")
         out.write("namespace shaders {\n")
 
         write_shaders(out, "vertex", vertex_shaders)
@@ -64,4 +66,5 @@ if __name__ == "__main__":
         #         out.write(shader.read())
         #     out.write( '        ");\n\n')
         # out.write("    } fragment;\n")
-        out.write("};")
+        out.write("};\n\n")
+        out.write("#endif")
