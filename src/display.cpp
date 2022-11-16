@@ -11,6 +11,10 @@
 
 #include "config.h"
 
+#ifdef USE_BAKED_SHADERS
+#include "baked_shaders.h"
+#endif
+
 #ifdef USE_CDDLIB
 
 #include <quickhull/QuickHull.hpp>
