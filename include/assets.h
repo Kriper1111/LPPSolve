@@ -1,9 +1,7 @@
 #pragma once
 
-#include <iostream>
+#include <memory>
 #include <glm/glm.hpp>
-
-// namespace kegl {
 
 struct VertexAttributePosition {
     float position[3];
@@ -14,21 +12,30 @@ struct VertexAttributePositionUV {
 };
 
 class Object {
-    public:
+    private:
     unsigned int vertexData;
     unsigned int indices;
     unsigned int objectData;
     unsigned int vertexCount;
     const char* meshName;
 
+    void genArrays();
+
+    public:
+    Object();
+
+    void setVertexData(const float* vertexData, size_t vertexCount, const unsigned int* indices, size_t indexCount);
+    void setVertexData(VertexAttributePosition* vertexData, size_t vertexCount, int* indices, size_t indexCount);
+    void setVertexData(VertexAttributePositionUV* vertexData, size_t vertexCount, int* indices, size_t indexCount);
+    void setFaceData(); // Unimplemented
+
+    static std::shared_ptr<Object> fromWavefront(const char* objectLocation);
+
+    void bindForDraw(unsigned int mode);
+    void bindForDraw();
+
     ~Object();
 };
-
-// FIXME: this garbage. Next step is to move to the MeshBuilder thing.
-bool fromVertexData(Object* object, const float* vertexData, size_t vertexCount, const int* indices, int indexCount);
-bool fromVertexData(Object* object, VertexAttributePosition* vertexData, int vertexCount, int* indices, int indexCount);
-bool fromVertexData(Object* object, VertexAttributePositionUV* vertexData, int vertexCount, int* indices, int indexCount);
-bool fromWavefront(Object* target, const char* objectLocation);
 
 class Shader {
     private:
@@ -36,19 +43,27 @@ class Shader {
     Shader(unsigned int programId);
 
     static char sCompileLog[512];
-    static unsigned int compileShader(const char*, unsigned int);
-    static unsigned int linkProgram(unsigned int, unsigned int);
+    static unsigned int compileShader(const char* shaderSource, unsigned int shaderType);
+    static unsigned int linkProgram(unsigned int vertexStage, unsigned int fragmentStage) noexcept(false);
     public:
     Shader(char const* vertexShaderPath, char const* fragmentShaderPath);
-    ~Shader();
 
     static Shader* fromSource(const char* vertexSource, const char* fragmentSource);
 
-    int checkCompileStatus();
     void activate();
     void setTransform(glm::mat4 projectionMatrix, glm::mat4 viewMatrix);
-    template <class T>
-    void setUniform(const char* name, T value);
-};
 
-// } // namespace: kegl
+    void setUniform(const char* name, int value);
+    void setUniform(const char* name, float value);
+    void setUniform(const char* name, double value);
+
+    void setUniform(const char* name, glm::vec2 value);
+    void setUniform(const char* name, glm::vec3 value);
+    void setUniform(const char* name, glm::vec4 value);
+
+    void setUniform(const char* name, glm::mat2 value);
+    void setUniform(const char* name, glm::mat3 value);
+    void setUniform(const char* name, glm::mat4 value);
+
+    ~Shader();
+};
