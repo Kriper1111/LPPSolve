@@ -9,6 +9,12 @@
 #include "camera.h"
 #include "solver.h"
 
+#include "config.h"
+
+#ifdef USE_BAKED_SHADERS
+#include "baked_shaders.h"
+#endif
+
 #ifdef USE_CDDLIB
 
 #include <quickhull/QuickHull.hpp>
@@ -30,7 +36,7 @@ void generateSolutionObject(Object* object, const std::vector<float> vertices) {
 
     fromVertexData(object, vertices.data(), vertices.size(), indices.data(), (int)indexBuffer.size());
 }
-#else 
+#else
 void generateSolutionObject(Object* object, const std::vector<float> vertices) {};
 #endif
 

@@ -9,7 +9,7 @@ on:
     - "version-*"
 
 env:
-  CMAKE_BUILD_TYPE: Release
+  CMAKE_BUILD_TYPE: RelWithDebInfo
   IMGUI_VERSION: v1.88
   GLFW_VERSION: v3.3.8
   GLM_VERSION: v0.9.9.8

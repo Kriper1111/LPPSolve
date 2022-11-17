@@ -15,10 +15,6 @@
 #include <quickhull/QuickHull.hpp>
 #endif
 
-#ifdef USE_BAKED_SHADERS
-#include "baked_shaders.h"
-#endif
-
 #ifdef USE_CDDLIB
 // XXX: This code is ugly and could at least be baked in
 const char* reflect_dd_error(dd_ErrorType error) {
