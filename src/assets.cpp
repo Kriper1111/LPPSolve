@@ -8,20 +8,16 @@
 
 #include "config.h"
 
-Object::~Object() {
-    if (this->vertexData != 0) glDeleteBuffers(1, &this->vertexData);
-    if (this->indices != 0) glDeleteBuffers(1, &this->indices);
-    if (this->objectData != 0) glDeleteBuffers(1, &this->objectData);
-}
+// OBJECTS
 
 #ifdef USE_OBJ_LOADER
 #include "OBJ_Loader.h"
 
 objl::Loader* loader = new objl::Loader();
 
-bool fromWavefront(Object* target, const char* objectLocation) {
+std::shared_ptr<Object> fromWavefront(const char* objectLocation) {
     if (!loader->LoadFile(objectLocation)) {
-        return false;
+        throw std::runtime_error("Unable to load object file");
     }
 
     objl::Mesh objMesh = loader->LoadedMeshes.back();
@@ -38,89 +34,96 @@ bool fromWavefront(Object* target, const char* objectLocation) {
         theMeshIdx.push_back(objMesh.Indices[vertIdx]);
     }
 
-    target->vertexCount = objMesh.Vertices.size();
-    glGenVertexArrays(1, &target->objectData);
+    loader->LoadedMeshes.clear();
 
-    glBindVertexArray(target->objectData);
-    glGenBuffers(1, &target->indices);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, target->indices);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, theMeshIdx.size() * sizeof(GLuint), theMeshIdx.data(), GL_STATIC_DRAW);
+    std::shared_ptr<Object> object = std::make_shared<Object>();
+    object->setVertexData(theMeshVerts.data(), theMeshVerts.size(), theMeshIdx.data(), theMeshIdx.size());
 
-    glGenBuffers(1, &target->vertexData);
-    glBindBuffer(GL_ARRAY_BUFFER, target->vertexData);
-    glBufferData(GL_ARRAY_BUFFER, theMeshVerts.size() * sizeof(float), theMeshVerts.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    return true;
+    return object;
 }
 #else
 bool fromWavefront(Object* target, const char* objectLocation) { return false; }
 #endif
 
-bool fromVertexData(
-    Object* object,
-    VertexAttributePosition* vertexData,
-    int vertexCount,
-    int* indices,
-    int indexCount
-){
-    glGenVertexArrays(1, &object->objectData);
-    glGenBuffers(1, &object->vertexData);
-    glGenBuffers(1, &object->indices);
-
-    glBindVertexArray(object->objectData);
-    glBindBuffer(GL_ARRAY_BUFFER, object->vertexData);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(*vertexData) * vertexCount, vertexData, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
-    glEnableVertexAttribArray(0);
-
-    object->vertexCount = vertexCount;
-
-    // FIXME: Refactor this
-    if (indices != nullptr) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object->indices);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(*indices) * indexCount, indices, GL_STATIC_DRAW);
-        object->vertexCount = indexCount;
-    }
-
-    return true;
-};
-bool fromVertexData(Object* object, VertexAttributePositionUV* vertexData, int indices){ return false; };
-bool fromVertexData(
-    Object* object,
-    const float* vertexData,
-    size_t vertexCount,
-    const int* indices,
-    int indexCount
-) {
-    glGenVertexArrays(1, &object->objectData);
-    glGenBuffers(1, &object->vertexData);
-    glGenBuffers(1, &object->indices);
-
-    glBindVertexArray(object->objectData);
-    glBindBuffer(GL_ARRAY_BUFFER, object->vertexData);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(*vertexData) * vertexCount, vertexData, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
-    glEnableVertexAttribArray(0);
-
-    object->vertexCount = vertexCount / 3;
-
-    // FIXME: Refactor this
-    if (indices != nullptr) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object->indices);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(*indices) * indexCount, indices, GL_STATIC_DRAW);
-        object->vertexCount = indexCount;
-    }
-
-    return true;
+Object::Object() {
+    this->vertexCount = 0;
+    this->objectData = 0;
+    this->vertexData = 0;
+    this->indices = 0;
 }
 
-/**
- * XXX:
- * This method now throws, so it might get a bit fucky-wucky™ with opengl during initialization.
- */
-std::string readFileDry(const char* filename) {
+void Object::genArrays() {
+    if (this->objectData == 0) glGenVertexArrays(1, &this->objectData);
+    if (this->vertexData == 0) glGenBuffers(1, &this->vertexData);
+    if (this->indices == 0) glGenBuffers(1, &this->indices);
+}
+
+void Object::setVertexData(
+    VertexAttributePosition* vertexData,
+    size_t vertexCount,
+    int* indices,
+    size_t indexCount
+){
+    this->genArrays();
+    glBindVertexArray(this->objectData);
+    glBindBuffer(GL_ARRAY_BUFFER, this->vertexData);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(*vertexData) * vertexCount, vertexData, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+    glEnableVertexAttribArray(0);
+
+    this->vertexCount = vertexCount;
+
+    // FIXME: Refactor this
+    if (indices != nullptr) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->indices);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(*indices) * indexCount, indices, GL_STATIC_DRAW);
+        this->vertexCount = indexCount;
+    }
+};
+
+void Object::setVertexData(VertexAttributePositionUV* vertexData, size_t vertexCount, int* indices, size_t indexCount){ };
+
+void Object::setVertexData(
+    const float* vertexData,
+    size_t vertexCount,
+    const unsigned int* indices,
+    size_t indexCount
+) {
+    this->genArrays();
+    glBindVertexArray(this->objectData);
+    glBindBuffer(GL_ARRAY_BUFFER, this->vertexData);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(*vertexData) * vertexCount, vertexData, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*) 0);
+    glEnableVertexAttribArray(0);
+
+    this->vertexCount = vertexCount / 3;
+
+    // FIXME: Refactor this
+    if (indices != nullptr) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->indices);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(*indices) * indexCount, indices, GL_STATIC_DRAW);
+        this->vertexCount = indexCount;
+    }
+}
+
+void Object::bindForDraw(GLenum mode) {
+    if (this->objectData == 0 || this->vertexData == 0 || this->indices == 0)
+        return;
+    glBindVertexArray(this->objectData);
+    glDrawElements(mode, this->vertexCount, GL_UNSIGNED_INT, 0);
+}
+
+void Object::bindForDraw() { this->bindForDraw(GL_TRIANGLES); }
+
+Object::~Object() {
+    if (this->vertexData != 0) glDeleteBuffers(1, &this->vertexData);
+    if (this->objectData != 0) glDeleteBuffers(1, &this->objectData);
+    if (this->indices != 0) glDeleteBuffers(1, &this->indices);
+}
+
+// SHADERS
+
+std::string readFileDry(const char* filename) noexcept(false) {
     std::string fileBuffer;
     std::ifstream file;
     file.exceptions( std::ifstream::failbit | std::ifstream::badbit );
@@ -141,53 +144,54 @@ std::string readFileDry(const char* filename) {
 
 char Shader::sCompileLog[512];
 
-GLuint Shader::compileShader(const char* text, GLenum shaderType) {
+GLuint Shader::compileShader(const char* shaderSource, GLenum shaderType) noexcept(false) {
     GLuint shaderPtr = glCreateShader(shaderType);
-    glShaderSource(shaderPtr, 1, &text, 0);
+    glShaderSource(shaderPtr, 1, &shaderSource, 0);
     glCompileShader(shaderPtr);
 
-    int succ;
+    int succ = GL_TRUE;
     glGetShaderiv(shaderPtr, GL_COMPILE_STATUS, &succ);
-    if (!succ) {
-        glGetShaderInfoLog(shaderPtr, 512, NULL, Shader::sCompileLog);
-        std::cerr << "Failed to build a shader: " << std::endl << Shader::sCompileLog << std::endl;
-        std::cerr << "Shader text: " << text << std::endl;
-        return -1;
+    if (succ != GL_TRUE) {
+        glGetShaderInfoLog(shaderPtr, 512, nullptr, Shader::sCompileLog);
+        std::cerr << "Failed to build a shader: " << succ << std::endl << Shader::sCompileLog << std::endl;
+        std::cerr << "Shader text: " << shaderSource << std::endl;
+        throw std::runtime_error("Failed to build a shader.");
     }
     return shaderPtr;
 }
 
-GLuint Shader::linkProgram(GLuint vertexStage, GLuint fragmentStage) {
-    if (vertexStage == -1 || fragmentStage == -1) {
-        std::cerr << "Unable to link a shader program: Failed to build shaders" << std::endl;
-        return 0;
-    }
+GLuint Shader::linkProgram(GLuint vertexStage, GLuint fragmentStage) noexcept(false) {
     GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexStage);
     glAttachShader(shaderProgram, fragmentStage);
     glLinkProgram(shaderProgram);
+    // It's safe and even encouraged to detach and delete them
+    // I doubt I'll implement caching and reusing anytime soon.
+    glDetachShader(shaderProgram, vertexStage);
+    glDetachShader(shaderProgram, fragmentStage);
+    glDeleteShader(vertexStage);
+    glDeleteShader(fragmentStage);
 
-    int linkSuccess;
+    int linkSuccess = GL_NO_ERROR;
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &linkSuccess);
-    if (!linkSuccess) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, Shader::sCompileLog);
+    if (linkSuccess == GL_NO_ERROR) {
+        glGetProgramInfoLog(shaderProgram, 512, nullptr, Shader::sCompileLog);
         std::cerr << "Failed to link a shader program: " << std::endl << Shader::sCompileLog << std::endl;
         glDeleteProgram(shaderProgram);
         shaderProgram = 0;
+        throw std::runtime_error("Failed to link a shader program");
     }
 
     return shaderProgram;
 }
 
-Shader::Shader(char const* vertexShaderLocation, char const* fragmentShaderLocation) {
-    std::string vertexShaderText = readFileDry(vertexShaderLocation);
-    std::string fragmentShaderText = readFileDry(fragmentShaderLocation);
+Shader::Shader(char const* vertexShaderPath, char const* fragmentShaderPath) {
+    std::string vertexShaderText = readFileDry(vertexShaderPath);
+    std::string fragmentShaderText = readFileDry(fragmentShaderPath);
 
-    unsigned int vertexShader = this->compileShader(vertexShaderText.c_str(), GL_VERTEX_SHADER);
-    unsigned int fragmentShader = this->compileShader(fragmentShaderText.c_str(), GL_FRAGMENT_SHADER);
-    this->pShaderProgram = this->linkProgram(vertexShader, fragmentShader);
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    GLuint vertexShader = Shader::compileShader(vertexShaderText.c_str(), GL_VERTEX_SHADER);
+    GLuint fragmentShader = Shader::compileShader(fragmentShaderText.c_str(), GL_FRAGMENT_SHADER);
+    this->pShaderProgram = Shader::linkProgram(vertexShader, fragmentShader);
 }
 
 Shader::Shader(GLuint programId) {
@@ -198,15 +202,12 @@ Shader* Shader::fromSource(const char* vertexSource, const char* fragmentSource)
     GLuint vertexStage = Shader::compileShader(vertexSource, GL_VERTEX_SHADER);
     GLuint fragmentStage = Shader::compileShader(fragmentSource, GL_FRAGMENT_SHADER);
     GLuint shaderProgram = Shader::linkProgram(vertexStage, fragmentStage);
-    glDeleteShader(vertexStage);
-    glDeleteShader(fragmentStage);
 
     return new Shader(shaderProgram);
 }
 
 Shader::~Shader() { if (this->pShaderProgram != 0) glDeleteProgram(this->pShaderProgram); }
 
-int Shader::checkCompileStatus() { return this->pShaderProgram != 0; }
 void Shader::activate() { glUseProgram(this->pShaderProgram); }
 
 void Shader::setTransform(glm::mat4 projection, glm::mat4 view) {
@@ -214,22 +215,38 @@ void Shader::setTransform(glm::mat4 projection, glm::mat4 view) {
     glUniformMatrix4fv(glGetUniformLocation(this->pShaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
 }
 
-template <>
-void Shader::setUniform<int>(const char *name, int uniformValue) {
+void Shader::setUniform(const char *name, int uniformValue) {
     glUniform1i(glGetUniformLocation(this->pShaderProgram, name), uniformValue);
 }
 
-template <>
-void Shader::setUniform<float>(const char*name, float uniformValue) { glUniform1f(glGetUniformLocation(this->pShaderProgram, name), uniformValue); }
+void Shader::setUniform(const char*name, float uniformValue) {
+    glUniform1f(glGetUniformLocation(this->pShaderProgram, name), uniformValue);
+}
 
-template <>
-void Shader::setUniform<double>(const char*name, double uniformValue) { glUniform1f(glGetUniformLocation(this->pShaderProgram, name), uniformValue); }
+void Shader::setUniform(const char*name, double uniformValue) {
+    glUniform1f(glGetUniformLocation(this->pShaderProgram, name), uniformValue);
+}
 
-template<>
-void Shader::setUniform<glm::vec3>(const char*name, glm::vec3 uniformValue) { glUniform3f(glGetUniformLocation(this->pShaderProgram, name), uniformValue.x, uniformValue.y, uniformValue.z); }
+void Shader::setUniform(const char*name, glm::vec2 uniformValue) {
+    glUniform2fv(glGetUniformLocation(this->pShaderProgram, name), 1, &uniformValue.x);
+}
 
-template<>
-void Shader::setUniform<glm::mat4>(const char*name, glm::mat4 uniformValue) { glUniformMatrix4fv(glGetUniformLocation(this->pShaderProgram, name), 1, GL_FALSE, &uniformValue[0][0]); }
+void Shader::setUniform(const char*name, glm::vec3 uniformValue) {
+    glUniform3fv(glGetUniformLocation(this->pShaderProgram, name), 1, &uniformValue.x);
+}
 
-template<>
-void Shader::setUniform<glm::mat3>(const char*name, glm::mat3 uniformValue) { glUniformMatrix3fv(glGetUniformLocation(this->pShaderProgram, name), 1, GL_FALSE, &uniformValue[0][0]); }
+void Shader::setUniform(const char*name, glm::vec4 uniformValue) {
+    glUniform4fv(glGetUniformLocation(this->pShaderProgram, name), 1, &uniformValue.x);
+}
+
+void Shader::setUniform(const char*name, glm::mat2 uniformValue) {
+    glUniformMatrix2fv(glGetUniformLocation(this->pShaderProgram, name), 1, GL_FALSE, &uniformValue[0][0]);
+}
+
+void Shader::setUniform(const char*name, glm::mat3 uniformValue) {
+    glUniformMatrix3fv(glGetUniformLocation(this->pShaderProgram, name), 1, GL_FALSE, &uniformValue[0][0]);
+}
+
+void Shader::setUniform(const char*name, glm::mat4 uniformValue) {
+    glUniformMatrix4fv(glGetUniformLocation(this->pShaderProgram, name), 1, GL_FALSE, &uniformValue[0][0]);
+}
