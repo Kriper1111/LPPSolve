@@ -18,8 +18,6 @@
 #endif
 
 namespace LocalMan {
-    using namespace moFileLib;
-
     struct LMLocale {
         std::string language;
         std::string country;
@@ -47,10 +45,10 @@ namespace LocalMan {
     void changeLocale(const char* locale) {
         try {
             const fs::path cataloguePath = localesMap.at(locale);
-            moFileReader::eErrorCode errorCode = moFileReader::eErrorCode::EC_SUCCESS;
-            errorCode = moReadMoFile(cataloguePath.c_str());
-            if (errorCode != moFileReader::EC_SUCCESS) {
-                throw std::runtime_error(moFileGetErrorDescription());
+            moFileLib::moFileReader::eErrorCode errorCode = moFileLib::moFileReader::eErrorCode::EC_SUCCESS;
+            errorCode = moFileLib::moReadMoFile(cataloguePath.c_str());
+            if (errorCode != moFileLib::moFileReader::EC_SUCCESS) {
+                throw std::runtime_error(moFileLib::moFileGetErrorDescription());
             }
             currentLocale = locale;
             std::cout << "Set locale to " << locale
@@ -131,7 +129,7 @@ namespace LocalMan {
         // and now split
         if ((index = hint.find_first_of("_")) != std::string::npos) {
             out.language.assign(hint.begin(), hint.begin() + index);
-            out.country.assign(hint.end() - index, hint.end());
+            out.country.assign(hint.begin() + index + 1, hint.end());
         } else {
             out.language = hint;
         }
@@ -147,16 +145,6 @@ namespace LocalMan {
         return getLocale(setlocale(LC_CTYPE, 0));
     }
     #endif
-
-    void setToDefault(std::string hint) {
-        LMLocale locale = getLocale(hint);
-
-        if (localesMap.find(locale.fullname) != localesMap.end()) {
-            changeLocale(locale.fullname);
-        } else {
-            changeLocale(locale.language);
-        }
-    }
 
     void setToDefault() {
         LMLocale locale = getLocale();

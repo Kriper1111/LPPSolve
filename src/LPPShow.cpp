@@ -10,6 +10,7 @@
 #include "localman.h"
 #include "assets.h"
 #include "camera.h"
+#define DISPLAY_IMPL
 #include "solver.h"
 
 // *honestly* i should define a function doing the same as '_' from moFileReader (mfr for short)

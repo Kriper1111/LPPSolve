@@ -1,10 +1,6 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-// XXX : We shouldn't have to include them in each implementation for the solver to work.
-// Forward-declare them maybe?
-#include "assets.h"
-#include "camera.h"
 
 #include <cstdarg>
 
@@ -12,6 +8,9 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "solver.h"
+#include "localman.h"
+
+#define test(function, name) run_test(function, name) ? passed+=1 : failed+=1
 
 using std::cout;
 using std::cerr;
@@ -208,38 +207,65 @@ bool solver_vertices_invalid() {
     return solver->getSolution()->polyhedraVertices.size() == 0;
 }
 
-typedef bool test();
+bool localman_parse_locale_plain() {
+    auto locale = LocalMan::getLocale("en_US");
+    return (locale.language == "en" && locale.country == "US");
+}
 
-bool run_test(test* test_function, const char* test_name) {
+bool localman_parse_locale_fluff() {
+    auto locale = LocalMan::getLocale("da_DK.ISO8859-15@euro");
+    return (locale.language == "da" && locale.country == "DK");
+}
+
+bool localman_parse_locale_short() {
+    auto locale = LocalMan::getLocale("ru");
+    return (locale.language == "ru" && locale.country == "");
+}
+
+bool localman_parse_locale_country_only() {
+    auto locale = LocalMan::getLocale("_ES");
+    return (locale.language == "" && locale.country == "ES");
+}
+
+typedef bool TestType();
+
+bool run_test(TestType* test_function, const char* test_name) {
     cout << "Running " << test_name << "... ";
     bool result = false;
     try { result = test_function(); }
     catch (...) {}
-    cout << (result ? "passed" : "failed") << endl;
+    cout << (result ? "\033[32;1mpassed" : "\033[31;1mfailed") << "\033[0;0m" << endl;
     return result;
 }
 
 int main() {
     cout << "Performing tests" << endl;
+    cout << "===========================\n";
 
     int passed = 0;
     int failed = 0;
 
     try {
-    run_test(solver_sanity_check, "Solver: Sanity check") ? passed += 1 : failed += 1;
-    run_test(solver_invalid_solution, "Solver: With invalid input") ? passed += 1 : failed += 1;
-    run_test(solver_2d_solution_min, "Solver: 2D solution -> min") ? passed += 1 : failed += 1;
-    run_test(solver_2d_solution_max, "Solver: 2D solution -> max") ? passed += 1 : failed += 1;
-    run_test(solver_3d_solution, "Solver: 3D solution") ? passed += 1 : failed += 1;
-    run_test(solver_2d_vertices, "Solver: 2D Extreme points") ? passed += 1 : failed += 1;
-    run_test(solver_3d_vertices, "Solver: 3D Extreme points") ? passed += 1 : failed += 1;
-    run_test(solver_vertices_invalid, "Solver: Extreme points with invalid system") ? passed += 1 : failed += 1;
+    test(solver_sanity_check, "Solver: Sanity check");
+    test(solver_invalid_solution, "Solver: With invalid input");
+    test(solver_2d_solution_min, "Solver: 2D solution -> min");
+    test(solver_2d_solution_max, "Solver: 2D solution -> max");
+    test(solver_3d_solution, "Solver: 3D solution");
+    test(solver_2d_vertices, "Solver: 2D Extreme points");
+    test(solver_3d_vertices, "Solver: 3D Extreme points");
+    test(solver_vertices_invalid, "Solver: Extreme points with invalid system");
+
+    test(localman_parse_locale_plain, "LocalMan: Parse plain locale");
+    test(localman_parse_locale_short, "LocalMan: Parse short locale");
+    test(localman_parse_locale_country_only, "LocalMan: Parse country only");
+    test(localman_parse_locale_fluff, "LocalMan: Parse with extra fluff");
     } catch (std::runtime_error &err) {
         cerr << "How unexpected, the test suite ran into a problem" << endl;
         cerr << "err.what(): " << err.what() << endl;
         cerr << "We're sorry." << endl;
     }
 
+    cout << "===========================\n";
     cout << "Tests completed" << endl;
     cout << "Passed: " << passed << endl;
     cout << "Failed: " << failed << endl;

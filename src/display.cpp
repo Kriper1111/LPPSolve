@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#define DISPLAY_IMPL
 #include "assets.h"
 #include "camera.h"
 #include "solver.h"

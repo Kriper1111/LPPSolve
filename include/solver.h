@@ -49,6 +49,7 @@ class LinearProgrammingProblem {
     virtual ~LinearProgrammingProblem();
 };
 
+#ifdef DISPLAY_IMPL
 class Display:public LinearProgrammingProblem {
     private:
     std::shared_ptr<Object> planeObject;
@@ -116,3 +117,4 @@ class WorldGridDisplay {
 
     ~WorldGridDisplay();
 };
+#endif

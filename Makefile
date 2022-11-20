@@ -80,7 +80,7 @@ endif
 objects/%.o:src/%.cpp
 	$(CXX) $(CXXFLAGS) -MMD -c -o $@ $<
 objects/%.o:tests/%.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) -MMD -c -o $@ $<
 objects/%.o:thirdparty/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 objects/%.o:thirdparty/quickhull/%.cpp
