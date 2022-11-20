@@ -10,6 +10,8 @@ thirdparty/imgui
 
 include/baked_shaders.h
 
+locale/compiled
+
 objects
 /LPPShow*
 /run-tests*

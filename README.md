@@ -18,6 +18,7 @@ This project requires the following libraries for a release build:
  * [GLAD](https://github.com/Dav1dde/glad) OpenGL 3.3 Core headers and objects. They are included with the project. For manual acquiring, follow https://glad.dav1d.de/#profile=core&language=c&specification=gl&loader=on&api=gl%3D3.3.
  * [ImGui](https://github.com/ocornut/imgui/): `libimgui-dev`/`imgui`
  * QuickHull by akuukka: [sources](https://github.com/akuukka/quickhull), included as submodule.
+ * moFileReader by AnoterFoxGuy: [sources](https://github.com/AnotherFoxGuy/MofileReader), only the header from releases is required.
  * cddlib: `libcdd-dev`/[sources](https://github.com/cddlib/cddlib)
 
 These libraries are available in `vcpkg` repository on Windows. Their names are listed after the slash. If possible, acquire them from there.

@@ -1,4 +1,4 @@
-.phony: all
+.phony: all locale
 
 ############################
 # BASELINE
@@ -25,11 +25,13 @@ OBJS_THIRDPARTY = $(addprefix objects/, $(addsuffix .o, $(basename $(notdir $(SO
 OBJS = $(OBJS_BASE) $(OBJS_THIRDPARTY)
 DEPS = $(OBJS:%.o=%.d)
 
+LOCALE_FILES = $(notdir $(wildcard locale/translated/*.po))
+COMPILED_LOCALE_FILES = $(addprefix locale/compiled/, $(LOCALE_FILES:%.po=%.mo))
 SHADERS = $(wildcard assets/*.vert) $(wildcard assets/*.frag)
 
 CXXFLAGS = -I$(INCLUDE_DIR) -I$(THIRDPARTY_INCLUDE)
-CXXFLAGS += -I$(IMGUI_DIR) -DUSE_CDDLIB
-LIBS = 
+CXXFLAGS += -I$(IMGUI_DIR) -DUSE_CDDLIB -std=c++14
+LIBS = -lstdc++fs
 
 ############################
 # PLATFORM-SPECIFIC
@@ -50,8 +52,8 @@ ifeq ($(PLATFORM),Darwin) # Borrowed from ImGui's example script
 endif
 
 ifeq ($(OS),Windows_NT)
-	LIBS += -lglfw3 -lopengl32 -lgdi32
-	CXXFLAGS += -static -Llibraries
+	LIBS += -lglfw3 -lopengl32 -lgdi32 -l:libcdd.a
+	CXXFLAGS += -static -Llibraries -Llibraries/glfw-mingw-w64
 endif
 
 CFLAGS = $(CXXFLAGS) # I think after?
@@ -87,12 +89,16 @@ objects/%.o:$(IMGUI_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 objects/%.o:$(IMGUI_DIR)/backends/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
+locale/compiled/%.mo:locale/translated/%.po
+	msgfmt -o $@ $< --
 
 include/bake%.h: $(SHADERS)
 	python preconfigure/bake_shaders.py $^ $@
 
-all: object-folder $(EXECUTABLE_NAME)
+all: object-folder locale $(EXECUTABLE_NAME)
 	@echo "Build done for $(EXECUTABLE_NAME) v$(EXECUTABLE_VERSION)"
+
+locale: $(COMPILED_LOCALE_FILES)
 
 -include $(DEPS)
 

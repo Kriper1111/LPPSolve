@@ -7,16 +7,17 @@
 #include <imgui/backends/imgui_impl_glfw.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
 
-#include <libintl.h>
-
+#include "localman.h"
 #include "assets.h"
 #include "camera.h"
 #include "solver.h"
 
-#define l10n(str) gettext(str)
+// *honestly* i should define a function doing the same as '_' from moFileReader (mfr for short)
+// instead of making it a macro that way it's.. i guess more control
+#define l10n(str) moFileLib::_(str)
+#define l10nc(str) moFileLib::_(str).c_str()
 
 const float movementSpeed = 2.5f;
-const std::vector<std::string> locales = { "ru_RU", "en_US" };
 ImVec2 imguiWindowPosition = { 980, 0 };
 ImVec2 imguiWindowSize = { 320, 720 };
 ImVec4 worldColor = { 0.364, 0.674, 0.764, 1.0 };
@@ -34,38 +35,12 @@ struct MouseState {
 } mouseState;
 
 namespace SceneData {
-    int currentLocale = 0;
     bool canMoveCamera = true;
     bool allowEditCamera = false;
     bool showDebugOverlay = false;
     Display* lppshow;
     WorldGridDisplay* worldOrigin;
     Camera *sceneCamera;
-}
-
-void initL10N() {
-    setenv("LANGUAGE", "", 1);
-    setlocale(LC_ALL, "C.UTF-8");
-    setlocale(LC_MESSAGES, "C.UTF-8");
-
-    // TODO: Find all the locales and populate a vector with their names
-    for (const std::string locale : locales) {
-        bindtextdomain(locale.c_str(), "./locale");
-    }
-
-    textdomain(locales[0].c_str());
-}
-
-// XXX: Very unsafe (for work)
-void changeLocale(int localeID) {
-    try {
-        const std::string localeName = locales.at(localeID);
-        textdomain(localeName.c_str());
-        SceneData::currentLocale = localeID;
-        std::cout << "Set locale to " << localeName << std::endl;
-    } catch (std::out_of_range &err) {
-        std::cerr << "Unable to change locale to " << localeID << " of " << locales.size() << std::endl;
-    }
 }
 
 void glfwErrorCallback(int error, const char* description) {
@@ -79,7 +54,8 @@ int logCriticalError(const char* description) {
 }
 
 void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
-    float speedMod = (glfwGetKey(inputWindow, GLFW_KEY_LEFT_SHIFT) | glfwGetKey(inputWindow, GLFW_KEY_RIGHT_SHIFT)) ? 4.0f : 1.0f;
+    float speedMod = (glfwGetKey(inputWindow, GLFW_KEY_LEFT_SHIFT) |
+                      glfwGetKey(inputWindow, GLFW_KEY_RIGHT_SHIFT)) ? 4.0f : 1.0f;
     speedMod *= timeStep * 1000.0f;
 
     float horizontal = (glfwGetKey(inputWindow, GLFW_KEY_A) - glfwGetKey(inputWindow, GLFW_KEY_D))
@@ -106,7 +82,7 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
         camera->rotate(-89.9, 0, 0);
         camera->setOrtography();
     }
-    
+
     if (snapToLeft || snapToRight || snapToTop) {
         camera->setOrtography();
     } else if (horizontal || vertical) {
@@ -114,7 +90,6 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
         camera->setPerspective();
     }
     if (zoom) {
-        
         // camera->zoom(0, zoom * speedMod);
     }
 }
@@ -124,12 +99,15 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+
     // TODO: Make collapsing too, maybe?
-    ImGui::Begin(l10n("Planes"), nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+    // ImGui::Begin(csuffix(l10n("Planes"), "###planes-win"), nullptr, windowFlags);
+    ImGui::Begin(l10n("Planes").append("###planes-win").c_str(), nullptr, windowFlags);
     ImGui::SetWindowPos(imguiWindowPosition);
     ImGui::SetWindowSize(imguiWindowSize);
 
-    if (ImGui::CollapsingHeader(l10n("Camera controls"))) {
+    if (ImGui::CollapsingHeader(l10n("Camera controls").append("###camera-opt").c_str())) {
         if (SceneData::allowEditCamera) {
             auto cameraLocation = camera->getCameraLocation();
             auto cameraRotation = camera->getCameraRotation();
@@ -173,20 +151,20 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         }
     }
 
-    if (ImGui::CollapsingHeader(l10n("Display options"))) {
-        ImGui::Checkbox("Show grid", &SceneData::worldOrigin->gridEnabled);
-        ImGui::Checkbox("Show world axis", &SceneData::worldOrigin->axisEnabled);
-        ImGui::InputFloat("Grid scale", &SceneData::worldOrigin->gridScale, 0.10f, 0.25f);
-        ImGui::InputFloat("Grid width", &SceneData::worldOrigin->gridWidth, 0.01f, 0.015f);
+    if (ImGui::CollapsingHeader(l10n("Display options").append("###display-opt").c_str())) {
+        ImGui::Checkbox(l10nc("Show grid"), &SceneData::worldOrigin->gridEnabled);
+        ImGui::Checkbox(l10nc("Show world axis"), &SceneData::worldOrigin->axisEnabled);
+        ImGui::InputFloat(l10nc("Grid scale"), &SceneData::worldOrigin->gridScale, 0.10f, 0.25f);
+        ImGui::InputFloat(l10nc("Grid width"), &SceneData::worldOrigin->gridWidth, 0.01f, 0.015f);
         ImGui::Separator();
 
         if (ImGui::CollapsingHeader("Solution")) {
-            ImGui::SliderFloat("Plane stripe width", &SceneData::lppshow->stripeWidth, 0.0f, 1.0f);
-            ImGui::SliderFloat("Plane stripe frequency", &SceneData::lppshow->stripeFrequency, 1.0f, 100.0f);
-            ImGui::SliderFloat("Solution wireframe thickness", &SceneData::lppshow->wireThickness, 1.0f, 5.0f);
-            ImGui::Checkbox("Show planes", &SceneData::lppshow->showPlanesAtAll);
-            ImGui::Checkbox("Show solution volume", &SceneData::lppshow->showSolutionVolume);
-            ImGui::Checkbox("Show solution wireframe", &SceneData::lppshow->showSolutionWireframe);
+            ImGui::SliderFloat(l10nc("Plane stripe width"), &SceneData::lppshow->stripeWidth, 0.0f, 1.0f);
+            ImGui::SliderFloat(l10nc("Plane stripe frequency"), &SceneData::lppshow->stripeFrequency, 1.0f, 100.0f);
+            ImGui::SliderFloat(l10nc("Solution wireframe thickness"), &SceneData::lppshow->wireThickness, 1.0f, 5.0f);
+            ImGui::Checkbox(l10nc("Show planes"), &SceneData::lppshow->showPlanesAtAll);
+            ImGui::Checkbox(l10nc("Show solution volume"), &SceneData::lppshow->showSolutionVolume);
+            ImGui::Checkbox(l10nc("Show solution wireframe"), &SceneData::lppshow->showSolutionWireframe);
             ImGui::Separator();
         }
 
@@ -195,33 +173,35 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             #ifdef DEBUG
             ImGui::ColorPicker3("World color", &worldColor.x, shaderPickerFlags);
             #endif
-            ImGui::ColorEdit3("Solution volume", &SceneData::lppshow->solutionColor.x, shaderPickerFlags);
-            ImGui::ColorEdit3("Solution wireframe", &SceneData::lppshow->solutionWireframeColor.x, shaderPickerFlags);
-            ImGui::ColorEdit3("Plane right direction", &SceneData::lppshow->constraintPositiveColor.x, shaderPickerFlags);
-            ImGui::ColorEdit3("Plane wrong direction", &SceneData::lppshow->constraintNegativeColor.x, shaderPickerFlags);
+            ImGui::ColorEdit3(l10nc("Solution volume"), &SceneData::lppshow->solutionColor.x, shaderPickerFlags);
+            ImGui::ColorEdit3(l10nc("Solution wireframe"), &SceneData::lppshow->solutionWireframeColor.x, shaderPickerFlags);
+            ImGui::ColorEdit3(l10nc("Plane right direction"), &SceneData::lppshow->constraintPositiveColor.x, shaderPickerFlags);
+            ImGui::ColorEdit3(l10nc("Plane wrong direction"), &SceneData::lppshow->constraintNegativeColor.x, shaderPickerFlags);
+            ImGui::Separator();
         }
-        ImGui::Separator();
-        if (ImGui::BeginCombo("Language: ", locales[SceneData::currentLocale].c_str())) {
-            for (int localeID = 0; localeID < locales.size(); localeID ++) {
-                if (ImGui::Selectable(locales[localeID].c_str(), localeID == SceneData::currentLocale)) {
-                    changeLocale(localeID);
+
+        if (ImGui::BeginCombo("Language: ", LocalMan::currentLocale.c_str())) {
+            for (auto locale : LocalMan::localesMap) {
+                if (ImGui::Selectable(locale.first.c_str(), locale.first == LocalMan::currentLocale)) {
+                    LocalMan::changeLocale(locale.first);
                 }
             }
             ImGui::EndCombo();
         }
+        ImGui::Separator();
     }
 
     ImGui::Text("Total planes: %d", SceneData::lppshow->getEquationCount());
-    if (ImGui::Button(l10n("Add plane")) && SceneData::lppshow->getEquationCount() < 256) {
+    if (ImGui::Button(l10nc("Add plane")) && SceneData::lppshow->getEquationCount() < 256) {
         SceneData::lppshow->addLimitPlane({0, 0, 1, 0});
     }
     ImGui::SameLine();
-    if (ImGui::Button(l10n("Remove plane")) && SceneData::lppshow->getEquationCount() > 0) {
+    if (ImGui::Button(l10nc("Remove plane")) && SceneData::lppshow->getEquationCount() > 0) {
         SceneData::lppshow->removeLimitPlane();
     }
     ImGui::Separator();
 
-    ImGui::Text(l10n("Objective function:"));
+    ImGui::Text(l10nc("Objective function:"));
     ImGui::InputFloat4("##objective", &SceneData::lppshow->objectiveFunction.x);
     ImGui::SameLine(); ImGui::Text("->"); ImGui::SameLine();
     auto doMinimize = SceneData::lppshow->doMinimize;
@@ -250,7 +230,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::PopID();
     }
 
-    if (ImGui::Button(l10n("Solve"))) {
+    if (ImGui::Button(l10nc("Solve"))) {
         try {
             SceneData::lppshow->solve();
         } catch (std::runtime_error &dd_error) {
@@ -314,8 +294,6 @@ void glfwMouseCallback(GLFWwindow* window) {
 }
 
 int main() {
-    initL10N();
-
     // XXX: Make GLFW init thing into an object?
     // That way we could use auto-destructors without worrying about
     // deleting stray Objects after glfw has been deinitialized.
@@ -365,6 +343,8 @@ int main() {
     ////////////
     //// SCENE SETUP
     ////////////
+    LocalMan::updateLocales();
+    LocalMan::setToDefault();
     Camera* camera = new Camera(windowWidth - imguiWindowSize.x, windowHeight);
     camera->teleportTo(7.35889, 6.92579, 4.95831);
     camera->rotate(-26.4407, 0.0, -133.3081);
