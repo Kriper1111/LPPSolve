@@ -23,25 +23,25 @@
 const char* reflect_dd_error(dd_ErrorType error) {
     switch (error)
     {
-    case dd_DimensionTooLarge: return REFLECT(dd_DimensionTooLarge);
-    case dd_ImproperInputFormat: return REFLECT(dd_ImproperInputFormat);
-    case dd_NegativeMatrixSize: return REFLECT(dd_NegativeMatrixSize);
-    case dd_EmptyVrepresentation: return REFLECT(dd_EmptyVrepresentation);
-    case dd_EmptyHrepresentation: return REFLECT(dd_EmptyHrepresentation);
-    case dd_EmptyRepresentation: return REFLECT(dd_EmptyRepresentation);
-    case dd_IFileNotFound: return REFLECT(dd_IFileNotFound);
-    case dd_OFileNotOpen: return REFLECT(dd_OFileNotOpen);
-    case dd_NoLPObjective: return REFLECT(dd_NoLPObjective);
-    case dd_NoRealNumberSupport: return REFLECT(dd_NoRealNumberSupport);
-    case dd_NotAvailForH: return REFLECT(dd_NotAvailForH);
-    case dd_NotAvailForV: return REFLECT(dd_NotAvailForV);
-    case dd_CannotHandleLinearity: return REFLECT(dd_CannotHandleLinearity);
-    case dd_RowIndexOutOfRange: return REFLECT(dd_RowIndexOutOfRange);
-    case dd_ColIndexOutOfRange: return REFLECT(dd_ColIndexOutOfRange);
-    case dd_LPCycling: return REFLECT(dd_LPCycling);
-    case dd_NumericallyInconsistent: return REFLECT(dd_NumericallyInconsistent);
-    case dd_NoError: return REFLECT(dd_NoError);
-    default: return "Unknown dd_ErrorType";
+        case dd_DimensionTooLarge: return REFLECT(dd_DimensionTooLarge);
+        case dd_ImproperInputFormat: return REFLECT(dd_ImproperInputFormat);
+        case dd_NegativeMatrixSize: return REFLECT(dd_NegativeMatrixSize);
+        case dd_EmptyVrepresentation: return REFLECT(dd_EmptyVrepresentation);
+        case dd_EmptyHrepresentation: return REFLECT(dd_EmptyHrepresentation);
+        case dd_EmptyRepresentation: return REFLECT(dd_EmptyRepresentation);
+        case dd_IFileNotFound: return REFLECT(dd_IFileNotFound);
+        case dd_OFileNotOpen: return REFLECT(dd_OFileNotOpen);
+        case dd_NoLPObjective: return REFLECT(dd_NoLPObjective);
+        case dd_NoRealNumberSupport: return REFLECT(dd_NoRealNumberSupport);
+        case dd_NotAvailForH: return REFLECT(dd_NotAvailForH);
+        case dd_NotAvailForV: return REFLECT(dd_NotAvailForV);
+        case dd_CannotHandleLinearity: return REFLECT(dd_CannotHandleLinearity);
+        case dd_RowIndexOutOfRange: return REFLECT(dd_RowIndexOutOfRange);
+        case dd_ColIndexOutOfRange: return REFLECT(dd_ColIndexOutOfRange);
+        case dd_LPCycling: return REFLECT(dd_LPCycling);
+        case dd_NumericallyInconsistent: return REFLECT(dd_NumericallyInconsistent);
+        case dd_NoError: return REFLECT(dd_NoError);
+        default: return "Unknown dd_ErrorType";
     }
 }
 
@@ -61,7 +61,7 @@ const char* reflect_lp_status(dd_LPStatusType status) {
 }
 
 // @throws std::runtime_error if there's a dd error
-void throw_dd_error(dd_ErrorType error) {
+void throw_dd_error(dd_ErrorType error) noexcept(false) {
     if (error != dd_NoError) {
         throw std::runtime_error(reflect_dd_error(error));
     }
@@ -92,13 +92,15 @@ std::vector<std::vector<int>> getAdjacency(dd_SetFamilyPtr adj) {
         std::vector<int> vertex_adjacent;
 
 		long cardinality = set_card(adj->set[vertex]);
-		bool invert = adj->setsize - cardinality >= cardinality;
+		// bool invert = adj->setsize - cardinality >= cardinality;
+        if (cardinality == adj->famsize) continue;
 		for (int elemt = 1; elemt <= adj->set[vertex][0]; elemt++) {
 			if (set_member(elemt, adj->set[vertex]))
 				vertex_adjacent.push_back(elemt);
 		}
 
-        if (vertex_adjacent.size() > 0)
+        // XXX: May cause some issues, if an empty row will show up first.
+        if (!vertex_adjacent.empty())
             adjacency.push_back(vertex_adjacent);
     }
     return adjacency;

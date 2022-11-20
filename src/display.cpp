@@ -33,14 +33,35 @@ void generateSolutionObject(Object* object, const std::vector<float> vertices) {
 
 void generateSolutionWireframe(Object* object, const std::vector<float> vertices, const std::vector<std::vector<int>> adjacency) {
     std::vector<int> indices;
+    int vertexCount = vertices.size() / 3;
+
+    #ifdef DEBUG
+    std::cout << "###############################\n";
+    std::cout << "# BEGIN WIREFRAME GENERATION\n";
+    std::cout << "###############################\n";
+
+    std::cout << "Total vertices: " << vertexCount << '\n';
+    std::cout << "Total adjacency entries: " << adjacency.size() << '\n';
+
+    std::cout << "The pairing output will follow.\n";
+    #endif
 
     for (int vertex_a = 0; vertex_a < adjacency.size(); vertex_a++) {
         const auto adjacent = adjacency[vertex_a];
         for (int vtx = 0; vtx < adjacent.size(); vtx++) {
             int vertex_b = adjacent[vtx] - 1;
-            if (vertex_a <= vertex_b) {
+
+            #ifdef DEBUG
+            std::cout << "Pairing " << vertex_a << "<->" << vertex_b << '\n';
+            #endif
+
+            if (vertex_a < vertex_b && vertex_b < vertexCount) {
                 indices.push_back(vertex_a);
                 indices.push_back(vertex_b);
+
+                #ifdef DEBUG
+                std::cout << " * It's a match!\n";
+                #endif
             }
         }
     }
