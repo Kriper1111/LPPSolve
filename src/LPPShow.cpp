@@ -91,7 +91,6 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
     }
     if (zoom) {
         SceneData::worldOrigin->zoomGrid(zoom * 0.005 * speedMod);
-        // camera->zoom(0, zoom * speedMod);
     }
 }
 
@@ -178,7 +177,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             ImGui::Separator();
         }
 
-        if (ImGui::TreeNode("Sliders")) {
+        if (ImGui::TreeNode(l10n("Sliders").append("###sliders").c_str())) {
             ImGui::PushItemWidth(imguiWindowSize.x / 2);
             #ifdef DEBUG
             ImGui::InputFloat("Grid scale", &SceneData::worldOrigin->gridScale, 0.10f, 0.25f);
@@ -236,7 +235,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         bool isVisible = SceneData::lppshow->visibleEquations[planeIndex];
         if(ImGui::Checkbox("##vis", &isVisible))
             SceneData::lppshow->visibleEquations[planeIndex] = isVisible;
-        ImGui::SameLine(); ImGui::Text("Plane: "); ImGui::SameLine();
+        ImGui::SameLine(); ImGui::Text("Plane:"); ImGui::SameLine();
         if (ImGui::InputFloat4("##vec", &planeEquationOrigin[0])) {
             SceneData::lppshow->editLimitPlane(planeIndex, planeEquationOrigin);
         }
@@ -252,12 +251,12 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     }
     auto solution = SceneData::lppshow->getSolution();
     if (solution->isErrored) {
-        ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, "Failed to solve the equation: %s", solution->errorString);
+        ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, l10nc("Failed to solve the equation: %s"), solution->errorString);
     } else if (solution->isSolved) {
-        ImGui::Text("Optimal value: %.4f", solution->optimalValue);
-        ImGui::Text("Optimal plan: %.3fx1 %.3fx2 %.3fx3", solution->optimalVector.x, solution->optimalVector.y, solution->optimalVector.z);
+        ImGui::Text(l10nc("Optimal value: %.4f"), solution->optimalValue);
+        ImGui::Text(l10nc("Optimal plan: %.3fx1 %.3fx2 %.3fx3"), solution->optimalVector.x, solution->optimalVector.y, solution->optimalVector.z);
     } else if (!solution->isErrored && !solution->isSolved && !solution->statusString.empty()) {
-        ImGui::Text("Solution status: %s", solution->statusString.c_str());
+        ImGui::Text(l10nc("Solution status: %s"), solution->statusString.c_str());
     }
 
     #ifdef DEBUG

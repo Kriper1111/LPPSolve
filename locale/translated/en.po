@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-20 16:51+0300\n"
+"POT-Creation-Date: 2022-11-20 17:38+0300\n"
 "PO-Revision-Date: 2022-11-15 22:17+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -17,94 +17,118 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/LPPShow.cpp:106
+#: src/LPPShow.cpp:105
 msgid "Planes"
 msgstr "Planes"
 
-#: src/LPPShow.cpp:110
+#: src/LPPShow.cpp:109
 msgid "Camera controls"
 msgstr "Camera controls"
 
-#: src/LPPShow.cpp:154
+#: src/LPPShow.cpp:153
 msgid "Display options"
 msgstr "Display options"
 
-#: src/LPPShow.cpp:155
+#: src/LPPShow.cpp:154
 msgid "Visibility"
 msgstr "Visibility"
 
-#: src/LPPShow.cpp:156
+#: src/LPPShow.cpp:155
 msgid "Show grid"
 msgstr "Show grid"
 
-#: src/LPPShow.cpp:157
+#: src/LPPShow.cpp:156
 msgid "Show world axis"
 msgstr "Show world axis"
 
-#: src/LPPShow.cpp:158
+#: src/LPPShow.cpp:157
 msgid "Show planes"
 msgstr "Show planes"
 
-#: src/LPPShow.cpp:159
+#: src/LPPShow.cpp:158
 msgid "Show solution volume"
 msgstr "Show solution volume"
+
+#: src/LPPShow.cpp:159
+msgid "Show solution wireframe"
+msgstr "Show solution wireframe"
 
 #: src/LPPShow.cpp:160
 msgid "Show solution vector"
 msgstr "Show solution vector"
 
-#: src/LPPShow.cpp:161
-msgid "Show solution wireframe"
-msgstr "Show solution wireframe"
-
-#: src/LPPShow.cpp:166
+#: src/LPPShow.cpp:165
 msgid "Colors"
 msgstr "Colors"
 
-#: src/LPPShow.cpp:172
+#: src/LPPShow.cpp:171
 msgid "Solution volume"
 msgstr "Solution volume"
+
+#: src/LPPShow.cpp:172
+msgid "Solution wireframe"
+msgstr "Solution wireframe"
 
 #: src/LPPShow.cpp:173
 msgid "Solution vector"
 msgstr "Solution vector"
 
 #: src/LPPShow.cpp:174
-msgid "Solution wireframe"
-msgstr "Solution wireframe"
-
-#: src/LPPShow.cpp:175
 msgid "Plane right direction"
 msgstr "Plane right direction"
 
-#: src/LPPShow.cpp:176
+#: src/LPPShow.cpp:175
 msgid "Plane wrong direction"
 msgstr "Plane wrong direction"
 
-#: src/LPPShow.cpp:185
+#: src/LPPShow.cpp:180
+msgid "Sliders"
+msgstr "Sliders"
+
+#: src/LPPShow.cpp:186
 msgid "Plane stripe width"
 msgstr "Plane stripe width"
 
-#: src/LPPShow.cpp:186
+#: src/LPPShow.cpp:187
 msgid "Plane stripe frequency"
 msgstr "Plane stripe frequency"
 
-#: src/LPPShow.cpp:187
+#: src/LPPShow.cpp:188
 msgid "Solution wireframe thickness"
 msgstr "Solution wireframe thickness"
 
-#: src/LPPShow.cpp:206
+#: src/LPPShow.cpp:207
 msgid "Add plane"
 msgstr "Add plane"
 
-#: src/LPPShow.cpp:210
+#: src/LPPShow.cpp:211
 msgid "Remove plane"
 msgstr "Remove plane"
 
-#: src/LPPShow.cpp:215
+#: src/LPPShow.cpp:216
 msgid "Objective function:"
 msgstr "Objective function:"
 
-#: src/LPPShow.cpp:244
+#: src/LPPShow.cpp:245
 msgid "Solve"
 msgstr "Solve"
+
+#: src/LPPShow.cpp:254
+#, c-format
+msgid "Failed to solve the equation: %s"
+msgstr "Failed to solve the equation: %s"
+
+#: src/LPPShow.cpp:256
+#, c-format
+msgid "Optimal value: %.4f"
+msgstr "Optimal value: %.4f"
+
+#: src/LPPShow.cpp:257
+#, c-format
+msgid "Optimal plan: %.3fx1 %.3fx2 %.3fx3"
+msgstr "Optimal plan: %.3fx1 %.3fx2 %.3fx3"
+
+#: src/LPPShow.cpp:259
+#, c-format
+msgid "Solution status: %s"
+msgstr "Solution status: %s"
