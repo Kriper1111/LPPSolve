@@ -7,7 +7,7 @@ class LinearProgrammingProblem {
         bool isErrored = false;
         bool didMinimize;
         float optimalValue;
-        glm::vec4 optimalVector;
+        glm::vec3 optimalVector;
         std::string errorString;
         std::string statusString;
         std::vector<float> polyhedraVertices;
@@ -56,6 +56,7 @@ class Display:public LinearProgrammingProblem {
 
     std::shared_ptr<Shader> solutionShader;    
     std::shared_ptr<Object> solutionObject;
+    std::shared_ptr<Object> solutionVector;
     std::shared_ptr<Object> solutionWireframe;
     std::vector<glm::mat4> planeTransforms;
 
@@ -73,6 +74,7 @@ class Display:public LinearProgrammingProblem {
     std::vector<bool> visibleEquations; // We could maybe merge that into one flag?
     bool showPlanesAtAll = true;
     bool showSolutionVolume = true;
+    bool showSolutionVector = true;
     bool showSolutionWireframe = true;
     float stripeFrequency = 10.0;
     float stripeWidth = 0.5;
@@ -80,6 +82,7 @@ class Display:public LinearProgrammingProblem {
     glm::vec3 constraintPositiveColor = {0.0, 0.0, 1.0};
     glm::vec3 constraintNegativeColor = {1.0, 0.0, 0.0};
     glm::vec3 solutionColor = {1.0, 0.746282, 0.043526};
+    glm::vec3 solutionVectorColor = {0.128, 0.833, 0.272};
     glm::vec3 solutionWireframeColor = {0.8, 0.095672, 0.019807};
 
     Display();

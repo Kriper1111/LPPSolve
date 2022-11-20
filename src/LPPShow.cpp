@@ -156,7 +156,6 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::Checkbox(l10nc("Show world axis"), &SceneData::worldOrigin->axisEnabled);
         ImGui::InputFloat(l10nc("Grid scale"), &SceneData::worldOrigin->gridScale, 0.10f, 0.25f);
         ImGui::InputFloat(l10nc("Grid width"), &SceneData::worldOrigin->gridWidth, 0.01f, 0.015f);
-        ImGui::Separator();
 
         if (ImGui::CollapsingHeader("Solution")) {
             ImGui::SliderFloat(l10nc("Plane stripe width"), &SceneData::lppshow->stripeWidth, 0.0f, 1.0f);
@@ -164,16 +163,19 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             ImGui::SliderFloat(l10nc("Solution wireframe thickness"), &SceneData::lppshow->wireThickness, 1.0f, 5.0f);
             ImGui::Checkbox(l10nc("Show planes"), &SceneData::lppshow->showPlanesAtAll);
             ImGui::Checkbox(l10nc("Show solution volume"), &SceneData::lppshow->showSolutionVolume);
+            ImGui::Checkbox(l10nc("Show solution vector"), &SceneData::lppshow->showSolutionVector);
             ImGui::Checkbox(l10nc("Show solution wireframe"), &SceneData::lppshow->showSolutionWireframe);
             ImGui::Separator();
         }
 
         if (ImGui::CollapsingHeader("Colors")) {
-            ImGuiColorEditFlags shaderPickerFlags = ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_NoInputs;
+            ImGuiColorEditFlags shaderPickerFlags = ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoOptions;
             #ifdef DEBUG
+            shaderPickerFlags = shaderPickerFlags & (~ImGuiColorEditFlags_NoOptions);
             ImGui::ColorPicker3("World color", &worldColor.x, shaderPickerFlags);
             #endif
             ImGui::ColorEdit3(l10nc("Solution volume"), &SceneData::lppshow->solutionColor.x, shaderPickerFlags);
+            ImGui::ColorEdit3(l10nc("Solution vector"), &SceneData::lppshow->solutionVectorColor.x, shaderPickerFlags);
             ImGui::ColorEdit3(l10nc("Solution wireframe"), &SceneData::lppshow->solutionWireframeColor.x, shaderPickerFlags);
             ImGui::ColorEdit3(l10nc("Plane right direction"), &SceneData::lppshow->constraintPositiveColor.x, shaderPickerFlags);
             ImGui::ColorEdit3(l10nc("Plane wrong direction"), &SceneData::lppshow->constraintNegativeColor.x, shaderPickerFlags);
@@ -242,7 +244,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, "Failed to solve the equation: %s", solution->errorString);
     } else if (solution->isSolved) {
         ImGui::Text("Optimal value: %.4f", solution->optimalValue);
-        ImGui::Text("Optimal plan: %.3fx1 %.3fx2 %.3fx3 %.3f", &solution->optimalVector.x);
+        ImGui::Text("Optimal plan: %.3fx1 %.3fx2 %.3fx3", solution->optimalVector.x, solution->optimalVector.y, solution->optimalVector.z);
     } else if (!solution->isErrored && !solution->isSolved && !solution->statusString.empty()) {
         ImGui::Text("Solution status: %s", solution->statusString.c_str());
     }

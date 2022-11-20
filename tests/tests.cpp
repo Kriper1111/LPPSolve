@@ -10,6 +10,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
+
 #include "solver.h"
 
 using std::cout;
@@ -59,7 +60,7 @@ bool solver_2d_solution_max() {
     solver->addLimitPlane(constraintTwo);
 
     solver->solve();
-    return solver->getSolution()->optimalValue == 7;
+    return (solver->getSolution()->optimalValue == 7) && (solver->getSolution()->optimalVector == glm::vec3({1, 1, 0}));
 }
 
 bool solver_2d_solution_min() {
@@ -77,7 +78,7 @@ bool solver_2d_solution_min() {
     solver->addLimitPlane(constraintThree);
 
     solver->solve();
-    return solver->getSolution()->optimalValue == 2;
+    return (solver->getSolution()->optimalValue == 2) && (solver->getSolution()->optimalVector == glm::vec3({0, 0.5, 0}));
 }
 
 // XXX: We'll test the default cube for the lack of anything else
@@ -96,7 +97,7 @@ bool solver_3d_solution() {
     solver->addLimitPlane(constraintThree);
 
     solver->solve();
-    return solver->getSolution()->optimalValue == 8;
+    return (solver->getSolution()->optimalValue == 8) && (solver->getSolution()->optimalVector == glm::vec3({1, 1, 1}));
 }
 
 bool solver_2d_vertices() {

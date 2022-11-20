@@ -31,6 +31,17 @@ void generateSolutionObject(Object* object, const std::vector<float> vertices) {
     fromVertexData(object, vertices.data(), vertices.size(), indices.data(), (int)indexBuffer.size());
 }
 
+void generateSolutionVector(Object* object, const glm::vec3 solutionVector) {
+    float vertices[6] = {
+        0, 0, 0,
+        solutionVector.x, solutionVector.y, solutionVector.z
+    };
+
+    int indices[2] = { 0, 1 };
+
+    fromVertexData(object, vertices, 6, indices, 2);
+}
+
 void generateSolutionWireframe(Object* object, const std::vector<float> vertices, const std::vector<std::vector<int>> adjacency) {
     std::vector<int> indices;
     int vertexCount = vertices.size() / 3;
@@ -71,6 +82,7 @@ void generateSolutionWireframe(Object* object, const std::vector<float> vertices
 
 #else
 void generateSolutionObject(Object* object, const std::vector<float> vertices) {};
+void generateSolutionVector(Object* object, const glm::vec3 solutionVector) {};
 void generateSolutionWireframe(Object* object, const std::vector<float> vertices, const std::vector<std::vector<int>> adjacency) {};
 #endif
 
@@ -158,8 +170,10 @@ void Display::recalculatePlane(int planeIndex) {
 void Display::rebindAttributes() {};
 void Display::onSolutionSolved() {
     solutionWireframe.reset(new Object());
+    solutionVector.reset(new Object());
     solutionObject.reset(new Object());
     generateSolutionWireframe(solutionWireframe.get(), solution.polyhedraVertices, solution.adjacency);
+    generateSolutionVector(solutionVector.get(), solution.optimalVector);
     generateSolutionObject(solutionObject.get(), solution.polyhedraVertices);
 }
 
@@ -224,12 +238,12 @@ void Display::render(Camera* camera) {
     if (this->solution.isSolved && this->solutionObject) {
     this->solutionShader->activate();
     this->solutionShader->setTransform(camera->getProjection(), camera->getView());
-    if(this->showSolutionVolume) {
+    if (this->showSolutionVolume) {
         this->solutionShader->setUniform("vertexColor", solutionColor);
         glBindVertexArray(this->solutionObject->objectData);
         glDrawElements(GL_TRIANGLES, this->solutionObject->vertexCount, GL_UNSIGNED_INT, 0);
     }
-    if(this->showSolutionWireframe) {
+    if (this->showSolutionWireframe) {
         this->solutionShader->setUniform("vertexColor", solutionWireframeColor);
         glLineWidth(this->wireThickness);
         glEnable(GL_POLYGON_OFFSET_LINE);
@@ -239,6 +253,16 @@ void Display::render(Camera* camera) {
         glDisable(GL_POLYGON_OFFSET_LINE);
         glLineWidth(1.0);
     }
+    if (this->showSolutionVector) {
+        this->solutionShader->setUniform("vertexColor", solutionVectorColor);
+        
+        glDisable(GL_DEPTH_TEST);
+
+        glBindVertexArray(this->solutionVector->objectData);
+        glDrawElements(GL_LINES, this->solutionVector->vertexCount, GL_UNSIGNED_INT, 0);
+
+        glEnable(GL_DEPTH_TEST);
+    }
     }
 
     // TODO: render solution vector too
@@ -247,6 +271,7 @@ void Display::render(Camera* camera) {
 Display::~Display() {
     Display::solutionShader.reset();
     Display::solutionObject.reset();
+    Display::solutionVector.reset();
     Display::solutionWireframe.reset();
     Display::planeObject.reset();
     Display::planeShader.reset();

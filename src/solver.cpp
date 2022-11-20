@@ -67,10 +67,10 @@ void throw_dd_error(dd_ErrorType error) noexcept(false) {
     }
 }
 
-glm::vec4 createVector(dd_Arow dd_vector, int vector_length) {
-    glm::vec4 vector(0);
-    for (int index = 0; index < vector_length && index < 4; index++) {
-        vector[index] = dd_vector[index][0];
+glm::vec3 createVector(dd_Arow dd_vector, int vector_length) {
+    glm::vec3 vector(0);
+    for (int index = 0; (index < vector_length - 1) && (index < 3); index++) {
+        vector[index] = dd_vector[index + 1][0];
     }
     return vector;
 }
