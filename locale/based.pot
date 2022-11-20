@@ -81,14 +81,6 @@ msgstr ""
 msgid "Plane wrong direction"
 msgstr ""
 
-#: src/LPPShow.cpp:183
-msgid "Grid scale"
-msgstr ""
-
-#: src/LPPShow.cpp:184
-msgid "Grid width"
-msgstr ""
-
 #: src/LPPShow.cpp:185
 msgid "Plane stripe width"
 msgstr ""

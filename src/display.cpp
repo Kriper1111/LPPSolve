@@ -255,7 +255,7 @@ void Display::render(Camera* camera) {
     }
     if (this->showSolutionVector) {
         this->solutionShader->setUniform("vertexColor", solutionVectorColor);
-        
+
         glDisable(GL_DEPTH_TEST);
 
         glBindVertexArray(this->solutionVector->objectData);
@@ -264,8 +264,6 @@ void Display::render(Camera* camera) {
         glEnable(GL_DEPTH_TEST);
     }
     }
-
-    // TODO: render solution vector too
 };
 
 Display::~Display() {
@@ -347,9 +345,9 @@ WorldGridDisplay::WorldGridDisplay() {
 }
 
 void WorldGridDisplay::zoomGrid(float amount) {
-    gridScale += amount;
-    while (gridScale > 2.0) gridScale -= 2.0;
-    while (gridScale < 1.0) gridScale += 1.0;
+    gridScale += amount * gridScale;
+    if (gridScale > 10.0) gridScale = 1.0;
+    if (gridScale <  0.1) gridScale = 1.0;
 }
 
 void WorldGridDisplay::render(glm::mat4 view, glm::mat4 projection) {
@@ -365,6 +363,16 @@ void WorldGridDisplay::render(glm::mat4 view, glm::mat4 projection) {
 
         glBindVertexArray(gridObject->objectData);
         glDrawElementsInstanced(GL_TRIANGLES, gridObject->vertexCount, GL_UNSIGNED_INT, 0, 4);
+
+        if (gridScale >= 1.0) {
+            gridShader->setUniform("gridScale", gridScale / 10);
+            gridShader->setUniform("strokeWidth", 0.05 - gridWidth / gridScale);
+            glDrawElementsInstanced(GL_TRIANGLES, gridObject->vertexCount, GL_UNSIGNED_INT, 0, 4);
+        } else {
+            gridShader->setUniform("gridScale", gridScale * 10);
+            gridShader->setUniform("strokeWidth", 0.05 - gridWidth * gridScale);
+            glDrawElementsInstanced(GL_TRIANGLES, gridObject->vertexCount, GL_UNSIGNED_INT, 0, 4);
+        }
     }
     if (axisEnabled) {
         axisShader->activate();

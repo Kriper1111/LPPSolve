@@ -82,14 +82,6 @@ msgstr "Ограничение (включает)"
 msgid "Plane wrong direction"
 msgstr "Ограничение (исключает)"
 
-#: src/LPPShow.cpp:183
-msgid "Grid scale"
-msgstr "Масштаб сетки"
-
-#: src/LPPShow.cpp:184
-msgid "Grid width"
-msgstr "Ширина линий сетки"
-
 #: src/LPPShow.cpp:185
 msgid "Plane stripe width"
 msgstr "Ширина полосочек ограничений"
