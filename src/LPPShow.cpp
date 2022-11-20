@@ -152,37 +152,46 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     }
 
     if (ImGui::CollapsingHeader(l10n("Display options").append("###display-opt").c_str())) {
-        ImGui::Checkbox(l10nc("Show grid"), &SceneData::worldOrigin->gridEnabled);
-        ImGui::Checkbox(l10nc("Show world axis"), &SceneData::worldOrigin->axisEnabled);
-        ImGui::InputFloat(l10nc("Grid scale"), &SceneData::worldOrigin->gridScale, 0.10f, 0.25f);
-        ImGui::InputFloat(l10nc("Grid width"), &SceneData::worldOrigin->gridWidth, 0.01f, 0.015f);
-
-        if (ImGui::CollapsingHeader("Solution")) {
-            ImGui::SliderFloat(l10nc("Plane stripe width"), &SceneData::lppshow->stripeWidth, 0.0f, 1.0f);
-            ImGui::SliderFloat(l10nc("Plane stripe frequency"), &SceneData::lppshow->stripeFrequency, 1.0f, 100.0f);
-            ImGui::SliderFloat(l10nc("Solution wireframe thickness"), &SceneData::lppshow->wireThickness, 1.0f, 5.0f);
+        if (ImGui::TreeNode(l10n("Visibility").append("###checkboxes").c_str())) {
+            ImGui::Checkbox(l10nc("Show grid"), &SceneData::worldOrigin->gridEnabled);
+            ImGui::Checkbox(l10nc("Show world axis"), &SceneData::worldOrigin->axisEnabled);
             ImGui::Checkbox(l10nc("Show planes"), &SceneData::lppshow->showPlanesAtAll);
             ImGui::Checkbox(l10nc("Show solution volume"), &SceneData::lppshow->showSolutionVolume);
             ImGui::Checkbox(l10nc("Show solution vector"), &SceneData::lppshow->showSolutionVector);
             ImGui::Checkbox(l10nc("Show solution wireframe"), &SceneData::lppshow->showSolutionWireframe);
+            ImGui::TreePop();
             ImGui::Separator();
         }
 
-        if (ImGui::CollapsingHeader("Colors")) {
+        if (ImGui::TreeNode(l10n("Colors").append("###colors").c_str())) {
             ImGuiColorEditFlags shaderPickerFlags = ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoOptions;
             #ifdef DEBUG
             shaderPickerFlags = shaderPickerFlags & (~ImGuiColorEditFlags_NoOptions);
-            ImGui::ColorPicker3("World color", &worldColor.x, shaderPickerFlags);
+            ImGui::ColorEdit3("World color", &worldColor.x, shaderPickerFlags);
             #endif
             ImGui::ColorEdit3(l10nc("Solution volume"), &SceneData::lppshow->solutionColor.x, shaderPickerFlags);
             ImGui::ColorEdit3(l10nc("Solution vector"), &SceneData::lppshow->solutionVectorColor.x, shaderPickerFlags);
             ImGui::ColorEdit3(l10nc("Solution wireframe"), &SceneData::lppshow->solutionWireframeColor.x, shaderPickerFlags);
             ImGui::ColorEdit3(l10nc("Plane right direction"), &SceneData::lppshow->constraintPositiveColor.x, shaderPickerFlags);
             ImGui::ColorEdit3(l10nc("Plane wrong direction"), &SceneData::lppshow->constraintNegativeColor.x, shaderPickerFlags);
+            ImGui::TreePop();
             ImGui::Separator();
         }
 
-        if (ImGui::BeginCombo("Language: ", LocalMan::currentLocale.c_str())) {
+        if (ImGui::TreeNode("Sliders")) {
+            ImGui::PushItemWidth(imguiWindowSize.x / 2);
+            ImGui::InputFloat(l10nc("Grid scale"), &SceneData::worldOrigin->gridScale, 0.10f, 0.25f);
+            ImGui::InputFloat(l10nc("Grid width"), &SceneData::worldOrigin->gridWidth, 0.01f, 0.015f);
+            ImGui::SliderFloat(l10nc("Plane stripe width"), &SceneData::lppshow->stripeWidth, 0.0f, 1.0f);
+            ImGui::SliderFloat(l10nc("Plane stripe frequency"), &SceneData::lppshow->stripeFrequency, 1.0f, 100.0f);
+            ImGui::SliderFloat(l10nc("Solution wireframe thickness"), &SceneData::lppshow->wireThickness, 1.0f, 5.0f);
+            ImGui::PopItemWidth();
+            ImGui::TreePop();
+            ImGui::Separator();
+        }
+
+        ImGui::Text("Language: "); ImGui::SameLine();
+        if (ImGui::BeginCombo("###lang", LocalMan::currentLocale.c_str())) {
             for (auto locale : LocalMan::localesMap) {
                 if (ImGui::Selectable(locale.first.c_str(), locale.first == LocalMan::currentLocale)) {
                     LocalMan::changeLocale(locale.first);

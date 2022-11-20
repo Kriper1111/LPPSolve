@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-15 22:17+0300\n"
+"POT-Creation-Date: 2022-11-20 16:51+0300\n"
 "PO-Revision-Date: 2022-11-15 22:17+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -17,30 +17,102 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: src/LPPShow.cpp:127
+#: src/LPPShow.cpp:106
 msgid "Planes"
 msgstr "Planes"
 
-#: src/LPPShow.cpp:131
+#: src/LPPShow.cpp:110
 msgid "Camera controls"
 msgstr "Camera controls"
 
-#: src/LPPShow.cpp:175
+#: src/LPPShow.cpp:154
 msgid "Display options"
 msgstr "Display options"
 
-#: src/LPPShow.cpp:214
+#: src/LPPShow.cpp:155
+msgid "Visibility"
+msgstr "Visibility"
+
+#: src/LPPShow.cpp:156
+msgid "Show grid"
+msgstr "Show grid"
+
+#: src/LPPShow.cpp:157
+msgid "Show world axis"
+msgstr "Show world axis"
+
+#: src/LPPShow.cpp:158
+msgid "Show planes"
+msgstr "Show planes"
+
+#: src/LPPShow.cpp:159
+msgid "Show solution volume"
+msgstr "Show solution volume"
+
+#: src/LPPShow.cpp:160
+msgid "Show solution vector"
+msgstr "Show solution vector"
+
+#: src/LPPShow.cpp:161
+msgid "Show solution wireframe"
+msgstr "Show solution wireframe"
+
+#: src/LPPShow.cpp:166
+msgid "Colors"
+msgstr "Colors"
+
+#: src/LPPShow.cpp:172
+msgid "Solution volume"
+msgstr "Solution volume"
+
+#: src/LPPShow.cpp:173
+msgid "Solution vector"
+msgstr "Solution vector"
+
+#: src/LPPShow.cpp:174
+msgid "Solution wireframe"
+msgstr "Solution wireframe"
+
+#: src/LPPShow.cpp:175
+msgid "Plane right direction"
+msgstr "Plane right direction"
+
+#: src/LPPShow.cpp:176
+msgid "Plane wrong direction"
+msgstr "Plane wrong direction"
+
+#: src/LPPShow.cpp:183
+msgid "Grid scale"
+msgstr "Grid scale"
+
+#: src/LPPShow.cpp:184
+msgid "Grid width"
+msgstr "Grid width"
+
+#: src/LPPShow.cpp:185
+msgid "Plane stripe width"
+msgstr "Plane stripe width"
+
+#: src/LPPShow.cpp:186
+msgid "Plane stripe frequency"
+msgstr "Plane stripe frequency"
+
+#: src/LPPShow.cpp:187
+msgid "Solution wireframe thickness"
+msgstr "Solution wireframe thickness"
+
+#: src/LPPShow.cpp:206
 msgid "Add plane"
 msgstr "Add plane"
 
-#: src/LPPShow.cpp:218
+#: src/LPPShow.cpp:210
 msgid "Remove plane"
 msgstr "Remove plane"
 
-#: src/LPPShow.cpp:223
+#: src/LPPShow.cpp:215
 msgid "Objective function:"
 msgstr "Objective function:"
 
-#: src/LPPShow.cpp:252
+#: src/LPPShow.cpp:244
 msgid "Solve"
 msgstr "Solve"
