@@ -25,6 +25,9 @@ namespace LocalMan {
     };
     std::unordered_map<std::string, fs::path> localesMap{};
     std::string currentLocale = "";
+    #if defined(_WIN32)
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    #endif
     const fs::path basePath{"./locale/compiled"};
 
     const char* getDisplayName(const char* name) {
@@ -45,6 +48,15 @@ namespace LocalMan {
     void changeLocale(const char* locale) {
         try {
             const fs::path cataloguePath = localesMap.at(locale);
+            moFileLib::moFileReader::eErrorCode errorCode = moFileLib::moFileReader::eErrorCode::EC_SUCCESS;
+            #if defined(_WIN32)
+            errorCode = moFileLib::moReadMoFile(converter.to_bytes(cataloguePath).c_str());
+            #else
+            errorCode = moFileLib::moReadMoFile(cataloguePath.c_str());
+            #endif
+            if (errorCode != moFileLib::moFileReader::EC_SUCCESS) {
+                throw std::runtime_error(moFileLib::moFileGetErrorDescription());
+            }
             moFileLib::moFileReader::eErrorCode errorCode = moFileLib::moFileReader::eErrorCode::EC_SUCCESS;
             errorCode = moFileLib::moReadMoFile(cataloguePath.c_str());
             if (errorCode != moFileLib::moFileReader::EC_SUCCESS) {
@@ -69,10 +81,9 @@ namespace LocalMan {
     LMLocale getLocale(std::string hint);
     LMLocale getLocale();
 
-    #if defined(_WIN32)
+    #if defined(_WIN32) || defined(WIN32) || defined(__WIN32)
     LMLocale getLocale(const wchar_t* hint) {
         LMLocale out;
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
         // 9 is a magic number. Please avoid magic numbers and read
         // https://learn.microsoft.com/en-us/windows/win32/intl/locale-siso-constants instead
         // That won't make you feel better, but it'll certainly explain why '9'.
@@ -88,12 +99,12 @@ namespace LocalMan {
         //                                              - me, 18-NOV-2022, 20:mm:ss GMT
         // "...well now good thing I added those timestamps"
         //                                              - me, 18-NOV-2022, 20:38:ss GMT
-        GetLocaleInfoEx(localeName, LOCALE_SISO639LANGNAME, currentIdentifier, 9);
+        GetLocaleInfoEx(hint, LOCALE_SISO639LANGNAME, currentIdentifier, 9);
         out.language = converter.to_bytes(currentIdentifier);
-        GetLocaleInfoEx(localeName, LOCALE_SISO3166CTRYNAME, currentIdentifier, 9);
+        GetLocaleInfoEx(hint, LOCALE_SISO3166CTRYNAME, currentIdentifier, 9);
         out.country = converter.to_bytes(currentIdentifier);
         out.fullname = out.language;
-        if (out.country) {
+        if (!out.country.empty()) {
             out.fullname = out.fullname.append("_").append(out.country);
         }
         // END MADNESS
@@ -101,16 +112,17 @@ namespace LocalMan {
     }
 
     LMLocale getLocale(const char* hint) {
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-        LMLocale out = getLocale(converter.from_bytes(hint).c_str());
-        return out;
+        return getLocale(converter.from_bytes(hint).c_str());
+    }
+
+    LMLocale getLocale(std::string hint) {
+        return getLocale(converter.from_bytes(hint).c_str());
     }
 
     LMLocale getLocale() {
         std::unique_ptr<WCHAR[]> hint(new WCHAR[LOCALE_NAME_MAX_LENGTH]);
         GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SNAME, hint.get(), LOCALE_NAME_MAX_LENGTH);
-        LMLocale out = getLocale(hint.get());
-        return out;
+        return getLocale(hint.get());
     }
     #else
     LMLocale getLocale(std::string hint) {

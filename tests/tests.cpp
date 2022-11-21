@@ -208,21 +208,42 @@ bool solver_vertices_invalid() {
 }
 
 bool localman_parse_locale_plain() {
-    auto locale = LocalMan::getLocale("en_US");
+    #ifdef _WIN32
+    const char* test_string = "English_United States";
+    #else
+    const char* test_string = "en_US";
+    #endif
+    auto locale = LocalMan::getLocale(test_string);
     return (locale.language == "en" && locale.country == "US");
 }
 
 bool localman_parse_locale_fluff() {
-    auto locale = LocalMan::getLocale("da_DK.ISO8859-15@euro");
+    #ifdef _WIN32
+    // It's very hard to come by the locale name list on Windows
+    const char* test_string = "Danish_Denmark.Windows-1252";
+    #else
+    const char* test_string = "da_DK.ISO8859-15@euro";
+    #endif
+    auto locale = LocalMan::getLocale(test_string);
     return (locale.language == "da" && locale.country == "DK");
 }
 
 bool localman_parse_locale_short() {
-    auto locale = LocalMan::getLocale("ru");
+    #ifdef _WIN32
+    const char* test_string = "Russian";
+    #else
+    const char* test_string = "ru";
+    #endif
+    auto locale = LocalMan::getLocale(test_string);
     return (locale.language == "ru" && locale.country == "");
 }
 
 bool localman_parse_locale_country_only() {
+    #ifdef _WIN32
+    const char* test_string = "_Spain";
+    #else
+    const char* test_string = "_ES";
+    #endif
     auto locale = LocalMan::getLocale("_ES");
     return (locale.language == "" && locale.country == "ES");
 }

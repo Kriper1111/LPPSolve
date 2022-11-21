@@ -103,7 +103,7 @@ locale: $(COMPILED_LOCALE_FILES)
 -include $(DEPS)
 
 run-tests: objects/tests.o objects/solver.o
-	$(CXX) -o $@ $^ -g -D_GLIBCXX_DEBUG $(LIBS)
+	$(CXX) -o $@ $^ $(CXXFLAGS) -g -D_GLIBCXX_DEBUG $(LIBS)
 
 bake: include/baked_shaders.h
 
