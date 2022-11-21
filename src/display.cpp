@@ -121,11 +121,7 @@ void Display::recalculatePlane(int planeIndex) {
 // TODO: Implement with instanced rendering
 void Display::rebindAttributes() {};
 void Display::onSolutionSolved() {
-<<<<<<< HEAD
-    solutionObject.reset(new Object());
-=======
     if (!solutionObject) solutionObject.reset(new Object());
->>>>>>> bc99494 (Refactored Object and Shader classes)
     generateSolutionObject(solutionObject.get(), solution.polyhedraVertices);
 }
 
