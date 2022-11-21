@@ -7,10 +7,11 @@
 #include <imgui/backends/imgui_impl_glfw.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
 
+#define LOCALMAN_IMPL
+#define DISPLAY_IMPL
 #include "localman.h"
 #include "assets.h"
 #include "camera.h"
-#define DISPLAY_IMPL
 #include "solver.h"
 
 // *honestly* i should define a function doing the same as '_' from moFileReader (mfr for short)
@@ -108,6 +109,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui::SetWindowSize(imguiWindowSize);
 
     if (ImGui::CollapsingHeader(l10n("Camera controls").append("###camera-opt").c_str())) {
+        #ifdef DEBUG
         if (SceneData::allowEditCamera) {
             auto cameraLocation = camera->getCameraLocation();
             auto cameraRotation = camera->getCameraRotation();
@@ -124,6 +126,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::SliderFloat("Look insensitivity", &camera->lookInSensitivity, 1.0f, 50.0f);
         ImGui::SliderFloat("Look depth", &camera->lookDepth, 0.0f, 100.0f);
         ImGui::Checkbox("Allow editing camera values", &SceneData::allowEditCamera);
+        #endif
 
         // Ortho
         float orthographicScale = camera->getOrthographicScale();
@@ -156,8 +159,8 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             ImGui::Checkbox(l10nc("Show grid"), &SceneData::worldOrigin->gridEnabled);
             ImGui::Checkbox(l10nc("Show world axis"), &SceneData::worldOrigin->axisEnabled);
             ImGui::Checkbox(l10nc("Show planes"), &SceneData::lppshow->showPlanesAtAll);
-            ImGui::Checkbox(l10nc("Show solution volume"), &SceneData::lppshow->showSolutionVolume);
-            ImGui::Checkbox(l10nc("Show solution wireframe"), &SceneData::lppshow->showSolutionWireframe);
+            ImGui::Checkbox(l10nc("Show feasible range"), &SceneData::lppshow->showSolutionVolume);
+            ImGui::Checkbox(l10nc("Show feasible range edges"), &SceneData::lppshow->showSolutionWireframe);
             ImGui::Checkbox(l10nc("Show solution vector"), &SceneData::lppshow->showSolutionVector);
             ImGui::TreePop();
             ImGui::Separator();
@@ -169,8 +172,8 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             shaderPickerFlags = shaderPickerFlags & (~ImGuiColorEditFlags_NoOptions);
             ImGui::ColorEdit3("World color", &worldColor.x, shaderPickerFlags);
             #endif
-            ImGui::ColorEdit3(l10nc("Solution volume"), &SceneData::lppshow->solutionColor.x, shaderPickerFlags);
-            ImGui::ColorEdit3(l10nc("Solution wireframe"), &SceneData::lppshow->solutionWireframeColor.x, shaderPickerFlags);
+            ImGui::ColorEdit3(l10nc("Feasible range"), &SceneData::lppshow->solutionColor.x, shaderPickerFlags);
+            ImGui::ColorEdit3(l10nc("Feasible range edges"), &SceneData::lppshow->solutionWireframeColor.x, shaderPickerFlags);
             ImGui::ColorEdit3(l10nc("Solution vector"), &SceneData::lppshow->solutionVectorColor.x, shaderPickerFlags);
             ImGui::ColorEdit3(l10nc("Plane right direction"), &SceneData::lppshow->constraintPositiveColor.x, shaderPickerFlags);
             ImGui::ColorEdit3(l10nc("Plane wrong direction"), &SceneData::lppshow->constraintNegativeColor.x, shaderPickerFlags);
@@ -186,7 +189,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             #endif
             ImGui::SliderFloat(l10nc("Plane stripe width"), &SceneData::lppshow->stripeWidth, 0.0f, 1.0f);
             ImGui::SliderFloat(l10nc("Plane stripe frequency"), &SceneData::lppshow->stripeFrequency, 1.0f, 100.0f);
-            ImGui::SliderFloat(l10nc("Solution wireframe thickness"), &SceneData::lppshow->wireThickness, 1.0f, 5.0f);
+            ImGui::SliderFloat(l10nc("Feasible range edge thickness"), &SceneData::lppshow->wireThickness, 1.0f, 5.0f);
             ImGui::PopItemWidth();
             ImGui::TreePop();
             ImGui::Separator();
@@ -255,7 +258,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, l10nc("Failed to solve the equation: %s"), solution->errorString);
     } else if (solution->isSolved) {
         ImGui::Text(l10nc("Optimal value: %.4f"), solution->optimalValue);
-        ImGui::Text(l10nc("Optimal plan: %.3fx1 %.3fx2 %.3fx3"), solution->optimalVector.x, solution->optimalVector.y, solution->optimalVector.z);
+        ImGui::Text(l10nc("Optimal plan: %.3fx₁ %.3fx₂ %.3fx₃"), solution->optimalVector.x, solution->optimalVector.y, solution->optimalVector.z);
     } else if (!solution->isErrored && !solution->isSolved && !solution->statusString.empty()) {
         ImGui::Text(l10nc("Solution status: %s"), solution->statusString.c_str());
     }

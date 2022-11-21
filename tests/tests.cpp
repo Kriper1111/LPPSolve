@@ -8,6 +8,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "solver.h"
+#define LOCALMAN_IMPL
 #include "localman.h"
 
 #define test(function, name) run_test(function, name) ? passed+=1 : failed+=1
