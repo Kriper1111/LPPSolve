@@ -28,7 +28,7 @@ jobs:
     - name: Apt - Install uncompileable dependencies
       run: |
         sudo apt-get update -qq
-        sudo apt-get install --no-install-recommends -y libglfw3-dev libglm-dev
+        sudo apt-get install --no-install-recommends -y libglfw3-dev libglm-dev gettext
 
     - name: CommandLine - Look at ldconfig
       run: sudo ldconfig -p

@@ -4,7 +4,7 @@
 #include <unordered_map>
 
 #include "mfr/moFileReader.hpp"
-#if __cplusplus == 201402L
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201402L) || __cplusplus >= 201402L)
     #include <experimental/filesystem>
     namespace fs = std::experimental::filesystem;
 #else

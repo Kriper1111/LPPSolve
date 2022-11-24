@@ -90,6 +90,7 @@ if (WIN32)
             target_link_directories(LPPShow PUBLIC libraries/glfw-vc2022)
             list(APPEND LIBRARIES legacy_stdio_definitions)
         endif()
+        target_compile_definitions(LPPShow PUBLIC /Zc:__cplusplus)
     else() # (CMAKE_CXX_COMPILER_ID MATCHES GNU|CLANG), hopefully
         list(APPEND LIBRARIES -static) # Force static links only on MinGW/Unix/whatever else, because VC is magic, apparently
         target_link_directories(LPPShow PUBLIC libraries/glfw-mingw-w64)
