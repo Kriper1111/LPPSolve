@@ -53,7 +53,7 @@ jobs:
     - name: CMake - Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.CMAKE_BUILD_TYPE}}
     - name: CMake - Install
-      run: cmake --install ${{github.workspace}}\build --config Release
+      run: cmake --install ${{github.workspace}}/build --config Release
       continue-on-error: true
 
     - name: Actions - Emit artifact

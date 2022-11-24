@@ -14,6 +14,7 @@
 
 #ifdef _WIN32
 #include <codecvt>
+#include <windows.h>
 #include <winnls.h>
 #endif
 
