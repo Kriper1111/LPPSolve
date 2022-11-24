@@ -41,6 +41,9 @@ namespace LocalMan {
     void changeLocale(const char* locale);
     void changeLocale(std::string locale);
 
+#if defined(_WIN32)
+    LMLocale getLocale(const wchar_t* hint);
+#endif
     LMLocale getLocale(const char* hint);
     LMLocale getLocale(std::string hint);
     LMLocale getLocale();
