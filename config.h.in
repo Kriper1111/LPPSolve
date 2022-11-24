@@ -1,0 +1,3 @@
+#cmakedefine USE_CDDLIB
+#cmakedefine USE_OBJ_LOADER
+#cmakedefine USE_BAKED_SHADERS

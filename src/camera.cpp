@@ -49,6 +49,7 @@ Camera::Camera(int viewWidth, int viewHeight, float fov, float nearplane, float 
     this->aspectRatio = (float)viewWidth/(float)viewHeight;
     this->nearPlane = nearplane;
     this->farPlane = farplane;
+    this->isOrthographic = false;
     this->recalcProjection();
     this->mDirection = glm::vec3(0.0f);
     this->mLocation = glm::vec3(0.0, 0.0, 0.0f);

@@ -6,8 +6,10 @@ This program aims to visualise three-dimensional linear programming problems: th
 It *should* work with two-dimensional problems as well.
 
 ## Installation guide
-In the (near) future, you'll be able to find latest binaries in releases, auto-built by GitHub CI. For now, you'll have to compile it manually.
-Only Makefile workflow is suported for now.
+You should find latest release in the "Releases" section on the right, as well as in recent "Actions" artifacts.
+If you don't trust the runners (and frankly I don't either), you could build it from source.
+
+Makefile and CMake workflows are supported now.
 
 Note:
 When building on Windows, use Cygwin enviroment. Although the `mingw64`, `git-bash`, `GnuWin32` enviroment is supported by the Makefile, it don't have access to `cddlib`. In that case, you'll have to build it yourself. **Good luck.**
@@ -21,8 +23,8 @@ This project requires the following libraries for a release build:
  * moFileReader by AnoterFoxGuy: [sources](https://github.com/AnotherFoxGuy/MofileReader), only the header from releases is required.
  * cddlib: `libcdd-dev`/[sources](https://github.com/cddlib/cddlib)
 
-These libraries are available in `vcpkg` repository on Windows. Their names are listed after the slash. If possible, acquire them from there.
-If not, please put all required (`glfw3` and `cddlib`) static libraries into `libraries/` subfolder and third-party includes into `thirdparty/` subfolder.
+~~These libraries are available in `vcpkg` repository on Windows. Their names are listed after the slash. If you really want so, acquire them from there. Keep in mind, you will have to specify vcpkg's toolchain file for CMake in this case, or scout its files for downloaded headers and libraries to put into `thirdparty/` and `libraries/` respectively.~~
+The CMake recipe will now fetch required libraries from source, if building on Windows (but not ImGui on Linux). This is the preferred way. Otherwise, you can locate and put all required (`glfw3` and `cddlib`) static libraries into `libraries/` subfolder and third-party includes (`glfw3`, `glm`, `OBJ_Loader.h` and `cddlib`) into `thirdparty/` subfolder. Please make sure to keep some sort of folder structure and leave each dependency, except for `OBJ_Loader.h`, its own folder.
 
 Additionally, `OBJ_Loader.h` by [Bly7](https://github.com/Bly7/OBJ-Loader) is required for debug builds<sup>[1]</sup>.
 

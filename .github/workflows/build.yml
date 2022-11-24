@@ -1,0 +1,103 @@
+name: Building, CI Even
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+    - "cmake"
+    tags:
+    - "version-*"
+
+env:
+  CDDLIB_VERSION: 0.94m
+  CMAKE_BUILD_TYPE: RelWithDebInfo
+  GLFW_VERSION: v3.3.8
+  GLM_VERSION: v0.9.9.8
+  IMGUI_VERSION: v1.88
+  MFR_VERSION: v1.2.0
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Apt - Install uncompileable dependencies
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install --no-install-recommends -y libglfw3-dev libglm-dev
+
+    - name: CommandLine - Look at ldconfig
+      run: sudo ldconfig -p
+
+    - name: Cache - ImGui from source
+      id: cache-imgui
+      uses: actions/cache@v3.0.11
+      with:
+        key: version-fc-imgui${{ env.IMGUI_VERSION }}-cddlib${{ env.CDDLIB_VERSION }}-mfr${{ env.MFR_VERSION }}
+        path: |
+          libraries/
+          thirdparty/cdd
+          thirdparty/cddlib
+          thirdparty/imgui
+          thirdparty/mfr
+          external_projects/src/imgui-populate-stamp
+
+    # Shamelessly borrowed from an example CMake action. Probably better than I could've done myself
+    # ..evidently
+    - name: CMake - Configure
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}}
+    - name: CMake - Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.CMAKE_BUILD_TYPE}}
+    - name: CMake - Install
+      run: cmake --install ${{github.workspace}}\build --config Release
+      continue-on-error: true
+
+    - name: Actions - Emit artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist-linux
+        path: ${{github.workspace}}/dist
+
+  # This one will be ran only on non-snapshot builds, since it's slower and more of a PITA
+  build-windows:
+    runs-on: windows-latest
+    if: ${{ !endsWith(github.ref_name, 'snapshot') }}
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Cache - Windows uncompileable dependencies
+      id: cache-windows-thirdparty
+      uses: actions/cache@v3.0.11
+      with:
+        key: thirdparty-ep-cddlib${{ env.CDDLIB_VERSION }}-imgui${{ env.IMGUI_VERSION }}-glfw${{ env.GLFW_VERSION }}-glm${{ env.GLM_VERSION }}-mfr${{ env.MFR_VERSION }}
+        path: |
+          libraries/
+          external_projects/
+
+    - name: CMake - Configure
+      run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DUSE_BAKED_SHADERS=on
+    - name: CMake - Build
+      run: cmake --build ${{github.workspace}}\build --config Release
+    - name: CMake - Install
+      run: cmake --install ${{github.workspace}}\build --config Release
+      continue-on-error: true
+
+    - name: CommandLine - Look around
+      run: tree ${{github.workspace}}\build /F
+
+    - name: Actions - Emit artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist-windows
+        path: |
+          ${{github.workspace}}\build\Release
+          ${{github.workspace}}\build\LPPShow*
+          ${{github.workspace}}\locale\compiled
+          ${{github.workspace}}\dist

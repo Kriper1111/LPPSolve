@@ -10,6 +10,12 @@
 #include "camera.h"
 #include "solver.h"
 
+#include "config.h"
+
+#ifdef USE_BAKED_SHADERS
+#include "baked_shaders.h"
+#endif
+
 #ifdef USE_CDDLIB
 
 #include <quickhull/QuickHull.hpp>
@@ -27,9 +33,9 @@ void generateSolutionObject(Object* object, const std::vector<float> vertices) {
 
     // Cast to <int> because for some reason OpenGL doesn't like anything other than
     // *(u)int* in its index buffer
-    std::vector<int> indices(indexBuffer.begin(), indexBuffer.end());
+    std::vector<unsigned int> indices(indexBuffer.begin(), indexBuffer.end());
 
-    fromVertexData(object, vertices.data(), vertices.size(), indices.data(), (int)indexBuffer.size());
+    object->setVertexData(vertices.data(), vertices.size(), indices.data(), indexBuffer.size());
 }
 
 void generateSolutionVector(Object* object, const glm::vec3 solutionVector) {
@@ -38,13 +44,13 @@ void generateSolutionVector(Object* object, const glm::vec3 solutionVector) {
         solutionVector.x, solutionVector.y, solutionVector.z
     };
 
-    int indices[2] = { 0, 1 };
+    unsigned int indices[2] = { 0, 1 };
 
-    fromVertexData(object, vertices, 6, indices, 2);
+    object->setVertexData(vertices, 6, indices, 2);
 }
 
 void generateSolutionWireframe(Object* object, const std::vector<float> vertices, const std::vector<std::vector<int>> adjacency) {
-    std::vector<int> indices;
+    std::vector<unsigned int> indices;
     int vertexCount = vertices.size() / 3;
 
     #ifdef DEBUG
@@ -78,7 +84,7 @@ void generateSolutionWireframe(Object* object, const std::vector<float> vertices
         }
     }
 
-    fromVertexData(object, vertices.data(), vertices.size(), indices.data(), (int)indices.size());
+    object->setVertexData(vertices.data(), vertices.size(), indices.data(), indices.size());
 }
 
 #else
@@ -107,7 +113,7 @@ void Display::createPlaneObject() {
         0, 3, 2
     };
 
-    fromVertexData(planeObject.get(), vertexData, 4, indices, 6);
+    Display::planeObject->setVertexData(vertexData, 4, indices, 6);
 }
 
 void Display::createPlaneShader() {
@@ -170,9 +176,9 @@ void Display::recalculatePlane(int planeIndex) {
 // TODO: Implement with instanced rendering
 void Display::rebindAttributes() {};
 void Display::onSolutionSolved() {
-    solutionWireframe.reset(new Object());
-    solutionVector.reset(new Object());
-    solutionObject.reset(new Object());
+    if (!solutionWireframe) solutionWireframe.reset(new Object());
+    if (!solutionVector) solutionVector.reset(new Object());
+    if (!solutionObject) solutionObject.reset(new Object());
     generateSolutionWireframe(solutionWireframe.get(), solution.polyhedraVertices, solution.adjacency);
     generateSolutionVector(solutionVector.get(), solution.optimalVector);
     generateSolutionObject(solutionObject.get(), solution.polyhedraVertices);
@@ -203,7 +209,7 @@ Display::Display() {
 
 void Display::render(Camera* camera) {
     if (planeTransforms.size() == 0) return;
-    glBindVertexArray(planeObject->objectData);
+    // glBindVertexArray(planeObject->objectData);
     planeShader->activate();
     planeShader->setTransform(camera->getProjection(), camera->getView());
     /** TODO: Instanced rendering of plane limits
@@ -232,7 +238,7 @@ void Display::render(Camera* camera) {
         planeShader->setUniform("stripeWidth", stripeWidth);
         planeShader->setUniform("positiveColor", constraintPositiveColor);
         planeShader->setUniform("negativeColor", constraintNegativeColor);
-        glDrawElements(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0);
+        planeObject->bindForDraw();
     }
     }
 
@@ -241,16 +247,16 @@ void Display::render(Camera* camera) {
     this->solutionShader->setTransform(camera->getProjection(), camera->getView());
     if (this->showSolutionVolume) {
         this->solutionShader->setUniform("vertexColor", solutionColor);
-        glBindVertexArray(this->solutionObject->objectData);
-        glDrawElements(GL_TRIANGLES, this->solutionObject->vertexCount, GL_UNSIGNED_INT, 0);
+        this->solutionObject->bindForDraw();
     }
     if (this->showSolutionWireframe) {
         this->solutionShader->setUniform("vertexColor", solutionWireframeColor);
         glLineWidth(this->wireThickness);
         glEnable(GL_POLYGON_OFFSET_LINE);
         glPolygonOffset(-1.0, -11.0);
-        glBindVertexArray(this->solutionWireframe->objectData);
-        glDrawElements(GL_LINES, this->solutionWireframe->vertexCount, GL_UNSIGNED_INT, 0);
+
+        this->solutionWireframe->bindForDraw(GL_LINE);
+
         glDisable(GL_POLYGON_OFFSET_LINE);
         glLineWidth(1.0);
     }
@@ -259,8 +265,9 @@ void Display::render(Camera* camera) {
 
         glDisable(GL_DEPTH_TEST);
 
-        glBindVertexArray(this->solutionVector->objectData);
-        glDrawElements(GL_LINES, this->solutionVector->vertexCount, GL_UNSIGNED_INT, 0);
+        solutionVector->bindForDraw(GL_LINES);
+        // glBindVertexArray(this->solutionVector->objectData);
+        // glDrawElements(GL_LINES, this->solutionVector->vertexCount, GL_UNSIGNED_INT, 0);
 
         glEnable(GL_DEPTH_TEST);
     }
@@ -295,7 +302,7 @@ void WorldGridDisplay::createObjects() {
         0, 3, 2
     };
 
-    fromVertexData(WorldGridDisplay::gridObject.get(), gridVertexData, 4, gridIndices, 6);
+    WorldGridDisplay::gridObject->setVertexData(gridVertexData, 4, gridIndices, 6);
 
     /** FIXME: Compact either manual object creation or shaders into less *objects*
      * Right now I have to use two different shaders for basically the same generic object
@@ -324,7 +331,7 @@ void WorldGridDisplay::createObjects() {
         0, 3
     };
 
-    fromVertexData(WorldGridDisplay::axisObject.get(), axisVertexData, 4, axisIndices, 6);
+    WorldGridDisplay::axisObject->setVertexData(axisVertexData, 4, axisIndices, 6);
 }
 
 void WorldGridDisplay::createShaders() {
@@ -362,24 +369,22 @@ void WorldGridDisplay::render(glm::mat4 view, glm::mat4 projection) {
         gridShader->setUniform("gridOffset[2]", glm::vec2({-1.0,  1.0}));
         gridShader->setUniform("gridOffset[3]", glm::vec2({-1.0, -1.0}));
 
-        glBindVertexArray(gridObject->objectData);
-        glDrawElementsInstanced(GL_TRIANGLES, gridObject->vertexCount, GL_UNSIGNED_INT, 0, 4);
+        gridObject->bindForDrawInstanced(4);
 
         if (gridScale >= 1.0) {
             gridShader->setUniform("gridScale", gridScale / 10);
             gridShader->setUniform("strokeWidth", 0.05 - gridWidth / gridScale);
-            glDrawElementsInstanced(GL_TRIANGLES, gridObject->vertexCount, GL_UNSIGNED_INT, 0, 4);
+            gridObject->bindForDrawInstanced(4);
         } else {
             gridShader->setUniform("gridScale", gridScale * 10);
             gridShader->setUniform("strokeWidth", 0.05 - gridWidth * gridScale);
-            glDrawElementsInstanced(GL_TRIANGLES, gridObject->vertexCount, GL_UNSIGNED_INT, 0, 4);
+            gridObject->bindForDrawInstanced(4);
         }
     }
     if (axisEnabled) {
         axisShader->activate();
         axisShader->setTransform(projection, view);
-        glBindVertexArray(axisObject->objectData);
-        glDrawElements(GL_LINES, axisObject->vertexCount, GL_UNSIGNED_INT, 0);
+        axisObject->bindForDraw(GL_LINES);
     }
 }
 

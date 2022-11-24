@@ -3,7 +3,7 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "moFileReader.hpp"
+#include "mfr/moFileReader.hpp"
 #if __cplusplus == 201402L
     #include <experimental/filesystem>
     namespace fs = std::experimental::filesystem;
@@ -167,6 +167,7 @@ LocalMan::LMLocale LocalMan::getLocale() {
 #endif // defined(_WIN32)
 
 void LocalMan::setToDefault() {
+    setlocale(LC_ALL, "");
     LMLocale locale = getLocale();
 
     if (localesMap.find(locale.fullname) != localesMap.end()) {

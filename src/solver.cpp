@@ -5,6 +5,7 @@
 #include "camera.h"
 #include "glm/glm.hpp"
 #include "solver.h"
+#include "config.h"
 
 #ifdef USE_CDDLIB
 #define REFLECT(var) #var
@@ -12,10 +13,6 @@
 #include <cdd/cdd.h>
 
 #include <quickhull/QuickHull.hpp>
-#endif
-
-#ifdef USE_BAKED_SHADERS
-#include "baked_shaders.h"
 #endif
 
 #ifdef USE_CDDLIB

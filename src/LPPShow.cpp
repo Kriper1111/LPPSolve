@@ -1,3 +1,4 @@
+#include <iostream>
 #include <vector>
 #include <memory>
 
@@ -13,6 +14,7 @@
 #include "assets.h"
 #include "camera.h"
 #include "solver.h"
+#include "config.h"
 
 // *honestly* i should define a function doing the same as '_' from moFileReader (mfr for short)
 // instead of making it a macro that way it's.. i guess more control
@@ -347,6 +349,8 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glFrontFace(GL_CW);
 
+    glfwSwapInterval(1);
+
     ////////////
     //// INIT IMGUI
     ////////////
@@ -387,6 +391,9 @@ int main() {
 
     iio.Fonts->AddFontFromFileTTF("assets/DejaVuSansMono.ttf", 14, 0, ranges.Data);
     iio.Fonts->Build();
+    #ifndef DEBUG
+    iio.IniFilename = NULL;
+    #endif
 
     // ???
     glfwWindowResizeCallback(mainWindow, windowWidth, windowHeight);
@@ -408,7 +415,6 @@ int main() {
         glfwMouseCallback(mainWindow);
         updateProcessDraw(mainWindow, camera, deltaTime);
 
-        // FIXME: Needs VSync on Windows
         glfwSwapBuffers(mainWindow);
         glfwPollEvents();
     }
