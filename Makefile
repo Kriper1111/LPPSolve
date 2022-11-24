@@ -27,7 +27,7 @@ OBJS = $(OBJS_BASE) $(OBJS_THIRDPARTY)
 SHADERS = $(wildcard assets/*.vert) $(wildcard assets/*.frag)
 
 CXXFLAGS = -I$(INCLUDE_DIR) -I$(THIRDPARTY_INCLUDE)
-CXXFLAGS += -I$(IMGUI_DIR) -DUSE_CDDLIB
+CXXFLAGS += -I$(IMGUI_DIR) -DUSE_CDDLIB -Wall
 LIBS = 
 
 ############################
