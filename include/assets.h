@@ -37,6 +37,9 @@ class Object {
     void bindForDrawInstanced(unsigned int mode, int count);
     void bindForDrawInstanced(int count);
 
+    void bindForDrawSlice(unsigned int mode, int offset, int vertices);
+    void bindForDrawSlice(int offset, int vertices);
+
     ~Object();
 };
 

@@ -98,25 +98,72 @@ const glm::vec3 worldUp({0, 0, 1});
 // class Display {
 // private:
 
-void Display::createPlaneObject() {
+void Display::createObjects() {
     Display::planeObject.reset(new Object());
 
-    VertexAttributePosition vertexData[] = {
+    VertexAttributePosition planeVertexData[] = {
         {-1.0, -1.0, 0.0},
         {-1.0,  1.0, 0.0},
         { 1.0, -1.0, 0.0},
         { 1.0,  1.0, 0.0}
     };
 
-    int indices[] = {
+    int planeIndices[] = {
         0, 1, 3,
         0, 3, 2
     };
 
-    Display::planeObject->setVertexData(vertexData, 4, indices, 6);
+    Display::planeObject->setVertexData(planeVertexData, 4, planeIndices, 6);
+
+    Display::vectorDisplay.reset(new Object());
+
+    VertexAttributePosition vectorVertexData[13] = {
+        /// /// /// /// ///
+        { -1.0, -1.0,  0.0}, // 0
+        { -1.0,  1.0,  0.0}, // 1
+        {  1.0, -1.0,  0.0}, // 2
+        {  1.0,  1.0,  0.0}, // 3
+        { -1.0, -1.0,  1.0}, // 4
+        { -1.0,  1.0,  1.0}, // 5
+        {  1.0, -1.0,  1.0}, // 6
+        {  1.0,  1.0,  1.0}, // 7
+        /// /// /// /// ///
+        {  0.0,  1.0, -1.0}, // 8
+        {  1.0,  0.0, -1.0}, // 9
+        {  0.0, -1.0, -1.0}, // 10
+        { -1.0,  0.0, -1.0}, // 11
+        {  0.0,  0.0,  1.0}  // 12
+        /// /// /// /// ///
+    };
+
+    int vectorIndices[54] = {
+        /// /// /// /// ///
+         0,  6,  4,
+         3,  6,  2,
+         7,  4,  6,
+         1,  7,  3,
+         1,  2,  0,
+         5,  0,  4,
+         1,  0,  5,
+         3,  2,  1,
+         7,  6,  3,
+         5,  4,  7,
+         2,  6,  0,
+         5,  7,  1,
+        /// /// /// /// ///
+         8,  9, 10,
+         8, 10, 11,
+         8,  9, 12,
+         9, 10, 12,
+        10, 11, 12,
+        11,  8, 12
+        /// /// /// /// ///
+    };
+
+    Display::vectorDisplay->setVertexData(vectorVertexData, 13, vectorIndices, 54);
 }
 
-void Display::createPlaneShader() {
+void Display::createShaders() {
     #ifdef USE_BAKED_SHADERS
     Display::planeShader.reset(Shader::fromSource(shaders::vertex.plane_vert, shaders::fragment.plane_frag));
     Display::solutionShader.reset(Shader::fromSource(shaders::vertex.default_vert, shaders::fragment.default_frag));
@@ -177,10 +224,8 @@ void Display::recalculatePlane(int planeIndex) {
 void Display::rebindAttributes() {};
 void Display::onSolutionSolved() {
     if (!solutionWireframe) solutionWireframe.reset(new Object());
-    if (!solutionVector) solutionVector.reset(new Object());
     if (!solutionObject) solutionObject.reset(new Object());
     generateSolutionWireframe(solutionWireframe.get(), solution.polyhedraVertices, solution.adjacency);
-    generateSolutionVector(solutionVector.get(), solution.optimalVector);
     generateSolutionObject(solutionObject.get(), solution.polyhedraVertices);
 }
 
@@ -201,8 +246,8 @@ void Display::onPlaneRemoved(int planeIndex) {
 //  public:
 
 Display::Display() {
-    if (!Display::planeObject) createPlaneObject();
-    if (!Display::planeShader) createPlaneShader();
+    if (!Display::planeObject || !Display::vectorDisplay) createObjects();
+    if (!Display::planeShader || !Display::solutionShader) createShaders();
     this->showPlanesAtAll = true;
     this->visibleEquations = std::vector<bool>();
 };
@@ -255,21 +300,38 @@ void Display::render(Camera* camera) {
         glEnable(GL_POLYGON_OFFSET_LINE);
         glPolygonOffset(-1.0, -11.0);
 
-        this->solutionWireframe->bindForDraw(GL_LINE);
+        this->solutionWireframe->bindForDraw(GL_LINES);
 
         glDisable(GL_POLYGON_OFFSET_LINE);
         glLineWidth(1.0);
     }
     if (this->showSolutionVector) {
-        this->solutionShader->setUniform("vertexColor", solutionVectorColor);
+        glm::mat4 transform = glm::mat4(1);
+        glm::vec3 optimalVectorNormal = glm::normalize(this->solution.optimalVector);
 
-        glDisable(GL_DEPTH_TEST);
+        if (optimalVectorNormal == worldUp) {
+            transform[1] = { 0, -optimalVectorNormal.z, 0, 0 };
+        } else {
+            glm::vec3 right = glm::normalize(glm::cross(optimalVectorNormal, worldUp));
+            glm::vec3 up = glm::normalize(glm::cross(right, optimalVectorNormal));
 
-        solutionVector->bindForDraw(GL_LINES);
-        // glBindVertexArray(this->solutionVector->objectData);
-        // glDrawElements(GL_LINES, this->solutionVector->vertexCount, GL_UNSIGNED_INT, 0);
+            transform[0] = { right, 0 };
+            transform[1] = { up, 0 };
+            transform[2] = { optimalVectorNormal, 0 };
+        }
 
-        glEnable(GL_DEPTH_TEST);
+        glm::mat4 vectorBase = transform * glm::scale(glm::mat4(1), glm::vec3({this->vectorWidth, this->vectorWidth, glm::length(this->solution.optimalVector) - this->vectorWidth * this->arrowScale}));
+
+        this->solutionShader->setUniform("vertexColor", this->solutionVectorColor);
+        this->solutionShader->setUniform("transform", vectorBase);
+
+        vectorDisplay->bindForDrawSlice(0, 36);
+
+        glm::mat4 vectorArrow = transform;
+        vectorArrow = glm::translate(glm::mat4(1), glm::vec3(this->solution.optimalVector.x, this->solution.optimalVector.y, this->solution.optimalVector.z)) * vectorArrow;
+        vectorArrow = glm::scale(vectorArrow, glm::vec3(this->vectorWidth) * this->arrowScale);
+        this->solutionShader->setUniform("transform", vectorArrow);
+        vectorDisplay->bindForDrawSlice(36, 18);
     }
     }
 };
@@ -277,8 +339,10 @@ void Display::render(Camera* camera) {
 Display::~Display() {
     Display::solutionShader.reset();
     Display::solutionObject.reset();
-    Display::solutionVector.reset();
     Display::solutionWireframe.reset();
+
+    Display::vectorDisplay.reset();
+
     Display::planeObject.reset();
     Display::planeShader.reset();
 };

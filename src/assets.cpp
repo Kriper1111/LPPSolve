@@ -120,8 +120,16 @@ void Object::bindForDrawInstanced(GLenum mode, GLsizei count) {
     glDrawElementsInstanced(mode, this->vertexCount, GL_UNSIGNED_INT, 0, count);
 }
 
+void Object::bindForDrawSlice(GLenum mode, int offset, GLint vertices) {
+    if (this->objectData == 0 || this->vertexData == 0 || this->indices == 0 || vertices > this->vertexCount)
+        return;
+    glBindVertexArray(this->objectData);
+    glDrawElements(mode, vertices, GL_UNSIGNED_INT, (void*) (sizeof(int) * offset));
+}
+
 void Object::bindForDraw() { this->bindForDraw(GL_TRIANGLES); }
 void Object::bindForDrawInstanced(GLsizei count) { this->bindForDrawInstanced(GL_TRIANGLES, count); }
+void Object::bindForDrawSlice(int offset, GLint vertices) { this->bindForDrawSlice(GL_TRIANGLES, offset, vertices); }
 
 Object::~Object() {
     if (this->vertexData != 0) glDeleteBuffers(1, &this->vertexData);

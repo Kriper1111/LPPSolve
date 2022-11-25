@@ -20,7 +20,7 @@ class LinearProgrammingProblem {
     Solution solution;
 
     void collectPointless();
-    
+
     // virtual "events" for Display compatibility
     virtual void onSolutionSolved() {};
     virtual void onPlaneAdded(int planeIndex) {};
@@ -55,14 +55,15 @@ class Display:public LinearProgrammingProblem {
     std::shared_ptr<Object> planeObject;
     std::shared_ptr<Shader> planeShader;
 
-    std::shared_ptr<Shader> solutionShader;    
+    std::shared_ptr<Object> vectorDisplay;
+
+    std::shared_ptr<Shader> solutionShader;
     std::shared_ptr<Object> solutionObject;
-    std::shared_ptr<Object> solutionVector;
     std::shared_ptr<Object> solutionWireframe;
     std::vector<glm::mat4> planeTransforms;
 
-    void createPlaneObject();
-    void createPlaneShader();
+    void createObjects();
+    void createShaders();
 
     void recalculatePlane(int planeIndex);
     void rebindAttributes();
@@ -80,10 +81,13 @@ class Display:public LinearProgrammingProblem {
     float stripeFrequency = 10.0;
     float stripeWidth = 0.5;
     float wireThickness = 1.0;
+    float vectorWidth = 0.1;
+    float arrowScale = 2.5;
+
     glm::vec3 constraintPositiveColor = {0.0, 0.0, 1.0};
     glm::vec3 constraintNegativeColor = {1.0, 0.0, 0.0};
     glm::vec3 solutionColor = {1.0, 0.746282, 0.043526};
-    glm::vec3 solutionVectorColor = {0.128, 0.833, 0.272};
+    glm::vec3 solutionVectorColor = { 0, 0, 0 }; // {0.128, 0.833, 0.272};
     glm::vec3 solutionWireframeColor = {0.8, 0.095672, 0.019807};
 
     Display();

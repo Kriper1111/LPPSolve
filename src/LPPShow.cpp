@@ -188,6 +188,8 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             #ifdef DEBUG
             ImGui::InputFloat("Grid scale", &SceneData::worldOrigin->gridScale, 0.10f, 0.25f);
             ImGui::InputFloat("Grid width", &SceneData::worldOrigin->gridWidth, 0.01f, 0.015f);
+            ImGui::SliderFloat("Vector width", &SceneData::lppshow->vectorWidth, 0.01f, 1.0f);
+            ImGui::SliderFloat("Arrow scale", &SceneData::lppshow->arrowScale, 1.0f, 10.0f);
             #endif
             ImGui::SliderFloat(l10nc("Plane stripe width"), &SceneData::lppshow->stripeWidth, 0.0f, 1.0f);
             ImGui::SliderFloat(l10nc("Plane stripe frequency"), &SceneData::lppshow->stripeFrequency, 1.0f, 100.0f);
