@@ -262,7 +262,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, l10nc("Failed to solve the equation: %s"), solution->errorString);
     } else if (solution->isSolved) {
         ImGui::Text(l10nc("Optimal value: %.4f"), solution->optimalValue);
-        ImGui::Text(l10nc("Optimal plan: %.3fx₁ %.3fx₂ %.3fx₃"), solution->optimalVector.x, solution->optimalVector.y, solution->optimalVector.z);
+        ImGui::Text(l10nc("Optimal plan: %.3fX₁ %.3fX₂ %.3fX₃"), solution->optimalVector.x, solution->optimalVector.y, solution->optimalVector.z);
     } else if (!solution->isErrored && !solution->isSolved && !solution->statusString.empty()) {
         ImGui::Text(l10nc("Solution status: %s"), solution->statusString.c_str());
     }
@@ -389,6 +389,7 @@ int main() {
     ImFontGlyphRangesBuilder builder;
     builder.AddRanges(iio.Fonts->GetGlyphRangesDefault());
     builder.AddRanges(iio.Fonts->GetGlyphRangesCyrillic());
+    builder.AddText("₀₁₂₃₄₅₆₇₈₉");
     builder.BuildRanges(&ranges);
 
     iio.Fonts->AddFontFromFileTTF("assets/DejaVuSansMono.ttf", 14, 0, ranges.Data);
