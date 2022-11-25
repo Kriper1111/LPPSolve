@@ -47,12 +47,10 @@ msgid "Show planes"
 msgstr "Показывать ограничения"
 
 #: src/LPPShow.cpp:164
-#, fuzzy
 msgid "Show feasible range"
 msgstr "Показывать ОДЗ"
 
 #: src/LPPShow.cpp:165
-#, fuzzy
 msgid "Show feasible range edges"
 msgstr "Показывать рёбра ОДЗ"
 
@@ -69,7 +67,6 @@ msgid "Feasible range"
 msgstr "Цвет ОДЗ"
 
 #: src/LPPShow.cpp:178
-#, fuzzy
 msgid "Feasible range edges"
 msgstr "Цвет рёбер ОДЗ"
 
@@ -98,7 +95,6 @@ msgid "Plane stripe frequency"
 msgstr "Частота полосочек ограничений"
 
 #: src/LPPShow.cpp:196
-#, fuzzy
 msgid "Feasible range edge thickness"
 msgstr "Цвет ребёр ОДЗ"
 
@@ -129,7 +125,7 @@ msgid "Optimal value: %.4f"
 msgstr "Оптимальное значение: %.4f"
 
 #: src/LPPShow.cpp:265
-#, fuzzy, c-format
+#, c-format
 msgid "Optimal plan: %.3fX₁ %.3fX₂ %.3fX₃"
 msgstr "Оптимальный план: %.3fX₁ %.3fX₂ %.3fX₃"
 

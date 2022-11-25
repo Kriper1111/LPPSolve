@@ -46,7 +46,6 @@ msgid "Show planes"
 msgstr "Show planes"
 
 #: src/LPPShow.cpp:164
-#, fuzzy
 msgid "Show feasible range"
 msgstr "Show planes"
 
@@ -125,7 +124,7 @@ msgid "Optimal value: %.4f"
 msgstr "Optimal value: %.4f"
 
 #: src/LPPShow.cpp:265
-#, fuzzy, c-format
+#, c-format
 msgid "Optimal plan: %.3fX₁ %.3fX₂ %.3fX₃"
 msgstr "Optimal plan: %.3fX₁ %.3fX₁ %.3fX₁"
 
