@@ -93,6 +93,10 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
         camera->orbit(horizontal * movementSpeed * speedMod, -vertical * movementSpeed * speedMod);
         camera->setPerspective();
     }
+    if (mouseState.leftMouseButton) {
+        camera->orbit(-mouseState.deltaX * timeStep * 1000.0f, mouseState.deltaY * timeStep * 1000.0f);
+        camera->setPerspective();
+    }
     if (zoom) {
         SceneData::worldOrigin->zoomGrid(zoom * 0.005 * speedMod);
     }
@@ -293,6 +297,11 @@ void glfwWindowResizeCallback(GLFWwindow *window, int width, int height) {
 
     imguiWindowPosition.x = width - imguiWindowSize.x;
     imguiWindowPosition.y = 0; // height - imguiWindowSize.y;
+
+    int viewWidth = width - imguiWindowSize.x;
+
+    glViewport(0, 0, viewWidth, height);
+    SceneData::sceneCamera->changeAspectRatio(viewWidth, height);
 }
 
 void glfwMouseCallback(GLFWwindow* window, double positionX, double positionY) {

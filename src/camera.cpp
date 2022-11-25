@@ -58,7 +58,24 @@ Camera::Camera(int viewWidth, int viewHeight, float fov, float nearplane, float 
 }
 
 void Camera::changeFOV(float FOV) {
-    fieldOfView = FOV;
+    this->fieldOfView = FOV;
+    this->recalcProjection();
+}
+
+void Camera::changeAspectRatio(float aspectRatio) {
+    this->aspectRatio = aspectRatio;
+    this->recalcProjection();
+}
+
+void Camera::changeAspectRatio(int viewWidth, int viewHeight) {
+    this->viewWidth = viewWidth;
+    this->viewHeight = viewHeight;
+    this->changeAspectRatio((float)viewWidth / (float)viewHeight);
+}
+
+void Camera::changeClipPlanes(float nearplane, float farplane) {
+    this->nearPlane = nearplane;
+    this->farPlane = farplane;
     this->recalcProjection();
 }
 

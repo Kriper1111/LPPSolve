@@ -23,10 +23,13 @@ class Camera {
 
     public:
     float lookInSensitivity = 15.0f;
-    float orthographicScale = 1.0;
+    float orthographicScale = 3.75;
     float lookDepth = 25.0f;
     Camera(int viewWidth, int viewHeight, float fov = 45.5f, float nearplane = 0.01f, float farplane = 100.0f);
     void changeFOV(float newFOV);
+    void changeAspectRatio(float aspectRatio);
+    void changeAspectRatio(int viewWidth, int viewHeight);
+    void changeClipPlanes(float nearplane, float farplane);
     void setOrtography();
     void setPerspective();
 
