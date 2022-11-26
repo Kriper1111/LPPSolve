@@ -1,5 +1,6 @@
 .vscode
 .ignoreme
+.qtc_clangd
 
 __pycache__
 
@@ -13,13 +14,14 @@ include/baked_shaders.h
 locale/compiled
 
 dist
-build
+build*
 objects
 libraries
 external_projects
 /LPPShow*
 /run-tests*
 
+*.user
 *.mtl
 *.old
 imgui.ini

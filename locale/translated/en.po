@@ -47,7 +47,7 @@ msgstr "Show planes"
 
 #: src/LPPShow.cpp:164
 msgid "Show feasible range"
-msgstr "Show planes"
+msgstr "Show feasible range"
 
 #: src/LPPShow.cpp:165
 msgid "Show feasible range edges"

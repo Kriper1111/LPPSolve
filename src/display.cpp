@@ -38,17 +38,6 @@ void generateSolutionObject(Object* object, const std::vector<float> vertices) {
     object->setVertexData(vertices.data(), vertices.size(), indices.data(), indexBuffer.size());
 }
 
-void generateSolutionVector(Object* object, const glm::vec3 solutionVector) {
-    float vertices[6] = {
-        0, 0, 0,
-        solutionVector.x, solutionVector.y, solutionVector.z
-    };
-
-    unsigned int indices[2] = { 0, 1 };
-
-    object->setVertexData(vertices, 6, indices, 2);
-}
-
 void generateSolutionWireframe(Object* object, const std::vector<float> vertices, const std::vector<std::vector<int>> adjacency) {
     std::vector<unsigned int> indices;
     int vertexCount = vertices.size() / 3;
@@ -65,9 +54,9 @@ void generateSolutionWireframe(Object* object, const std::vector<float> vertices
     #endif
 
     for (int vertex_a = 0; vertex_a < adjacency.size(); vertex_a++) {
-        const auto adjacent = adjacency[vertex_a];
-        for (int vtx = 0; vtx < adjacent.size(); vtx++) {
-            int vertex_b = adjacent[vtx] - 1;
+        const auto &adjacent = adjacency[vertex_a];
+        for (int vertex_b : adjacent) {
+            vertex_b -= 1;
 
             #ifdef DEBUG
             std::cout << "Pairing " << vertex_a << "<->" << vertex_b << '\n';
@@ -220,6 +209,23 @@ void Display::recalculatePlane(int planeIndex) {
 
     rebindAttributes();
 }
+
+void Display::recalculateOptimalPlan() {
+    optimalPlanTransform = glm::mat4(1);
+    glm::vec3 optimalVectorNormal = glm::normalize(this->solution.optimalVector);
+
+    if (optimalVectorNormal == worldUp) {
+        optimalPlanTransform[1] = { 0, -optimalVectorNormal.z, 0, 0 };
+    } else {
+        glm::vec3 right = glm::normalize(glm::cross(optimalVectorNormal, worldUp));
+        glm::vec3 up = glm::normalize(glm::cross(right, optimalVectorNormal));
+
+        optimalPlanTransform[0] = { right, 0 };
+        optimalPlanTransform[1] = { up, 0 };
+        optimalPlanTransform[2] = { optimalVectorNormal, 0 };
+    }
+}
+
 // TODO: Implement with instanced rendering
 void Display::rebindAttributes() {};
 void Display::onSolutionSolved() {
@@ -227,6 +233,7 @@ void Display::onSolutionSolved() {
     if (!solutionObject) solutionObject.reset(new Object());
     generateSolutionWireframe(solutionWireframe.get(), solution.polyhedraVertices, solution.adjacency);
     generateSolutionObject(solutionObject.get(), solution.polyhedraVertices);
+    recalculateOptimalPlan();
 }
 
 void Display::onPlaneAdded(int planeIndex) {
@@ -290,6 +297,7 @@ void Display::render(Camera* camera) {
     if (this->solution.isSolved && this->solutionObject) {
     this->solutionShader->activate();
     this->solutionShader->setTransform(camera->getProjection(), camera->getView());
+    this->solutionShader->setUniform("transform", glm::mat4(1));
     if (this->showSolutionVolume) {
         this->solutionShader->setUniform("vertexColor", solutionColor);
         this->solutionObject->bindForDraw();
@@ -306,31 +314,27 @@ void Display::render(Camera* camera) {
         glLineWidth(1.0);
     }
     if (this->showSolutionVector) {
-        glm::mat4 transform = glm::mat4(1);
-        glm::vec3 optimalVectorNormal = glm::normalize(this->solution.optimalVector);
-
-        if (optimalVectorNormal == worldUp) {
-            transform[1] = { 0, -optimalVectorNormal.z, 0, 0 };
-        } else {
-            glm::vec3 right = glm::normalize(glm::cross(optimalVectorNormal, worldUp));
-            glm::vec3 up = glm::normalize(glm::cross(right, optimalVectorNormal));
-
-            transform[0] = { right, 0 };
-            transform[1] = { up, 0 };
-            transform[2] = { optimalVectorNormal, 0 };
-        }
-
-        glm::mat4 vectorBase = transform * glm::scale(glm::mat4(1), glm::vec3({this->vectorWidth, this->vectorWidth, glm::length(this->solution.optimalVector) - this->vectorWidth * this->arrowScale}));
-
         this->solutionShader->setUniform("vertexColor", this->solutionVectorColor);
-        this->solutionShader->setUniform("transform", vectorBase);
 
+        glm::vec3 vectorBaseScale = {
+            this->vectorWidth,
+            this->vectorWidth,
+            glm::length(this->solution.optimalVector) - this->vectorWidth * this->arrowScale
+        };
+        glm::mat4 vectorBaseTransform = glm::scale(
+            this->optimalPlanTransform,
+            glm::vec3(vectorBaseScale)
+        );
+
+        this->solutionShader->setUniform("transform", vectorBaseTransform);
         vectorDisplay->bindForDrawSlice(0, 36);
 
-        glm::mat4 vectorArrow = transform;
-        vectorArrow = glm::translate(glm::mat4(1), glm::vec3(this->solution.optimalVector.x, this->solution.optimalVector.y, this->solution.optimalVector.z)) * vectorArrow;
-        vectorArrow = glm::scale(vectorArrow, glm::vec3(this->vectorWidth) * this->arrowScale);
-        this->solutionShader->setUniform("transform", vectorArrow);
+        glm::vec3 vectorArrowScale = glm::vec3(this->vectorWidth) * this->arrowScale;
+        glm::mat4 vectorArrowTransform;
+        vectorArrowTransform = glm::translate(glm::mat4(1), this->solution.optimalVector); // We move first
+        vectorArrowTransform = vectorArrowTransform * this->optimalPlanTransform; // Then we reorient it to look in the direction
+        vectorArrowTransform = glm::scale(vectorArrowTransform, vectorArrowScale); // And only then we scale
+        this->solutionShader->setUniform("transform", vectorArrowTransform);
         vectorDisplay->bindForDrawSlice(36, 18);
     }
     }

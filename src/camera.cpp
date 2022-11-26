@@ -32,10 +32,18 @@ void Camera::applyRotation() {
 }
 
 void Camera::recalcProjection() {
-    if (this->isOrthographic)
-        this->projectionMatrix = glm::ortho(-aspectRatio * orthographicScale, aspectRatio * orthographicScale, -1.0f * orthographicScale, 1.0f * orthographicScale, nearPlane, farPlane);
-    else
+    if (this->isOrthographic) {
+        this->projectionMatrix = glm::ortho(
+                    -aspectRatio * orthographicScale,
+                    aspectRatio * orthographicScale,
+                    -1.0f * orthographicScale,
+                    1.0f * orthographicScale,
+                    nearPlane, farPlane
+            );
+    }
+    else {
         this->projectionMatrix = glm::perspective(glm::radians(fieldOfView), aspectRatio, nearPlane, farPlane);
+    }
 }
 
 void Camera::updateOrbitDepth() {
@@ -89,14 +97,14 @@ void Camera::useOrthography(bool useOrthography) {
     }
 }
 
-bool Camera::useOrthography() { return this->isOrthographic; }
+bool Camera::useOrthography() const { return this->isOrthographic; }
 
 void Camera::setOrthographicScale(float scale) {
     this->orthographicScale = scale;
     if (this->isOrthographic) this->recalcProjection();
 }
 
-float Camera::getOrthographicScale() { return this->orthographicScale; }
+float Camera::getOrthographicScale() const { return this->orthographicScale; }
 
 void Camera::rotate(float rotation) { rotate(rotation, rotation, rotation); }
 void Camera::rotate(float pitch, float roll, float yaw) {
@@ -166,4 +174,4 @@ glm::vec3 Camera::getCameraDirection() { return this->mDirection; }
 glm::mat4 Camera::getView() { return glm::lookAt(this->mLocation, this->mLocation + this->mDirection, this->mUp); }
 glm::mat4 Camera::getProjection() { return this->projectionMatrix; }
 
-float Camera::getFOV() { return this->fieldOfView; }
+float Camera::getFOV() const { return this->fieldOfView; }

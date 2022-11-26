@@ -96,11 +96,9 @@ void LocalMan::changeLocale(std::string locale) {
 #if defined(_WIN32)
 LocalMan::LMLocale LocalMan::getLocale(const wchar_t* hint) {
     LMLocale out;
-    // 9 is a magic number. Please avoid magic numbers and read
-    // https://learn.microsoft.com/en-us/windows/win32/intl/locale-siso-constants instead
-    // That won't make you feel better, but it'll certainly explain why '9'.
-    // (it's not defined anywhere i can find, so... magic it is)
-    // ((per Windows tradition))
+    // 9 is a magic number; consider reading the following document:
+    // https://learn.microsoft.com/en-us/windows/win32/intl/locale-siso-constant
+    // and thinking of why isn't that a named constant
     WCHAR currentIdentifier[9];
 
     // BEGIN MADNESS

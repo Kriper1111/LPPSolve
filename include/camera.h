@@ -34,10 +34,10 @@ class Camera {
     void setPerspective();
 
     void setOrthographicScale(float scale); // getter because we need to recalc projection
-    float getOrthographicScale();
+    float getOrthographicScale() const;
 
     void useOrthography(bool useOrthography);
-    bool useOrthography();
+    bool useOrthography() const;
 
     void rotate(float rotation);
     void rotate(float pitch, float roll, float yaw);
@@ -60,7 +60,7 @@ class Camera {
     glm::mat4 getView();
     glm::mat4 getProjection();
 
-    float getFOV();
+    float getFOV() const;
 };
 
 std::string glx_toString(glm::vec3 vector);

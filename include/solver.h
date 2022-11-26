@@ -62,10 +62,13 @@ class Display:public LinearProgrammingProblem {
     std::shared_ptr<Object> solutionWireframe;
     std::vector<glm::mat4> planeTransforms;
 
+    glm::mat4 optimalPlanTransform;
+
     void createObjects();
     void createShaders();
 
     void recalculatePlane(int planeIndex);
+    void recalculateOptimalPlan();
     void rebindAttributes();
     void onSolutionSolved();
     void onPlaneAdded(int planeIndex);

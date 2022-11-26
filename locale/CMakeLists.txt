@@ -25,7 +25,10 @@ foreach(TRANSLATION_SOURCE IN LISTS TRANSLATION_SOURCES)
 endforeach(TRANSLATION_SOURCE IN LISTS TRANSLATION_SOURCES)
 
 
-add_custom_target(compiled_pots DEPENDS "${TRANSLATION_TARGETS}")
+add_custom_target(compiled_pots
+    DEPENDS "${TRANSLATION_TARGETS}"
+    SOURCES "${TRANSLATION_SOURCES}"
+)
 if (WIN32 AND FALSE)
     add_dependencies(compiled_pots gettext_runtime)
 endif(WIN32 AND FALSE)

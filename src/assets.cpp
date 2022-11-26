@@ -106,30 +106,30 @@ void Object::setVertexData(
     }
 }
 
-void Object::bindForDraw(GLenum mode) {
+void Object::bindForDraw(GLenum mode) const {
     if (this->objectData == 0 || this->vertexData == 0 || this->indices == 0)
         return;
     glBindVertexArray(this->objectData);
-    glDrawElements(mode, this->vertexCount, GL_UNSIGNED_INT, 0);
+    glDrawElements(mode, this->vertexCount, GL_UNSIGNED_INT, nullptr);
 }
 
-void Object::bindForDrawInstanced(GLenum mode, GLsizei count) {
+void Object::bindForDrawInstanced(GLenum mode, GLsizei count) const {
     if (this->objectData == 0 || this->vertexData == 0 || this->indices == 0)
         return;
     glBindVertexArray(this->objectData);
-    glDrawElementsInstanced(mode, this->vertexCount, GL_UNSIGNED_INT, 0, count);
+    glDrawElementsInstanced(mode, this->vertexCount, GL_UNSIGNED_INT, nullptr, count);
 }
 
-void Object::bindForDrawSlice(GLenum mode, int offset, GLint vertices) {
+void Object::bindForDrawSlice(GLenum mode, size_t offset, GLint vertices) const {
     if (this->objectData == 0 || this->vertexData == 0 || this->indices == 0 || vertices > this->vertexCount)
         return;
     glBindVertexArray(this->objectData);
     glDrawElements(mode, vertices, GL_UNSIGNED_INT, (void*) (sizeof(int) * offset));
 }
 
-void Object::bindForDraw() { this->bindForDraw(GL_TRIANGLES); }
-void Object::bindForDrawInstanced(GLsizei count) { this->bindForDrawInstanced(GL_TRIANGLES, count); }
-void Object::bindForDrawSlice(int offset, GLint vertices) { this->bindForDrawSlice(GL_TRIANGLES, offset, vertices); }
+void Object::bindForDraw() const { this->bindForDraw(GL_TRIANGLES); }
+void Object::bindForDrawInstanced(GLsizei count) const { this->bindForDrawInstanced(GL_TRIANGLES, count); }
+void Object::bindForDrawSlice(size_t offset, GLint vertices) const { this->bindForDrawSlice(GL_TRIANGLES, offset, vertices); }
 
 Object::~Object() {
     if (this->vertexData != 0) glDeleteBuffers(1, &this->vertexData);
@@ -158,18 +158,18 @@ std::string readFileDry(const char* filename) noexcept(false) {
     return fileBuffer;
 };
 
-char Shader::sCompileLog[512];
+std::unique_ptr<char> Shader::sCompileLog = std::make_unique<char>(512);
 
 GLuint Shader::compileShader(const char* shaderSource, GLenum shaderType) noexcept(false) {
     GLuint shaderPtr = glCreateShader(shaderType);
-    glShaderSource(shaderPtr, 1, &shaderSource, 0);
+    glShaderSource(shaderPtr, 1, &shaderSource, nullptr);
     glCompileShader(shaderPtr);
 
     int succ = GL_TRUE;
     glGetShaderiv(shaderPtr, GL_COMPILE_STATUS, &succ);
     if (succ != GL_TRUE) {
-        glGetShaderInfoLog(shaderPtr, 512, nullptr, Shader::sCompileLog);
-        std::cerr << "Failed to build a shader: " << succ << std::endl << Shader::sCompileLog << std::endl;
+        glGetShaderInfoLog(shaderPtr, 512, nullptr, Shader::sCompileLog.get());
+        std::cerr << "Failed to build a shader: " << succ << std::endl << Shader::sCompileLog.get() << std::endl;
         std::cerr << "Shader text: " << shaderSource << std::endl;
         throw std::runtime_error("Failed to build a shader.");
     }
@@ -191,10 +191,9 @@ GLuint Shader::linkProgram(GLuint vertexStage, GLuint fragmentStage) noexcept(fa
     int linkSuccess = GL_NO_ERROR;
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &linkSuccess);
     if (linkSuccess == GL_NO_ERROR) {
-        glGetProgramInfoLog(shaderProgram, 512, nullptr, Shader::sCompileLog);
-        std::cerr << "Failed to link a shader program: " << std::endl << Shader::sCompileLog << std::endl;
+        glGetProgramInfoLog(shaderProgram, 512, nullptr, Shader::sCompileLog.get());
+        std::cerr << "Failed to link a shader program: " << std::endl << Shader::sCompileLog .get() << std::endl;
         glDeleteProgram(shaderProgram);
-        shaderProgram = 0;
         throw std::runtime_error("Failed to link a shader program");
     }
 
@@ -224,45 +223,45 @@ Shader* Shader::fromSource(const char* vertexSource, const char* fragmentSource)
 
 Shader::~Shader() { if (this->pShaderProgram != 0) glDeleteProgram(this->pShaderProgram); }
 
-void Shader::activate() { glUseProgram(this->pShaderProgram); }
+void Shader::activate() const { glUseProgram(this->pShaderProgram); }
 
-void Shader::setTransform(glm::mat4 projection, glm::mat4 view) {
+void Shader::setTransform(glm::mat4 projection, glm::mat4 view) const {
     glUniformMatrix4fv(glGetUniformLocation(this->pShaderProgram, "projection"), 1, GL_FALSE, &projection[0][0]);
     glUniformMatrix4fv(glGetUniformLocation(this->pShaderProgram, "view"), 1, GL_FALSE, &view[0][0]);
 }
 
-void Shader::setUniform(const char *name, int uniformValue) {
+void Shader::setUniform(const char *name, int uniformValue) const {
     glUniform1i(glGetUniformLocation(this->pShaderProgram, name), uniformValue);
 }
 
-void Shader::setUniform(const char*name, float uniformValue) {
+void Shader::setUniform(const char*name, float uniformValue) const {
     glUniform1f(glGetUniformLocation(this->pShaderProgram, name), uniformValue);
 }
 
-void Shader::setUniform(const char*name, double uniformValue) {
+void Shader::setUniform(const char*name, double uniformValue) const {
     glUniform1f(glGetUniformLocation(this->pShaderProgram, name), uniformValue);
 }
 
-void Shader::setUniform(const char*name, glm::vec2 uniformValue) {
+void Shader::setUniform(const char*name, glm::vec2 uniformValue) const {
     glUniform2f(glGetUniformLocation(this->pShaderProgram, name), uniformValue.x, uniformValue.y);
 }
 
-void Shader::setUniform(const char*name, glm::vec3 uniformValue) {
+void Shader::setUniform(const char*name, glm::vec3 uniformValue) const {
     glUniform3f(glGetUniformLocation(this->pShaderProgram, name), uniformValue.x, uniformValue.y, uniformValue.z);
 }
 
-void Shader::setUniform(const char*name, glm::vec4 uniformValue) {
+void Shader::setUniform(const char*name, glm::vec4 uniformValue) const {
     glUniform4f(glGetUniformLocation(this->pShaderProgram, name), uniformValue.x, uniformValue.y, uniformValue.z, uniformValue.w);
 }
 
-void Shader::setUniform(const char*name, glm::mat2 uniformValue) {
+void Shader::setUniform(const char*name, glm::mat2 uniformValue) const {
     glUniformMatrix2fv(glGetUniformLocation(this->pShaderProgram, name), 1, GL_FALSE, &uniformValue[0][0]);
 }
 
-void Shader::setUniform(const char*name, glm::mat3 uniformValue) {
+void Shader::setUniform(const char*name, glm::mat3 uniformValue) const {
     glUniformMatrix3fv(glGetUniformLocation(this->pShaderProgram, name), 1, GL_FALSE, &uniformValue[0][0]);
 }
 
-void Shader::setUniform(const char*name, glm::mat4 uniformValue) {
+void Shader::setUniform(const char*name, glm::mat4 uniformValue) const {
     glUniformMatrix4fv(glGetUniformLocation(this->pShaderProgram, name), 1, GL_FALSE, &uniformValue[0][0]);
 }

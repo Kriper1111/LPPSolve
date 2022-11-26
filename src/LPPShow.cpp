@@ -205,7 +205,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
 
         ImGui::Text("Language: "); ImGui::SameLine();
         if (ImGui::BeginCombo("###lang", LocalMan::currentLocale.c_str())) {
-            for (auto locale : LocalMan::localesMap) {
+            for (const auto &locale : LocalMan::localesMap) {
                 if (ImGui::Selectable(locale.first.c_str(), locale.first == LocalMan::currentLocale)) {
                     LocalMan::changeLocale(locale.first);
                 }
@@ -261,9 +261,9 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             std::cerr << "Faile to solve equation: " << dd_error.what() << std::endl;
         }
     }
-    auto solution = SceneData::lppshow->getSolution();
+    const auto *solution = SceneData::lppshow->getSolution();
     if (solution->isErrored) {
-        ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, l10nc("Failed to solve the equation: %s"), solution->errorString);
+        ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, l10nc("Failed to solve the equation: %s"), solution->errorString.c_str());
     } else if (solution->isSolved) {
         ImGui::Text(l10nc("Optimal value: %.4f"), solution->optimalValue);
         ImGui::Text(l10nc("Optimal plan: %.3fX₁ %.3fX₂ %.3fX₃"), solution->optimalVector.x, solution->optimalVector.y, solution->optimalVector.z);
@@ -343,7 +343,7 @@ int main() {
     int windowWidth = 1280;
     int windowHeight = 720;
 
-    GLFWwindow* mainWindow = glfwCreateWindow(windowWidth, windowHeight, "Linear Programming Problem: Show", NULL, NULL);
+    GLFWwindow* mainWindow = glfwCreateWindow(windowWidth, windowHeight, "Linear Programming Problem: Show", nullptr, nullptr);
     if (mainWindow == nullptr) return logCriticalError("Failed to create a window");
     // ...
     glfwSetWindowSizeCallback(mainWindow, glfwWindowResizeCallback);
@@ -376,7 +376,7 @@ int main() {
     ////////////
     LocalMan::updateLocales();
     LocalMan::setToDefault();
-    Camera* camera = new Camera(windowWidth - imguiWindowSize.x, windowHeight);
+    auto* camera = new Camera(windowWidth - imguiWindowSize.x, windowHeight);
     camera->teleportTo(7.35889, 6.92579, 4.95831);
     camera->rotate(-26.4407, 0.0, -133.3081);
     // 7.35889 m, -6.92579 m, 4.95831 m // X, -Y, Z
@@ -401,7 +401,7 @@ int main() {
     builder.AddText("₀₁₂₃₄₅₆₇₈₉");
     builder.BuildRanges(&ranges);
 
-    iio.Fonts->AddFontFromFileTTF("assets/DejaVuSansMono.ttf", 14, 0, ranges.Data);
+    iio.Fonts->AddFontFromFileTTF("assets/DejaVuSansMono.ttf", 14, nullptr, ranges.Data);
     iio.Fonts->Build();
     #ifndef DEBUG
     iio.IniFilename = NULL;

@@ -12,6 +12,7 @@ if (USE_BAKED_SHADERS)
     )
     add_custom_target(bake
         DEPENDS "{CMAKE_SOURCE_DIR}/include/baked_shaders.h"
+        SOURCES "${UNBAKED_SHADERS}"
     )
 else()
     install(
