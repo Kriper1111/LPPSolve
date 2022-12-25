@@ -1,3 +1,4 @@
+#pragma once
 #include <glm/glm.hpp>
 #include <string>
 
@@ -48,6 +49,7 @@ class Camera {
     void teleportTo(float positionX, float positionY, float positionZ);
     void moveBy(float positionX, float positionY, float positionZ);
     void walk(float forwards, float backwards, float ascend);
+    void walk(float forwards, float backwards, float ascend, glm::vec3 axisMask);
 
     void orbit(double deltaX, double deltaY);
     void zoom(double deltaX, double deltaY);

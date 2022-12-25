@@ -5,6 +5,7 @@ layout (location = 0) in vec3 aPos;
 out vec2 texCoords;
 
 // FIXME: Make shaders more shared/reusable. Sure, they're small, but still.
+uniform mat4 globalScale = mat4(1.0);
 uniform mat4 planeTransform = mat4(1.0);
 uniform mat4 projection = mat4(1.0);
 uniform mat4 transform = mat4(1.0);
@@ -14,5 +15,6 @@ void main()
 {
     texCoords = vec2(aPos.x, aPos.y);
     vec4 transformedPlane = planeTransform * vec4(aPos, 1.0);
+    transformedPlane = transformedPlane * globalScale;
     gl_Position = projection * view * transform * transformedPlane;
 }

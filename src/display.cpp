@@ -19,13 +19,13 @@
 #ifdef USE_CDDLIB
 
 #include <quickhull/QuickHull.hpp>
-std::vector<size_t> getIndices(const std::vector<float> vertices) {
+std::vector<size_t> getIndices(const std::vector<float>& vertices) {
     quickhull::QuickHull<float> qh;
     auto convexHull = qh.getConvexHull(vertices.data(), vertices.size(), true, false);
     return convexHull.getIndexBuffer();
 }
 
-void generateSolutionObject(Object* object, const std::vector<float> vertices) {
+void generateSolutionObject(Object* object, const std::vector<float>& vertices) {
     quickhull::QuickHull<float> qh;
 
     auto convexHull = qh.getConvexHull(vertices.data(), vertices.size() / 3, true, true);
@@ -38,7 +38,7 @@ void generateSolutionObject(Object* object, const std::vector<float> vertices) {
     object->setVertexData(vertices.data(), vertices.size(), indices.data(), indexBuffer.size());
 }
 
-void generateSolutionWireframe(Object* object, const std::vector<float> vertices, const std::vector<std::vector<int>> adjacency) {
+void generateSolutionWireframe(Object* object, const std::vector<float>& vertices, const std::vector<std::vector<int>>& adjacency) {
     std::vector<unsigned int> indices;
     int vertexCount = vertices.size() / 3;
 
@@ -259,8 +259,13 @@ Display::Display() {
     this->visibleEquations = std::vector<bool>();
 };
 
+void Display::setScale(double scale) {
+    this->globalScale = scale;
+    this->globalScaleTransform = glm::scale(glm::mat4(1), glm::vec3(1 / this->globalScale));
+}
+
 void Display::render(Camera* camera) {
-    if (planeTransforms.size() == 0) return;
+    if (planeTransforms.empty()) return;
     // glBindVertexArray(planeObject->objectData);
     planeShader->activate();
     planeShader->setTransform(camera->getProjection(), camera->getView());
@@ -283,13 +288,14 @@ void Display::render(Camera* camera) {
      */
     // glDrawElementsInstanced(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0, planeTransforms.size());
     if (showPlanesAtAll) {
+    this->planeShader->setUniform("globalScale", globalScaleTransform);
     for (int planeIndex = 0; planeIndex < planeTransforms.size(); planeIndex++) {
         if (!visibleEquations[planeIndex]) continue;
-        planeShader->setUniform("planeTransform", planeTransforms[planeIndex]);
-        planeShader->setUniform("stripeScale", stripeFrequency);
-        planeShader->setUniform("stripeWidth", stripeWidth);
-        planeShader->setUniform("positiveColor", constraintPositiveColor);
-        planeShader->setUniform("negativeColor", constraintNegativeColor);
+        this->planeShader->setUniform("planeTransform", planeTransforms[planeIndex]);
+        this->planeShader->setUniform("stripeScale", stripeFrequency);
+        this->planeShader->setUniform("stripeWidth", stripeWidth);
+        this->planeShader->setUniform("positiveColor", constraintPositiveColor);
+        this->planeShader->setUniform("negativeColor", constraintNegativeColor);
         planeObject->bindForDraw();
     }
     }
@@ -297,7 +303,7 @@ void Display::render(Camera* camera) {
     if (this->solution.isSolved && this->solutionObject) {
     this->solutionShader->activate();
     this->solutionShader->setTransform(camera->getProjection(), camera->getView());
-    this->solutionShader->setUniform("transform", glm::mat4(1));
+    this->solutionShader->setUniform("transform", globalScaleTransform);
     if (this->showSolutionVolume) {
         this->solutionShader->setUniform("vertexColor", solutionColor);
         this->solutionObject->bindForDraw();
@@ -326,12 +332,13 @@ void Display::render(Camera* camera) {
             glm::vec3(vectorBaseScale)
         );
 
-        this->solutionShader->setUniform("transform", vectorBaseTransform);
+        this->solutionShader->setUniform("transform", vectorBaseTransform * globalScaleTransform);
         vectorDisplay->bindForDrawSlice(0, 36);
 
         glm::vec3 vectorArrowScale = glm::vec3(this->vectorWidth) * this->arrowScale;
         glm::mat4 vectorArrowTransform;
-        vectorArrowTransform = glm::translate(glm::mat4(1), this->solution.optimalVector); // We move first
+        vectorArrowTransform = vectorArrowTransform * globalScaleTransform; // even before anything, we apply global scale
+        vectorArrowTransform = glm::translate(vectorArrowTransform, this->solution.optimalVector); // We move first
         vectorArrowTransform = vectorArrowTransform * this->optimalPlanTransform; // Then we reorient it to look in the direction
         vectorArrowTransform = glm::scale(vectorArrowTransform, vectorArrowScale); // And only then we scale
         this->solutionShader->setUniform("transform", vectorArrowTransform);
@@ -422,8 +429,18 @@ WorldGridDisplay::WorldGridDisplay() {
 
 void WorldGridDisplay::zoomGrid(float amount) {
     gridScale += amount * gridScale;
-    if (gridScale > 10.0) gridScale = 1.0;
-    if (gridScale <  0.1) gridScale = 1.0;
+    if (gridScale > 10.0) {
+        gridScale = 1.0;
+        this->scaleExponent += 1;
+    }
+    if (gridScale <  0.1) {
+        gridScale = 1.0;
+        this->scaleExponent -= 1;
+    }
+}
+
+double WorldGridDisplay::getComputedScale() {
+    return pow(10, this->scaleExponent) * this->gridScale;
 }
 
 void WorldGridDisplay::render(glm::mat4 view, glm::mat4 projection) {

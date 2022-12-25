@@ -62,10 +62,11 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
                       glfwGetKey(inputWindow, GLFW_KEY_RIGHT_SHIFT)) ? 4.0f : 1.0f;
     speedMod *= timeStep * 1000.0f;
 
-    float horizontal = (glfwGetKey(inputWindow, GLFW_KEY_A) - glfwGetKey(inputWindow, GLFW_KEY_D))
-                     + (glfwGetKey(inputWindow, GLFW_KEY_LEFT) - glfwGetKey(inputWindow, GLFW_KEY_RIGHT));
-    float vertical = (glfwGetKey(inputWindow, GLFW_KEY_W) - glfwGetKey(inputWindow, GLFW_KEY_S))
-                   + (glfwGetKey(inputWindow, GLFW_KEY_UP) - glfwGetKey(inputWindow, GLFW_KEY_DOWN));
+    float orbitHorizontal = glfwGetKey(inputWindow, GLFW_KEY_LEFT) - glfwGetKey(inputWindow, GLFW_KEY_RIGHT);
+    float orbitVertical = glfwGetKey(inputWindow, GLFW_KEY_UP) - glfwGetKey(inputWindow, GLFW_KEY_DOWN);
+
+    float moveForwards = glfwGetKey(inputWindow, GLFW_KEY_W) - glfwGetKey(inputWindow, GLFW_KEY_S);
+    float moveLateral = glfwGetKey(inputWindow, GLFW_KEY_A) - glfwGetKey(inputWindow, GLFW_KEY_D);
 
     float zoom = (glfwGetKey(inputWindow, GLFW_KEY_R) - glfwGetKey(inputWindow, GLFW_KEY_F));
 
@@ -89,9 +90,18 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
 
     if (snapToLeft || snapToRight || snapToTop) {
         camera->setOrtography();
-    } else if (horizontal || vertical) {
-        camera->orbit(horizontal * movementSpeed * speedMod, -vertical * movementSpeed * speedMod);
+    } else if (orbitHorizontal || orbitVertical) {
+        camera->orbit(orbitHorizontal * movementSpeed * speedMod, -orbitVertical * movementSpeed * speedMod);
         camera->setPerspective();
+    }
+    if (moveLateral || moveForwards) {
+        // auto cameraDir = camera->getCameraDirection();
+        camera->walk(
+            moveForwards * speedMod * 0.01,
+            moveLateral * speedMod * 0.01,
+            0,
+            { 1, 1, 0 }
+        );
     }
     if (mouseState.leftMouseButton) {
         camera->orbit(-mouseState.deltaX * timeStep * 1000.0f, mouseState.deltaY * timeStep * 1000.0f);
@@ -99,6 +109,7 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
     }
     if (zoom) {
         SceneData::worldOrigin->zoomGrid(zoom * 0.005 * speedMod);
+        SceneData::lppshow->setScale(SceneData::worldOrigin->getComputedScale());
     }
 }
 
@@ -192,6 +203,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             #ifdef DEBUG
             ImGui::InputFloat("Grid scale", &SceneData::worldOrigin->gridScale, 0.10f, 0.25f);
             ImGui::InputFloat("Grid width", &SceneData::worldOrigin->gridWidth, 0.01f, 0.015f);
+            ImGui::Text("Computed grid scale %f", SceneData::worldOrigin->getComputedScale());
             ImGui::SliderFloat("Vector width", &SceneData::lppshow->vectorWidth, 0.01f, 1.0f);
             ImGui::SliderFloat("Arrow scale", &SceneData::lppshow->arrowScale, 1.0f, 10.0f);
             #endif

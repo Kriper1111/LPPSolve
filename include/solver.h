@@ -63,6 +63,7 @@ class Display:public LinearProgrammingProblem {
     std::vector<glm::mat4> planeTransforms;
 
     glm::mat4 optimalPlanTransform;
+    glm::mat4 globalScaleTransform = glm::mat4(1);
 
     void createObjects();
     void createShaders();
@@ -81,6 +82,7 @@ class Display:public LinearProgrammingProblem {
     bool showSolutionVolume = true;
     bool showSolutionVector = true;
     bool showSolutionWireframe = true;
+    double globalScale = 1.0;
     float stripeFrequency = 10.0;
     float stripeWidth = 0.5;
     float wireThickness = 1.0;
@@ -95,6 +97,7 @@ class Display:public LinearProgrammingProblem {
 
     Display();
 
+    void setScale(double scale);
     void render(Camera* camera);
 
     ~Display();
@@ -106,6 +109,7 @@ class WorldGridDisplay {
     std::shared_ptr<Object> axisObject;
     std::shared_ptr<Shader> gridShader;
     std::shared_ptr<Shader> axisShader;
+    int scaleExponent = 0;
 
     void createObjects();
     void createShaders();
@@ -120,6 +124,7 @@ class WorldGridDisplay {
     WorldGridDisplay();
 
     void zoomGrid(float zoomAmount);
+    double getComputedScale();
     void render(glm::mat4 view, glm::mat4 projection);
 
     ~WorldGridDisplay();

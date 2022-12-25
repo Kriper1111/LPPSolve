@@ -159,6 +159,13 @@ void Camera::walk(float forwards, float sideways, float ascend) {
     this->mLocation += movement;
 }
 
+void Camera::walk(float forwards, float sideways, float ascend, glm::vec3 axisMask) {
+    glm::vec3 movement = this->mDirection * axisMask * forwards;
+    movement += glm::cross(this->mDirection * axisMask, this->mUp) * sideways;
+    movement.z += ascend;
+    this->mLocation += movement;
+}
+
 #ifdef DEBUG
 std::string glx_toString(glm::vec3 vector) { return glm::to_string(vector); }
 std::string glx_toString(glm::mat4 matrix) { return glm::to_string(matrix); }
