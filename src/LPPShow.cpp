@@ -430,7 +430,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         try {
             SceneData::lppshow->solve();
         } catch (std::runtime_error &dd_error) {
-            std::cerr << "Faile to solve equation: " << dd_error.what() << std::endl;
+            std::cerr << "Failed to solve equation: " << dd_error.what() << std::endl;
         }
     }
     const auto *solution = SceneData::lppshow->getSolution();
