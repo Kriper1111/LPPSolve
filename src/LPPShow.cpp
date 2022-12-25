@@ -29,6 +29,7 @@ ImVec2 imguiWindowPosition = { 980, 20 };
 ImVec2 imguiWindowSize = { 320, 720 };
 ImVec4 worldColor = { 0.364, 0.674, 0.764, 1.0 };
 const char* const minmax[2] = { "min", "max" };
+const char* const equ[3] = { "<=", ">=", "=" };
 
 struct MouseState {
     bool leftMouseButton;
@@ -309,16 +310,6 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         }
     }
 
-    ImGui::Text("Total planes: %d", SceneData::lppshow->getEquationCount());
-    if (ImGui::Button(l10nc("Add plane")) && SceneData::lppshow->getEquationCount() < 256) {
-        SceneData::lppshow->addLimitPlane({0, 0, 1, 0});
-    }
-    ImGui::SameLine();
-    if (ImGui::Button(l10nc("Remove plane")) && SceneData::lppshow->getEquationCount() > 0) {
-        SceneData::lppshow->removeLimitPlane();
-    }
-    ImGui::Separator();
-
     ImGui::Text(l10nc("Objective function:"));
     ImGui::InputFloat4("##objective", &SceneData::lppshow->objectiveFunction.x);
     ImGui::SameLine(); ImGui::Text("->"); ImGui::SameLine();
@@ -330,52 +321,113 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     if (ImGui::Combo("##min", &currentItem, minmax, 2))
         SceneData::lppshow -> doMinimize = !doMinimize;
     ImGui::PopItemWidth();
+    ImGui::Separator();
 
+    ImGui::Text("Total planes: %d", SceneData::lppshow->getEquationCount());
+    if (ImGui::Button(l10nc("Add plane")) && SceneData::lppshow->getEquationCount() < 256) {
+        SceneData::lppshow->addLimitPlane({0, 0, 1, 0});
+    }
+    ImGui::SameLine();
+    if (ImGui::Button(l10nc("Remove plane")) && SceneData::lppshow->getEquationCount() > 0) {
+        SceneData::lppshow->removeLimitPlane();
+    }
     ImGui::Separator();
 
     // TODO: Make into a scrollbox
-    for (int planeIndex = 0; planeIndex < SceneData::lppshow->getEquationCount(); planeIndex++) {
-        auto planeEquationOrigin = SceneData::lppshow->getLimitPlane(planeIndex);
-        ImGui::PushID(planeIndex);
-        if (ImGui::Button("x")) {
-            SceneData::lppshow->editLimitPlane(planeIndex, {0, 0, 0, 0});
-        }
-        ImGui::SameLine();
-        ImGui::PushItemWidth(150.0f);
-        bool coeffChanged = ImGui::InputFloat3("##vec", &planeEquationOrigin.equationCoefficients[0]);
-        ImGui::PopItemWidth();
-        ImGui::SameLine();
-        ImGui::PushItemWidth(25.0f);
-        auto equationType = planeEquationOrigin.type;
-        if (ImGui::BeginCombo("##type", "??", ImGuiComboFlags_NoArrowButton)) {
-            if (ImGui::Selectable("<=", planeEquationOrigin.type == EquationType::LESS_EQUAL_THAN)) {
-                equationType = EquationType::LESS_EQUAL_THAN;
+    float TEXT_BASE_WIDTH = ImGui::GetTextLineHeightWithSpacing();
+    ImVec2 tableSize = ImVec2(0.0f, TEXT_BASE_WIDTH * 8);
+    ImGuiTableFlags tableFlags = ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_BordersH | ImGuiTableFlags_ScrollY | ImGuiTableFlags_NoPadInnerX;
+    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(3, 0));
+    if (ImGui::BeginTable("###plane-equations", 7, tableFlags, tableSize)) {
+        ImGui::TableSetupScrollFreeze(1, 0);
+        ImGui::TableSetupColumn("X", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_WIDTH);
+        ImGui::TableSetupColumn("x₁");
+        ImGui::TableSetupColumn("x₂");
+        ImGui::TableSetupColumn("x₃");
+        ImGui::TableSetupColumn("=", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_WIDTH * 1.5);
+        ImGui::TableSetupColumn("b");
+        ImGui::TableSetupColumn("V", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_WIDTH);
+        ImGui::TableHeadersRow();
+        ImGui::TableSetColumnIndex(1); ImGui::PushItemWidth(-FLT_MIN);
+        ImGui::TableSetColumnIndex(2); ImGui::PushItemWidth(-FLT_MIN);
+        ImGui::TableSetColumnIndex(3); ImGui::PushItemWidth(-FLT_MIN);
+        ImGui::TableSetColumnIndex(4); ImGui::PushItemWidth(-FLT_MIN);
+        ImGui::TableSetColumnIndex(5); ImGui::PushItemWidth(-FLT_MIN);
+        ImGui::TableSetColumnIndex(6);
+
+
+        // ImGui::
+        for (int planeIndex = 0; planeIndex < SceneData::lppshow->getEquationCount(); planeIndex++) {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            auto planeEquationOrigin = SceneData::lppshow->getLimitPlane(planeIndex);
+            ImGui::PushID(planeIndex);
+            if (ImGui::Button("x")) SceneData::lppshow->editLimitPlane(planeIndex, {0, 0, 0, 0});
+            ImGui::TableNextColumn();
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
+
+            bool coeffChanged = false;
+
+            coeffChanged |= ImGui::InputFloat("##vecx1", &planeEquationOrigin.equationCoefficients[0]);
+            ImGui::TableNextColumn();
+            coeffChanged |= ImGui::InputFloat("##vecx2", &planeEquationOrigin.equationCoefficients[1]);
+            ImGui::TableNextColumn();
+            coeffChanged |= ImGui::InputFloat("##vecx3", &planeEquationOrigin.equationCoefficients[2]);
+            ImGui::TableNextColumn();
+
+            int currentType = planeEquationOrigin.type;
+            bool typeChanged = false;
+
+            // The only reason as to why I'm using is is the damn dropdown button.
+            if (ImGui::BeginCombo("##type", equ[currentType], ImGuiComboFlags_NoArrowButton)) {
+                for (int eqType = 0; eqType < 3; eqType++) {
+                    bool itemSelected = currentType == eqType;
+                    if (ImGui::Selectable(equ[eqType], itemSelected)) {
+                        typeChanged = true;
+                        planeEquationOrigin.type = static_cast<EquationType>(eqType);
+                    }
+
+                    if (itemSelected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
             }
-            if (ImGui::Selectable(">=", planeEquationOrigin.type == EquationType::GREATER_EQUAL_THAN)) {
-                equationType = EquationType::GREATER_EQUAL_THAN;
+            ImGui::TableNextColumn();
+
+            bool constChanged = ImGui::InputFloat("##const", &planeEquationOrigin.equationCoefficients[3]);
+            ImGui::TableNextColumn();
+            ImGui::PopStyleColor();
+
+            // XXX: Do we want to use std::vector<bool> optimization or fall back to Plane objects?
+            bool isVisible = SceneData::lppshow->visibleEquations[planeIndex];
+            if(ImGui::Checkbox("##vis", &isVisible)) SceneData::lppshow->visibleEquations[planeIndex] = isVisible;
+            ImGui::TableNextColumn();
+
+            ImGui::PopID();
+
+            if(coeffChanged || constChanged || typeChanged) {
+                SceneData::lppshow->editLimitPlane(
+                    planeIndex,
+                    planeEquationOrigin.equationCoefficients,
+                    planeEquationOrigin.type
+                );
             }
-            if (ImGui::Selectable("=", planeEquationOrigin.type == EquationType::EQUAL_TO)) {
-                equationType = EquationType::EQUAL_TO;
-            }
-            ImGui::EndCombo();
         }
-        bool typeChanged = equationType != planeEquationOrigin.type;
-        ImGui::SameLine();
-        ImGui::PopItemWidth();
-        ImGui::PushItemWidth(50.0f);
-        bool constChanged = ImGui::InputFloat("##const", &planeEquationOrigin.equationCoefficients[3]);
-        if(coeffChanged || constChanged || typeChanged) {
-            SceneData::lppshow->editLimitPlane(planeIndex, planeEquationOrigin.equationCoefficients, equationType);
-        }
-        ImGui::SameLine();
-        ImGui::PopItemWidth();
-        // XXX: Do we want to use std::vector<bool> optimization or fall back to Plane objects?
-        bool isVisible = SceneData::lppshow->visibleEquations[planeIndex];
-        if(ImGui::Checkbox("##vis", &isVisible)) {
-            SceneData::lppshow->visibleEquations[planeIndex] = isVisible;
-        }
-        ImGui::PopID();
+        ImGui::EndTable();
     }
+    ImGui::PopStyleVar();
+    // ImGuiListClipper pantherClipperLX;
+    // pantherClipperLX.Begin(SceneData::lppshow->getEquationCount());
+    // while (pantherClipperLX.Step()) {
+    //     for (int planeIndex = pantherClipperLX.DisplayStart; planeIndex < pantherClipperLX.DisplayEnd; planeIndex++) {
+
+    //     }
+    // }
+
+    // for (int planeIndex = 0; planeIndex < SceneData::lppshow->getEquationCount(); planeIndex++) {
+
+    // }
     if (ImGui::Button("+") && SceneData::lppshow->getEquationCount() < 256) {
         SceneData::lppshow->addLimitPlane({0, 0, 1, 0});
     }
