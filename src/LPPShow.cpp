@@ -20,9 +20,12 @@
 // instead of making it a macro that way it's.. i guess more control
 #define l10n(str) moFileLib::_(str)
 #define l10nc(str) moFileLib::_(str).c_str()
+#define l10nm(str) str
+#define l10nd(str) moFileLib::_(str).c_str()
+// last one is for deferred localization
 
 const float movementSpeed = 2.5f;
-ImVec2 imguiWindowPosition = { 980, 0 };
+ImVec2 imguiWindowPosition = { 980, 20 };
 ImVec2 imguiWindowSize = { 320, 720 };
 ImVec4 worldColor = { 0.364, 0.674, 0.764, 1.0 };
 const char* const minmax[2] = { "min", "max" };
@@ -45,6 +48,25 @@ namespace SceneData {
     Display* lppshow;
     WorldGridDisplay* worldOrigin;
     Camera *sceneCamera;
+}
+
+namespace SettingsWindow {
+    bool showSettingsWindow = false;
+    const char* editColors = l10nm("Colors");
+    const char* editGeneral = l10nm("General");
+    const char* editSliders = l10nm("Sliders");
+    const char* editVisibility = l10nm("Visibility");
+
+    const std::vector<const char*> options = {
+        editGeneral,
+        editColors,
+        editSliders,
+        editVisibility
+    };
+    const char* selectedOption = options[0];
+
+    // readability
+    bool selected(const char* option) { return selectedOption == option; }
 }
 
 void glfwErrorCallback(int error, const char* description) {
@@ -95,7 +117,6 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
         camera->setPerspective();
     }
     if (moveLateral || moveForwards) {
-        // auto cameraDir = camera->getCameraDirection();
         camera->walk(
             moveForwards * speedMod * 0.01,
             moveLateral * speedMod * 0.01,
@@ -113,17 +134,129 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
     }
 }
 
+bool deserialize() { return true; };
+bool serialize() { return true; };
+
+void show_preferences_window(bool* isOpen) {
+    if(!ImGui::Begin(l10n("Preferences").append("###preferences").c_str(), isOpen)) {
+        ImGui::End();
+        return;
+    }
+
+    ImGui::BeginChild("options", ImVec2(ImGui::GetContentRegionAvail().x * 0.25, ImGui::GetContentRegionAvail().y), true);
+    // ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.25);
+    for (auto option : SettingsWindow::options) {
+        if (ImGui::Selectable(l10nd(option), SettingsWindow::selectedOption == option)) {
+            SettingsWindow::selectedOption = option;
+        }
+        if (SettingsWindow::selectedOption == option) {
+            ImGui::SetItemDefaultFocus();
+        }
+    }
+    ImGui::EndChild();
+    ImGui::SameLine();
+    ImGui::BeginChild("settingsPane");
+    if (SettingsWindow::selected(SettingsWindow::editGeneral)) {
+        static int currentStyle = 0;
+        ImGui::Text(l10nc("Color Theme: ")); ImGui::SameLine();
+        if (ImGui::Combo("###color", &currentStyle, "ImGui Dark\0ImGui Light\0ImGui Classic\0")) {
+            switch (currentStyle) {
+                case 0: ImGui::StyleColorsDark(); break;
+                case 1: ImGui::StyleColorsLight(); break;
+                case 2: ImGui::StyleColorsClassic(); break;
+            }
+        }
+        ImGui::Text(l10nc("Language: ")); ImGui::SameLine();
+        if (ImGui::BeginCombo("###lang", LocalMan::currentLocale.c_str())) {
+            for (const auto &locale : LocalMan::localesMap) {
+                if (ImGui::Selectable(locale.first.c_str(), locale.first == LocalMan::currentLocale)) {
+                    LocalMan::changeLocale(locale.first);
+                }
+            }
+            ImGui::EndCombo();
+        }
+    }
+    if (SettingsWindow::selected(SettingsWindow::editColors)) {
+        ImGuiColorEditFlags shaderPickerFlags = ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoOptions;
+        #ifdef DEBUG
+        shaderPickerFlags = shaderPickerFlags & (~ImGuiColorEditFlags_NoOptions);
+        ImGui::ColorEdit3("World color", &worldColor.x, shaderPickerFlags);
+        ImGui::Separator();
+        #endif
+        ImGui::ColorEdit3(l10nc("Feasible range"), &SceneData::lppshow->solutionColor.x, shaderPickerFlags);
+        ImGui::ColorEdit3(l10nc("Feasible range edges"), &SceneData::lppshow->solutionWireframeColor.x, shaderPickerFlags);
+        ImGui::ColorEdit3(l10nc("Solution vector"), &SceneData::lppshow->solutionVectorColor.x, shaderPickerFlags);
+        for (int colorIndex = 0; colorIndex < SceneData::lppshow->constraintPositiveColors.size(); colorIndex++) {
+            ImGui::PushID(colorIndex);
+            ImGui::ColorEdit3(l10nc("Plane color"), &SceneData::lppshow->constraintPositiveColors[colorIndex].x, shaderPickerFlags);
+            ImGui::PopID();
+        }
+    }
+    if (SettingsWindow::selected(SettingsWindow::editSliders)) {
+        ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.4);
+        #ifdef DEBUG
+        ImGui::Text("Computed grid scale %f", SceneData::worldOrigin->getComputedScale());
+        ImGui::InputFloat("Grid width", &SceneData::worldOrigin->gridWidth, 0.01f, 0.015f);
+        ImGui::SliderFloat("Vector width", &SceneData::lppshow->vectorWidth, 0.01f, 1.0f);
+        ImGui::SliderFloat("Arrow scale", &SceneData::lppshow->arrowScale, 1.0f, 10.0f);
+        ImGui::Separator();
+        #endif
+        ImGui::SliderFloat(l10nc("Plane stripe width"), &SceneData::lppshow->stripeWidth, 0.0f, 1.0f);
+        ImGui::SliderFloat(l10nc("Plane stripe frequency"), &SceneData::lppshow->stripeFrequency, 1.0f, 100.0f);
+        ImGui::SliderFloat(l10nc("Feasible range edge thickness"), &SceneData::lppshow->wireThickness, 1.0f, 5.0f);
+        ImGui::PopItemWidth();
+    }
+    if (SettingsWindow::selected(SettingsWindow::editVisibility)) {
+        ImGui::Checkbox(l10nc("Show grid"), &SceneData::worldOrigin->gridEnabled);
+        ImGui::Checkbox(l10nc("Show world axis"), &SceneData::worldOrigin->axisEnabled);
+        ImGui::Checkbox(l10nc("Show planes"), &SceneData::lppshow->showPlanesAtAll);
+        ImGui::Checkbox(l10nc("Show feasible range"), &SceneData::lppshow->showSolutionVolume);
+        ImGui::Checkbox(l10nc("Show feasible range edges"), &SceneData::lppshow->showSolutionWireframe);
+        ImGui::Checkbox(l10nc("Show solution vector"), &SceneData::lppshow->showSolutionVector);
+    }
+    ImGui::EndChild();
+
+    ImGui::End();
+}
+
 void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+    const ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
 
     // TODO: Make collapsing too, maybe?
     ImGui::Begin(l10n("Planes").append("###planes-win").c_str(), nullptr, windowFlags);
     ImGui::SetWindowPos(imguiWindowPosition);
     ImGui::SetWindowSize(imguiWindowSize);
+
+    bool shouldExit = false;
+    bool setExample = false;
+
+    if (ImGui::BeginMainMenuBar()) {
+        if(ImGui::BeginMenu("File")) {
+            // ImGui::MenuItem("Open..", "o", &deserialize);
+            // ImGui::MenuItem("Save..", "s", &serialize);
+            ImGui::MenuItem("Load example..", nullptr, &setExample);
+            ImGui::Separator();
+            ImGui::MenuItem("Preferences", "p", &SettingsWindow::showSettingsWindow);
+            ImGui::Separator();
+            ImGui::MenuItem("Exit", "e", &shouldExit);
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
+    if (shouldExit) {
+        ImGui::End();
+        glfwSetWindowShouldClose(window, 1);
+        return;
+    }
+    // if (setExample) {
+    //     SceneData::lppshow->removeLimitPlane();
+    // }
+    if (SettingsWindow::showSettingsWindow) show_preferences_window(&SettingsWindow::showSettingsWindow);
 
     if (ImGui::CollapsingHeader(l10n("Camera controls").append("###camera-opt").c_str())) {
         #ifdef DEBUG
@@ -169,66 +302,6 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             camera->rotate(-89.9, 0, 0);
             camera->setOrtography();
         }
-    }
-
-    if (ImGui::CollapsingHeader(l10n("Display options").append("###display-opt").c_str())) {
-        if (ImGui::TreeNode(l10n("Visibility").append("###checkboxes").c_str())) {
-            ImGui::Checkbox(l10nc("Show grid"), &SceneData::worldOrigin->gridEnabled);
-            ImGui::Checkbox(l10nc("Show world axis"), &SceneData::worldOrigin->axisEnabled);
-            ImGui::Checkbox(l10nc("Show planes"), &SceneData::lppshow->showPlanesAtAll);
-            ImGui::Checkbox(l10nc("Show feasible range"), &SceneData::lppshow->showSolutionVolume);
-            ImGui::Checkbox(l10nc("Show feasible range edges"), &SceneData::lppshow->showSolutionWireframe);
-            ImGui::Checkbox(l10nc("Show solution vector"), &SceneData::lppshow->showSolutionVector);
-            ImGui::TreePop();
-            ImGui::Separator();
-        }
-
-        if (ImGui::TreeNode(l10n("Colors").append("###colors").c_str())) {
-            ImGuiColorEditFlags shaderPickerFlags = ImGuiColorEditFlags_Float | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoOptions;
-            #ifdef DEBUG
-            shaderPickerFlags = shaderPickerFlags & (~ImGuiColorEditFlags_NoOptions);
-            ImGui::ColorEdit3("World color", &worldColor.x, shaderPickerFlags);
-            #endif
-            ImGui::ColorEdit3(l10nc("Feasible range"), &SceneData::lppshow->solutionColor.x, shaderPickerFlags);
-            ImGui::ColorEdit3(l10nc("Feasible range edges"), &SceneData::lppshow->solutionWireframeColor.x, shaderPickerFlags);
-            ImGui::ColorEdit3(l10nc("Solution vector"), &SceneData::lppshow->solutionVectorColor.x, shaderPickerFlags);
-            for (int colorIndex = 0; colorIndex < SceneData::lppshow->constraintPositiveColors.size(); colorIndex++) {
-                ImGui::PushID(colorIndex);
-                ImGui::ColorEdit3(l10nc("Plane color"), &SceneData::lppshow->constraintPositiveColors[colorIndex].x, shaderPickerFlags);
-                ImGui::PopID();
-            }
-            // ImGui::ColorEdit3(l10nc("Plane wrong direction"), &SceneData::lppshow->constraintNegativeColor.x, shaderPickerFlags);
-            ImGui::TreePop();
-            ImGui::Separator();
-        }
-
-        if (ImGui::TreeNode(l10n("Sliders").append("###sliders").c_str())) {
-            ImGui::PushItemWidth(imguiWindowSize.x / 2);
-            #ifdef DEBUG
-            ImGui::InputFloat("Grid scale", &SceneData::worldOrigin->gridScale, 0.10f, 0.25f);
-            ImGui::InputFloat("Grid width", &SceneData::worldOrigin->gridWidth, 0.01f, 0.015f);
-            ImGui::Text("Computed grid scale %f", SceneData::worldOrigin->getComputedScale());
-            ImGui::SliderFloat("Vector width", &SceneData::lppshow->vectorWidth, 0.01f, 1.0f);
-            ImGui::SliderFloat("Arrow scale", &SceneData::lppshow->arrowScale, 1.0f, 10.0f);
-            #endif
-            ImGui::SliderFloat(l10nc("Plane stripe width"), &SceneData::lppshow->stripeWidth, 0.0f, 1.0f);
-            ImGui::SliderFloat(l10nc("Plane stripe frequency"), &SceneData::lppshow->stripeFrequency, 1.0f, 100.0f);
-            ImGui::SliderFloat(l10nc("Feasible range edge thickness"), &SceneData::lppshow->wireThickness, 1.0f, 5.0f);
-            ImGui::PopItemWidth();
-            ImGui::TreePop();
-            ImGui::Separator();
-        }
-
-        ImGui::Text("Language: "); ImGui::SameLine();
-        if (ImGui::BeginCombo("###lang", LocalMan::currentLocale.c_str())) {
-            for (const auto &locale : LocalMan::localesMap) {
-                if (ImGui::Selectable(locale.first.c_str(), locale.first == LocalMan::currentLocale)) {
-                    LocalMan::changeLocale(locale.first);
-                }
-            }
-            ImGui::EndCombo();
-        }
-        ImGui::Separator();
     }
 
     ImGui::Text("Total planes: %d", SceneData::lppshow->getEquationCount());
@@ -312,7 +385,7 @@ void glfwWindowResizeCallback(GLFWwindow *window, int width, int height) {
     imguiWindowSize.y = height;
 
     imguiWindowPosition.x = width - imguiWindowSize.x;
-    imguiWindowPosition.y = 0; // height - imguiWindowSize.y;
+    // imguiWindowPosition.y = ImGui::GetTextLineHeightWithSpacing(); // height - imguiWindowSize.y;
 
     int viewWidth = width - imguiWindowSize.x;
 

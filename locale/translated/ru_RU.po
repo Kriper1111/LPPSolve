@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-25 13:05+0300\n"
+"POT-Creation-Date: 2022-12-25 16:17+0300\n"
 "PO-Revision-Date: 2022-11-20 16:39+0300\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -18,118 +18,135 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: src/LPPShow.cpp:109
-msgid "Planes"
-msgstr "Ограничения"
-
-#: src/LPPShow.cpp:113
-msgid "Camera controls"
-msgstr "Управление камерой"
-
-#: src/LPPShow.cpp:159
-msgid "Display options"
-msgstr "Настройки отображения"
-
-#: src/LPPShow.cpp:160
-msgid "Visibility"
-msgstr "Видимость"
-
-#: src/LPPShow.cpp:161
-msgid "Show grid"
-msgstr "Показывать сетку"
-
-#: src/LPPShow.cpp:162
-msgid "Show world axis"
-msgstr "Показывать оси"
-
-#: src/LPPShow.cpp:163
-msgid "Show planes"
-msgstr "Показывать ограничения"
-
-#: src/LPPShow.cpp:164
-msgid "Show feasible range"
-msgstr "Показывать ОДЗ"
-
-#: src/LPPShow.cpp:165
-msgid "Show feasible range edges"
-msgstr "Показывать рёбра ОДЗ"
-
-#: src/LPPShow.cpp:166
-msgid "Show solution vector"
-msgstr "Показывать оптимальный план"
-
-#: src/LPPShow.cpp:171
+#: src/LPPShow.cpp:55
 msgid "Colors"
 msgstr "Цвета"
 
-#: src/LPPShow.cpp:177
-msgid "Feasible range"
-msgstr "Цвет ОДЗ"
+#: src/LPPShow.cpp:56
+msgid "General"
+msgstr "Общие настройки"
 
-#: src/LPPShow.cpp:178
-msgid "Feasible range edges"
-msgstr "Цвет рёбер ОДЗ"
-
-#: src/LPPShow.cpp:179
-msgid "Solution vector"
-msgstr "Цвет оптимального плана"
-
-#: src/LPPShow.cpp:180
-msgid "Plane right direction"
-msgstr "Ограничение (включает)"
-
-#: src/LPPShow.cpp:181
-msgid "Plane wrong direction"
-msgstr "Ограничение (исключает)"
-
-#: src/LPPShow.cpp:186
+#: src/LPPShow.cpp:57
 msgid "Sliders"
 msgstr "Слайдеры"
 
-#: src/LPPShow.cpp:194
+#: src/LPPShow.cpp:58
+msgid "Visibility"
+msgstr "Видимость"
+
+#: src/LPPShow.cpp:141
+msgid "Preferences"
+msgstr "Настройки"
+
+#: src/LPPShow.cpp:161
+msgid "Color Theme: "
+msgstr "Тема интерфейса: "
+
+#: src/LPPShow.cpp:169
+msgid "Language: "
+msgstr "Язык: "
+
+#: src/LPPShow.cpp:186
+msgid "Feasible range"
+msgstr "Цвет ОДЗ"
+
+#: src/LPPShow.cpp:187
+msgid "Feasible range edges"
+msgstr "Цвет рёбер ОДЗ"
+
+#: src/LPPShow.cpp:188
+msgid "Solution vector"
+msgstr "Цвет оптимального плана"
+
+#: src/LPPShow.cpp:191
+msgid "Plane color"
+msgstr "Цвет ограничения"
+
+#: src/LPPShow.cpp:204
 msgid "Plane stripe width"
 msgstr "Ширина полосочек ограничений"
 
-#: src/LPPShow.cpp:195
+#: src/LPPShow.cpp:205
 msgid "Plane stripe frequency"
 msgstr "Частота полосочек ограничений"
 
-#: src/LPPShow.cpp:196
+#: src/LPPShow.cpp:206
 msgid "Feasible range edge thickness"
 msgstr "Цвет ребёр ОДЗ"
 
+#: src/LPPShow.cpp:210
+msgid "Show grid"
+msgstr "Показывать сетку"
+
+#: src/LPPShow.cpp:211
+msgid "Show world axis"
+msgstr "Показывать оси"
+
+#: src/LPPShow.cpp:212
+msgid "Show planes"
+msgstr "Показывать ограничения"
+
+#: src/LPPShow.cpp:213
+msgid "Show feasible range"
+msgstr "Показывать ОДЗ"
+
+#: src/LPPShow.cpp:214
+msgid "Show feasible range edges"
+msgstr "Показывать рёбра ОДЗ"
+
 #: src/LPPShow.cpp:215
+msgid "Show solution vector"
+msgstr "Показывать оптимальный план"
+
+#: src/LPPShow.cpp:230
+msgid "Planes"
+msgstr "Ограничения"
+
+#: src/LPPShow.cpp:256
+msgid "Camera controls"
+msgstr "Управление камерой"
+
+#: src/LPPShow.cpp:303
 msgid "Add plane"
 msgstr "Добавить ограничение"
 
-#: src/LPPShow.cpp:219
+#: src/LPPShow.cpp:307
 msgid "Remove plane"
 msgstr "Убрать ограничение"
 
-#: src/LPPShow.cpp:224
+#: src/LPPShow.cpp:312
 msgid "Objective function:"
 msgstr "Целевая функция"
 
-#: src/LPPShow.cpp:253
+#: src/LPPShow.cpp:341
 msgid "Solve"
 msgstr "Решить"
 
-#: src/LPPShow.cpp:262
+#: src/LPPShow.cpp:350
 #, c-format
 msgid "Failed to solve the equation: %s"
 msgstr "Не удалось решить уравнение: %s"
 
-#: src/LPPShow.cpp:264
+#: src/LPPShow.cpp:352
 #, c-format
 msgid "Optimal value: %.4f"
 msgstr "Оптимальное значение: %.4f"
 
-#: src/LPPShow.cpp:265
+#: src/LPPShow.cpp:353
 #, c-format
 msgid "Optimal plan: %.3fX₁ %.3fX₂ %.3fX₃"
 msgstr "Оптимальный план: %.3fX₁ %.3fX₂ %.3fX₃"
 
-#: src/LPPShow.cpp:267
+#: src/LPPShow.cpp:355
 #, c-format
 msgid "Solution status: %s"
 msgstr "Статус решения: %s"
+
+#~ msgid "Display options"
+#~ msgstr "Настройки отображения"
+
+#~ msgid "Plane right direction"
+#~ msgstr "Ограничение (включает)"
+
+#~ msgid "Plane wrong direction"
+#~ msgstr "Ограничение (исключает)"

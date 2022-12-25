@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-25 13:05+0300\n"
+"POT-Creation-Date: 2022-12-25 16:17+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,118 +17,126 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/LPPShow.cpp:109
-msgid "Planes"
-msgstr ""
-
-#: src/LPPShow.cpp:113
-msgid "Camera controls"
-msgstr ""
-
-#: src/LPPShow.cpp:159
-msgid "Display options"
-msgstr ""
-
-#: src/LPPShow.cpp:160
-msgid "Visibility"
-msgstr ""
-
-#: src/LPPShow.cpp:161
-msgid "Show grid"
-msgstr ""
-
-#: src/LPPShow.cpp:162
-msgid "Show world axis"
-msgstr ""
-
-#: src/LPPShow.cpp:163
-msgid "Show planes"
-msgstr ""
-
-#: src/LPPShow.cpp:164
-msgid "Show feasible range"
-msgstr ""
-
-#: src/LPPShow.cpp:165
-msgid "Show feasible range edges"
-msgstr ""
-
-#: src/LPPShow.cpp:166
-msgid "Show solution vector"
-msgstr ""
-
-#: src/LPPShow.cpp:171
+#: src/LPPShow.cpp:55
 msgid "Colors"
 msgstr ""
 
-#: src/LPPShow.cpp:177
-msgid "Feasible range"
+#: src/LPPShow.cpp:56
+msgid "General"
 msgstr ""
 
-#: src/LPPShow.cpp:178
-msgid "Feasible range edges"
-msgstr ""
-
-#: src/LPPShow.cpp:179
-msgid "Solution vector"
-msgstr ""
-
-#: src/LPPShow.cpp:180
-msgid "Plane right direction"
-msgstr ""
-
-#: src/LPPShow.cpp:181
-msgid "Plane wrong direction"
-msgstr ""
-
-#: src/LPPShow.cpp:186
+#: src/LPPShow.cpp:57
 msgid "Sliders"
 msgstr ""
 
-#: src/LPPShow.cpp:194
+#: src/LPPShow.cpp:58
+msgid "Visibility"
+msgstr ""
+
+#: src/LPPShow.cpp:141
+msgid "Preferences"
+msgstr ""
+
+#: src/LPPShow.cpp:161
+msgid "Color Theme: "
+msgstr ""
+
+#: src/LPPShow.cpp:169
+msgid "Language: "
+msgstr ""
+
+#: src/LPPShow.cpp:186
+msgid "Feasible range"
+msgstr ""
+
+#: src/LPPShow.cpp:187
+msgid "Feasible range edges"
+msgstr ""
+
+#: src/LPPShow.cpp:188
+msgid "Solution vector"
+msgstr ""
+
+#: src/LPPShow.cpp:191
+msgid "Plane color"
+msgstr ""
+
+#: src/LPPShow.cpp:204
 msgid "Plane stripe width"
 msgstr ""
 
-#: src/LPPShow.cpp:195
+#: src/LPPShow.cpp:205
 msgid "Plane stripe frequency"
 msgstr ""
 
-#: src/LPPShow.cpp:196
+#: src/LPPShow.cpp:206
 msgid "Feasible range edge thickness"
 msgstr ""
 
+#: src/LPPShow.cpp:210
+msgid "Show grid"
+msgstr ""
+
+#: src/LPPShow.cpp:211
+msgid "Show world axis"
+msgstr ""
+
+#: src/LPPShow.cpp:212
+msgid "Show planes"
+msgstr ""
+
+#: src/LPPShow.cpp:213
+msgid "Show feasible range"
+msgstr ""
+
+#: src/LPPShow.cpp:214
+msgid "Show feasible range edges"
+msgstr ""
+
 #: src/LPPShow.cpp:215
+msgid "Show solution vector"
+msgstr ""
+
+#: src/LPPShow.cpp:230
+msgid "Planes"
+msgstr ""
+
+#: src/LPPShow.cpp:256
+msgid "Camera controls"
+msgstr ""
+
+#: src/LPPShow.cpp:303
 msgid "Add plane"
 msgstr ""
 
-#: src/LPPShow.cpp:219
+#: src/LPPShow.cpp:307
 msgid "Remove plane"
 msgstr ""
 
-#: src/LPPShow.cpp:224
+#: src/LPPShow.cpp:312
 msgid "Objective function:"
 msgstr ""
 
-#: src/LPPShow.cpp:253
+#: src/LPPShow.cpp:341
 msgid "Solve"
 msgstr ""
 
-#: src/LPPShow.cpp:262
+#: src/LPPShow.cpp:350
 #, c-format
 msgid "Failed to solve the equation: %s"
 msgstr ""
 
-#: src/LPPShow.cpp:264
+#: src/LPPShow.cpp:352
 #, c-format
 msgid "Optimal value: %.4f"
 msgstr ""
 
-#: src/LPPShow.cpp:265
+#: src/LPPShow.cpp:353
 #, c-format
 msgid "Optimal plan: %.3fX₁ %.3fX₂ %.3fX₃"
 msgstr ""
 
-#: src/LPPShow.cpp:267
+#: src/LPPShow.cpp:355
 #, c-format
 msgid "Solution status: %s"
 msgstr ""
