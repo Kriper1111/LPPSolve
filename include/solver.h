@@ -5,15 +5,6 @@ enum EquationType {
     GREATER_EQUAL_THAN = 1,
     EQUAL_TO = 2
 };
-// const char* getEquationType(EquationType equationType) {
-//     switch (equationType)
-//     {
-//     case EquationType::LESS_EQUAL_THAN: return "<=";
-//     case EquationType::GREATER_EQUAL_THAN: return ">=";
-//     case EquationType::EQUAL_TO: return "=";
-//     }
-//     return "";
-// }
 class LinearProgrammingProblem {
     private:
     struct Equation {
@@ -101,7 +92,7 @@ class Display:public LinearProgrammingProblem {
     void onPlaneRemoved(int planeIndex);
 
     public:
-    std::vector<bool> visibleEquations; // We could maybe merge that into one flag?
+    std::vector<bool> visibleEquations;
     bool showPlanesAtAll = true;
     bool showSolutionVolume = true;
     bool showSolutionVector = true;
@@ -114,10 +105,10 @@ class Display:public LinearProgrammingProblem {
     float arrowScale = 2.5;
 
     std::vector<glm::vec3> constraintPositiveColors = {
-        {0.9216, 0.2863, 0.4627},
-        {0.1922, 0.3647, 0.9216},
-        {0.9216, 0.6980, 0.1020},
-        {0.1490, 0.9216, 0.2431}
+        {0.9608, 0.7294, 0.4510}, // {0.9216, 0.2863, 0.4627},
+        {0.5843, 0.3529, 0.9608}, // {0.1922, 0.3647, 0.9216},
+        {0.2118, 0.6588, 0.3059}  // {0.9216, 0.6980, 0.1020},
+                                  // {0.1490, 0.9216, 0.2431}
     };
     glm::vec3 solutionColor = {1.0, 0.746282, 0.043526};
     glm::vec3 solutionVectorColor = { 0, 0, 0 }; // {0.128, 0.833, 0.272};

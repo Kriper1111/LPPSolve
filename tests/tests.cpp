@@ -49,6 +49,8 @@ bool solver_invalid_solution() {
 
 bool solver_2d_solution_max() {
     std::unique_ptr<LinearProgrammingProblem> solver = std::make_unique<LinearProgrammingProblem>();
+    solver->addLimitPlane({0, 1, 0, 0}, EquationType::GREATER_EQUAL_THAN);
+    solver->addLimitPlane({1, 0, 0, 0}, EquationType::GREATER_EQUAL_THAN);
 
     const glm::vec4 objectiveFunction = { 3, 4, 0, 0 }; // top-left-ish
     const glm::vec4 constraintOne = {  1, 0, 0, 1 };  // x <= 1
@@ -65,6 +67,8 @@ bool solver_2d_solution_max() {
 
 bool solver_2d_solution_min() {
     std::unique_ptr<LinearProgrammingProblem> solver = std::make_unique<LinearProgrammingProblem>();
+    solver->addLimitPlane({1, 0, 0, 0}, EquationType::GREATER_EQUAL_THAN);
+    solver->addLimitPlane({0, 1, 0, 0}, EquationType::GREATER_EQUAL_THAN);
 
     const glm::vec4 objectiveFunction = {  3, 4, 0, 0 }; // 3x + 4y -> min
     const glm::vec4 constraintOne    =  {  1, 0, 0, 1 }; //  x      <= 1
@@ -83,6 +87,8 @@ bool solver_2d_solution_min() {
 
 bool solver_2d_solution_equals() {
     std::unique_ptr<LinearProgrammingProblem> solver = std::make_unique<LinearProgrammingProblem>();
+    solver->addLimitPlane({0, 1, 0, 0}, EquationType::GREATER_EQUAL_THAN);
+    solver->addLimitPlane({1, 0, 0, 0}, EquationType::GREATER_EQUAL_THAN);
 
     const glm::vec4 objectiveFunction = {  2, 2, 0, 0 }; // 3x + 4y -> max
     const glm::vec4 constraintOne    =  {  1,-3, 0,-7 }; //  x - 3y =  7
@@ -100,6 +106,9 @@ bool solver_2d_solution_equals() {
 // XXX: We'll test the default cube for the lack of anything else
 bool solver_3d_solution() {
     std::unique_ptr<LinearProgrammingProblem> solver = std::make_unique<LinearProgrammingProblem>();
+    solver->addLimitPlane({1, 0, 0, 0}, EquationType::GREATER_EQUAL_THAN);
+    solver->addLimitPlane({0, 1, 0, 0}, EquationType::GREATER_EQUAL_THAN);
+    solver->addLimitPlane({0, 0, 1, 0}, EquationType::GREATER_EQUAL_THAN);
 
     const glm::vec4 objectiveFunction = {  3, 3, 2, 0 }; // 3x + 3y + 2z -> min
     const glm::vec4 constraintOne    =  {  1, 0, 0, 1 }; //  x           <= 1
@@ -118,6 +127,8 @@ bool solver_3d_solution() {
 
 bool solver_2d_vertices() {
     std::unique_ptr<LinearProgrammingProblem> solver = std::make_unique<LinearProgrammingProblem>();
+    solver->addLimitPlane({1, 0, 0, 0}, EquationType::GREATER_EQUAL_THAN);
+    solver->addLimitPlane({0, 1, 0, 0}, EquationType::GREATER_EQUAL_THAN);
 
     const glm::vec4 objectiveFunction = {  3,  3,  0,   0 }; // 3x + 3y -> min
     const glm::vec4 constraintOne    =  { -1, -2,  0,  -4 }; //  x + 2y >=   4
@@ -164,6 +175,9 @@ bool solver_2d_vertices() {
 // Again, borrowing le cube for the time being
 bool solver_3d_vertices() {
     std::unique_ptr<LinearProgrammingProblem> solver = std::make_unique<LinearProgrammingProblem>();
+    solver->addLimitPlane({0, 0, 1, 0}, EquationType::GREATER_EQUAL_THAN);
+    solver->addLimitPlane({0, 1, 0, 0}, EquationType::GREATER_EQUAL_THAN);
+    solver->addLimitPlane({1, 0, 0, 0}, EquationType::GREATER_EQUAL_THAN);
 
     const glm::vec4 objectiveFunction = {  3,  3,  0,  1 }; // 3x + 3y      -> min
     const glm::vec4 constraintOne    =  {  1,  0,  0,  1 }; //  x           <= 1
@@ -210,15 +224,17 @@ bool solver_3d_vertices() {
 
 bool solver_vertices_invalid() {
     std::unique_ptr<LinearProgrammingProblem> solver = std::make_unique<LinearProgrammingProblem>();
+    solver->addLimitPlane({0, 1, 0, 0}, EquationType::GREATER_EQUAL_THAN);
+    solver->addLimitPlane({1, 0, 0, 0}, EquationType::GREATER_EQUAL_THAN);
 
-    const glm::vec4 constraintOne = {  1, 0, 0,  5 };  // x <= 5
-    const glm::vec4 constraintTwo = { -1, 0, 0, -7 };  // -x <= -7 -> x >= 7
+    const glm::vec4 constraintOne = {  1, 0, 0, 5 };  // x <= 5
+    const glm::vec4 constraintTwo = {  1, 0, 0, 7 };  // x >= 7
     const glm::vec4 objectiveFunction = { 1, 1, 0, 0}; // top-left
 
     solver->objectiveFunction = objectiveFunction;
     solver->doMinimize = false;
     solver->addLimitPlane(constraintOne);
-    solver->addLimitPlane(constraintTwo);
+    solver->addLimitPlane(constraintTwo, EquationType::GREATER_EQUAL_THAN);
 
     solver->solve();
     return solver->getSolution()->polyhedraVertices.size() == 0;

@@ -216,7 +216,7 @@ void LinearProgrammingProblem::solve() {
 
     solution = Solution();
 
-    constraintMatrix.reset(dd_CreateMatrix(3 + this->planeEquations.size(), 4));
+    constraintMatrix.reset(dd_CreateMatrix(this->planeEquations.size(), 4));
 
     int row;
     for (row = 0; row < planeEquations.size(); row++) {
@@ -257,15 +257,15 @@ void LinearProgrammingProblem::solve() {
         dd_set_d(constraintMatrix->matrix[row][2], coeff.y);
         dd_set_d(constraintMatrix->matrix[row][3], coeff.z);
     }
-    for (int diag = 0; diag < 3; diag++) {
-        // -This way we set the x1, x2, x3 >= 0 condition
-        // -Other form is
-        // dd_set_d(constraintMatrix->matrix[row + 0][1], 1.0);
-        // dd_set_d(constraintMatrix->matrix[row + 1][2], 1.0);
-        // dd_set_d(constraintMatrix->matrix[row + 2][3], 1.0);
-        //  without the loop
-        dd_set_d(constraintMatrix->matrix[row + diag][diag + 1], 1.0);
-    }
+    // for (int diag = 0; diag < 3; diag++) {
+    //     // -This way we set the x1, x2, x3 >= 0 condition
+    //     // -Other form is
+    //     // dd_set_d(constraintMatrix->matrix[row + 0][1], 1.0);
+    //     // dd_set_d(constraintMatrix->matrix[row + 1][2], 1.0);
+    //     // dd_set_d(constraintMatrix->matrix[row + 2][3], 1.0);
+    //     //  without the loop
+    //     dd_set_d(constraintMatrix->matrix[row + diag][diag + 1], 1.0);
+    // }
 
     // For some reason we don't need to invert the objective function?
     dd_set_d(constraintMatrix->rowvec[0], objectiveFunction.w);

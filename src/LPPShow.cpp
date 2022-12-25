@@ -256,6 +256,9 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     }
     if (setExample) {
         SceneData::lppshow->reset();
+        SceneData::lppshow->addLimitPlane({0, 0, 1, 0}, EquationType::GREATER_EQUAL_THAN); SceneData::lppshow->visibleEquations[0] = false;
+        SceneData::lppshow->addLimitPlane({0, 1, 0, 0}, EquationType::GREATER_EQUAL_THAN); SceneData::lppshow->visibleEquations[1] = false;
+        SceneData::lppshow->addLimitPlane({1, 0, 0, 0}, EquationType::GREATER_EQUAL_THAN); SceneData::lppshow->visibleEquations[2] = false;
         SceneData::lppshow->addLimitPlane({1, 0, 0, 1});
         SceneData::lppshow->addLimitPlane({0, 1, 0, 1});
         SceneData::lppshow->addLimitPlane({0, 0, 1, 1});
@@ -416,18 +419,8 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         }
         ImGui::EndTable();
     }
+
     ImGui::PopStyleVar();
-    // ImGuiListClipper pantherClipperLX;
-    // pantherClipperLX.Begin(SceneData::lppshow->getEquationCount());
-    // while (pantherClipperLX.Step()) {
-    //     for (int planeIndex = pantherClipperLX.DisplayStart; planeIndex < pantherClipperLX.DisplayEnd; planeIndex++) {
-
-    //     }
-    // }
-
-    // for (int planeIndex = 0; planeIndex < SceneData::lppshow->getEquationCount(); planeIndex++) {
-
-    // }
     if (ImGui::Button("+") && SceneData::lppshow->getEquationCount() < 256) {
         SceneData::lppshow->addLimitPlane({0, 0, 1, 0});
     }
@@ -571,7 +564,11 @@ int main() {
         return logCriticalError("Failed to compile required shaders");
     }
 
+    // Setup LPP Display with usual x, y, z >= 0 constraints and turn them off
     SceneData::lppshow->objectiveFunction = {0, 0, 0, 0};
+    SceneData::lppshow->addLimitPlane({0, 0, 1, 0}, EquationType::GREATER_EQUAL_THAN); SceneData::lppshow->visibleEquations[0] = false;
+    SceneData::lppshow->addLimitPlane({0, 1, 0, 0}, EquationType::GREATER_EQUAL_THAN); SceneData::lppshow->visibleEquations[1] = false;
+    SceneData::lppshow->addLimitPlane({1, 0, 0, 0}, EquationType::GREATER_EQUAL_THAN); SceneData::lppshow->visibleEquations[2] = false;
     ImGuiIO& iio = ImGui::GetIO(); (void) iio;
     ImVector<ImWchar> ranges;
     ImFontGlyphRangesBuilder builder;
