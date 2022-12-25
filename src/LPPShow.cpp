@@ -88,7 +88,7 @@ void moveCamera(Camera* camera, GLFWwindow* inputWindow, float timeStep) {
     float orbitVertical = glfwGetKey(inputWindow, GLFW_KEY_UP) - glfwGetKey(inputWindow, GLFW_KEY_DOWN);
 
     float moveForwards = glfwGetKey(inputWindow, GLFW_KEY_W) - glfwGetKey(inputWindow, GLFW_KEY_S);
-    float moveLateral = glfwGetKey(inputWindow, GLFW_KEY_A) - glfwGetKey(inputWindow, GLFW_KEY_D);
+    float moveLateral = glfwGetKey(inputWindow, GLFW_KEY_D) - glfwGetKey(inputWindow, GLFW_KEY_A);
 
     float zoom = (glfwGetKey(inputWindow, GLFW_KEY_R) - glfwGetKey(inputWindow, GLFW_KEY_F));
 
@@ -253,9 +253,14 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         glfwSetWindowShouldClose(window, 1);
         return;
     }
-    // if (setExample) {
-    //     SceneData::lppshow->removeLimitPlane();
-    // }
+    if (setExample) {
+        SceneData::lppshow->reset();
+        SceneData::lppshow->addLimitPlane({1, 0, 0, 1});
+        SceneData::lppshow->addLimitPlane({0, 1, 0, 1});
+        SceneData::lppshow->addLimitPlane({0, 0, 1, 1});
+        SceneData::lppshow->objectiveFunction = { 2, 3, 0, 0 };
+        setExample = false;
+    }
     if (SettingsWindow::showSettingsWindow) show_preferences_window(&SettingsWindow::showSettingsWindow);
 
     if (ImGui::CollapsingHeader(l10n("Camera controls").append("###camera-opt").c_str())) {

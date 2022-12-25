@@ -166,6 +166,16 @@ void LinearProgrammingProblem::removeLimitPlane(int planeIndex) {
     onPlaneRemoved(planeIndex);
 }
 
+void LinearProgrammingProblem::reset() {
+    auto problems = getEquationCount();
+    for (int idx = 0; idx < problems; idx++) {
+        this->removeLimitPlane(idx);
+    }
+    this->planeEquations.clear();
+    this->pointlessEquations.clear();
+    this->objectiveFunction = {0, 0, 0, 0};
+}
+
 template <typename dd_Type>
 using dd_unique_ptr = std::unique_ptr<dd_Type, void(*)(dd_Type*)>;
 

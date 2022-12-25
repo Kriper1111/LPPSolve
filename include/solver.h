@@ -40,6 +40,7 @@ class LinearProgrammingProblem {
     void editLimitPlane(int planeIndex, glm::vec4 constraints);
     void removeLimitPlane();
     void removeLimitPlane(int planeIndex);
+    void reset();
 
     void solve();
 

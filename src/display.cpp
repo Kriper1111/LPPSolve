@@ -43,33 +43,33 @@ void generateSolutionWireframe(Object* object, const std::vector<float>& vertice
     std::vector<unsigned int> indices;
     int vertexCount = vertices.size() / 3;
 
-    #ifdef DEBUG
-    std::cout << "###############################\n";
-    std::cout << "# BEGIN WIREFRAME GENERATION\n";
-    std::cout << "###############################\n";
+    // #ifdef DEBUG
+    // std::cout << "###############################\n";
+    // std::cout << "# BEGIN WIREFRAME GENERATION\n";
+    // std::cout << "###############################\n";
 
-    std::cout << "Total vertices: " << vertexCount << '\n';
-    std::cout << "Total adjacency entries: " << adjacency.size() << '\n';
+    // std::cout << "Total vertices: " << vertexCount << '\n';
+    // std::cout << "Total adjacency entries: " << adjacency.size() << '\n';
 
-    std::cout << "The pairing output will follow.\n";
-    #endif
+    // std::cout << "The pairing output will follow.\n";
+    // #endif
 
     for (int vertex_a = 0; vertex_a < adjacency.size(); vertex_a++) {
         const auto &adjacent = adjacency[vertex_a];
         for (int vertex_b : adjacent) {
             vertex_b -= 1;
 
-            #ifdef DEBUG
-            std::cout << "Pairing " << vertex_a << "<->" << vertex_b << '\n';
-            #endif
+            // #ifdef DEBUG
+            // std::cout << "Pairing " << vertex_a << "<->" << vertex_b << '\n';
+            // #endif
 
             if (vertex_a < vertex_b && vertex_b < vertexCount) {
                 indices.push_back(vertex_a);
                 indices.push_back(vertex_b);
 
-                #ifdef DEBUG
-                std::cout << " * It's a match!\n";
-                #endif
+                // #ifdef DEBUG
+                // std::cout << " * It's a match!\n";
+                // #endif
             }
         }
     }
