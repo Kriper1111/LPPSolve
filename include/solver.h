@@ -89,8 +89,12 @@ class Display:public LinearProgrammingProblem {
     float vectorWidth = 0.1;
     float arrowScale = 2.5;
 
-    glm::vec3 constraintPositiveColor = {0.0, 0.0, 1.0};
-    glm::vec3 constraintNegativeColor = {1.0, 0.0, 0.0};
+    std::vector<glm::vec3> constraintPositiveColors = {
+        {0.9216, 0.2863, 0.4627},
+        {0.1922, 0.3647, 0.9216},
+        {0.9216, 0.6980, 0.1020},
+        {0.1490, 0.9216, 0.2431}
+    };
     glm::vec3 solutionColor = {1.0, 0.746282, 0.043526};
     glm::vec3 solutionVectorColor = { 0, 0, 0 }; // {0.128, 0.833, 0.272};
     glm::vec3 solutionWireframeColor = {0.8, 0.095672, 0.019807};

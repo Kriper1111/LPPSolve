@@ -192,8 +192,12 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             ImGui::ColorEdit3(l10nc("Feasible range"), &SceneData::lppshow->solutionColor.x, shaderPickerFlags);
             ImGui::ColorEdit3(l10nc("Feasible range edges"), &SceneData::lppshow->solutionWireframeColor.x, shaderPickerFlags);
             ImGui::ColorEdit3(l10nc("Solution vector"), &SceneData::lppshow->solutionVectorColor.x, shaderPickerFlags);
-            ImGui::ColorEdit3(l10nc("Plane right direction"), &SceneData::lppshow->constraintPositiveColor.x, shaderPickerFlags);
-            ImGui::ColorEdit3(l10nc("Plane wrong direction"), &SceneData::lppshow->constraintNegativeColor.x, shaderPickerFlags);
+            for (int colorIndex = 0; colorIndex < SceneData::lppshow->constraintPositiveColors.size(); colorIndex++) {
+                ImGui::PushID(colorIndex);
+                ImGui::ColorEdit3(l10nc("Plane color"), &SceneData::lppshow->constraintPositiveColors[colorIndex].x, shaderPickerFlags);
+                ImGui::PopID();
+            }
+            // ImGui::ColorEdit3(l10nc("Plane wrong direction"), &SceneData::lppshow->constraintNegativeColor.x, shaderPickerFlags);
             ImGui::TreePop();
             ImGui::Separator();
         }
@@ -296,8 +300,8 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     if (SceneData::canMoveCamera && !(iio.WantCaptureKeyboard || iio.WantCaptureMouse))
         moveCamera(camera, window, timeStep);
 
-    SceneData::lppshow->render(camera);
     SceneData::worldOrigin->render(camera->getView(), camera->getProjection());
+    SceneData::lppshow->render(camera);
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

@@ -1,5 +1,6 @@
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -289,15 +290,18 @@ void Display::render(Camera* camera) {
     // glDrawElementsInstanced(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0, planeTransforms.size());
     if (showPlanesAtAll) {
     this->planeShader->setUniform("globalScale", globalScaleTransform);
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     for (int planeIndex = 0; planeIndex < planeTransforms.size(); planeIndex++) {
         if (!visibleEquations[planeIndex]) continue;
         this->planeShader->setUniform("planeTransform", planeTransforms[planeIndex]);
         this->planeShader->setUniform("stripeScale", stripeFrequency);
         this->planeShader->setUniform("stripeWidth", stripeWidth);
-        this->planeShader->setUniform("positiveColor", constraintPositiveColor);
-        this->planeShader->setUniform("negativeColor", constraintNegativeColor);
+        this->planeShader->setUniform("positiveColor", constraintPositiveColors[planeIndex % constraintPositiveColors.size()]);
+        this->planeShader->setUniform("negativeColor", glm::vec3(1) - constraintPositiveColors[planeIndex % constraintPositiveColors.size()]);
         planeObject->bindForDraw();
     }
+    // glDisable(GL_BLEND);
     }
 
     if (this->solution.isSolved && this->solutionObject) {
