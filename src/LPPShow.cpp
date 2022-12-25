@@ -233,13 +233,18 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     ImGui::SetWindowSize(imguiWindowSize);
 
     bool shouldExit = false;
-    bool setExample = false;
+    char setExample = 0;
 
     if (ImGui::BeginMainMenuBar()) {
         if(ImGui::BeginMenu("File")) {
             // ImGui::MenuItem("Open..", "o", &deserialize);
             // ImGui::MenuItem("Save..", "s", &serialize);
-            ImGui::MenuItem("Load example..", nullptr, &setExample);
+            if (ImGui::BeginMenu("Load example..")) {
+                if (ImGui::MenuItem("Sample cube")) setExample = 1;
+                if (ImGui::MenuItem("Pyramid thing")) setExample = 2;
+                // if (ImGui::MenuItem("Abstract")) setExample = 3;
+                ImGui::EndMenu();
+            }
             ImGui::Separator();
             ImGui::MenuItem("Preferences", "p", &SettingsWindow::showSettingsWindow);
             ImGui::Separator();
@@ -254,16 +259,40 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         glfwSetWindowShouldClose(window, 1);
         return;
     }
-    if (setExample) {
+    if (setExample != 0) {
         SceneData::lppshow->reset();
-        SceneData::lppshow->addLimitPlane({0, 0, 1, 0}, EquationType::GREATER_EQUAL_THAN); SceneData::lppshow->visibleEquations[0] = false;
-        SceneData::lppshow->addLimitPlane({0, 1, 0, 0}, EquationType::GREATER_EQUAL_THAN); SceneData::lppshow->visibleEquations[1] = false;
-        SceneData::lppshow->addLimitPlane({1, 0, 0, 0}, EquationType::GREATER_EQUAL_THAN); SceneData::lppshow->visibleEquations[2] = false;
-        SceneData::lppshow->addLimitPlane({1, 0, 0, 1});
-        SceneData::lppshow->addLimitPlane({0, 1, 0, 1});
-        SceneData::lppshow->addLimitPlane({0, 0, 1, 1});
-        SceneData::lppshow->objectiveFunction = { 2, 3, 0, 0 };
-        setExample = false;
+        switch (setExample)
+        {
+        case 1: // Cube thing
+            {
+            SceneData::lppshow->addLimitPlane({0, 0, 1, 0}, EquationType::GREATER_EQUAL_THAN); SceneData::lppshow->visibleEquations[0] = false;
+            SceneData::lppshow->addLimitPlane({0, 1, 0, 0}, EquationType::GREATER_EQUAL_THAN); SceneData::lppshow->visibleEquations[1] = false;
+            SceneData::lppshow->addLimitPlane({1, 0, 0, 0}, EquationType::GREATER_EQUAL_THAN); SceneData::lppshow->visibleEquations[2] = false;
+            SceneData::lppshow->addLimitPlane({1, 0, 0, 1});
+            SceneData::lppshow->addLimitPlane({0, 1, 0, 1});
+            SceneData::lppshow->addLimitPlane({0, 0, 1, 1});
+            SceneData::lppshow->objectiveFunction = { 2, 3, 0, 0 };
+            SceneData::lppshow->doMinimize = false;
+            break;
+            }
+        case 2: // Pyramid thing
+            {
+            SceneData::lppshow->addLimitPlane({ 0.5,  0.5,  0.5, 1.0}); SceneData::lppshow->visibleEquations[0] = false;
+            SceneData::lppshow->addLimitPlane({ 0.5, -0.5,  0.5, 1.0}); SceneData::lppshow->visibleEquations[1] = false;
+            SceneData::lppshow->addLimitPlane({-0.5, -0.5,  0.5, 1.0}); // SceneData::lppshow->visibleEquations[2] = false;
+            SceneData::lppshow->addLimitPlane({-0.5,  0.5,  0.5, 1.0}); SceneData::lppshow->visibleEquations[3] = false;
+            SceneData::lppshow->addLimitPlane({ 1.0,  1.0, -0.5, 0.5}); SceneData::lppshow->visibleEquations[4] = false;
+            SceneData::lppshow->addLimitPlane({ 1.0, -1.0, -0.5, 0.5}); // SceneData::lppshow->visibleEquations[5] = false;
+            SceneData::lppshow->addLimitPlane({ 1.0, -1.0, -0.5, 0.5}); SceneData::lppshow->visibleEquations[6] = false;
+            SceneData::lppshow->addLimitPlane({-1.0,  1.0, -0.5, 0.5}); // SceneData::lppshow->visibleEquations[7] = false;
+            SceneData::lppshow->objectiveFunction = { 0, 0, 1, 0 };
+            SceneData::lppshow->doMinimize = false;
+            break;
+            }
+        default:
+            break;
+        }
+        setExample = 0;
     }
     if (SettingsWindow::showSettingsWindow) show_preferences_window(&SettingsWindow::showSettingsWindow);
 

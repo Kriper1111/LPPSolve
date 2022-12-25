@@ -256,6 +256,11 @@ void Display::onPlaneRemoved(int planeIndex) {
     planeTransforms.erase(planeTransforms.begin() + planeIndex);
 }
 
+void Display::onReset() {
+    planeTransforms.clear();
+    visibleEquations.clear();
+}
+
 //  public:
 
 Display::Display() {
@@ -346,7 +351,7 @@ void Display::render(Camera* camera) {
 
         glm::vec3 vectorArrowScale = glm::vec3(this->vectorWidth) * this->arrowScale;
         glm::mat4 vectorArrowTransform;
-        vectorArrowTransform = vectorArrowTransform * globalScaleTransform; // even before anything, we apply global scale
+        vectorArrowTransform = glm::mat4(1) * globalScaleTransform; // even before anything, we apply global scale
         vectorArrowTransform = glm::translate(vectorArrowTransform, this->solution.optimalVector); // We move first
         vectorArrowTransform = vectorArrowTransform * this->optimalPlanTransform; // Then we reorient it to look in the direction
         vectorArrowTransform = glm::scale(vectorArrowTransform, vectorArrowScale); // And only then we scale

@@ -36,6 +36,7 @@ class LinearProgrammingProblem {
     virtual void onPlaneAdded(int planeIndex) {};
     virtual void onPlaneUpdated(int planeIndex) {};
     virtual void onPlaneRemoved(int planeIndex) {};
+    virtual void onReset() {};
 
     public:
     glm::vec4 objectiveFunction;
@@ -90,6 +91,7 @@ class Display:public LinearProgrammingProblem {
     void onPlaneAdded(int planeIndex);
     void onPlaneUpdated(int planeIndex);
     void onPlaneRemoved(int planeIndex);
+    void onReset();
 
     public:
     std::vector<bool> visibleEquations;

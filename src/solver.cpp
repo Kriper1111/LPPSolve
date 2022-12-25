@@ -181,6 +181,11 @@ void LinearProgrammingProblem::reset() {
     this->planeEquations.clear();
     this->pointlessEquations.clear();
     this->objectiveFunction = {0, 0, 0, 0};
+    // Light GC but reaaally we should just delete/remake it
+    this->solution.adjacency.clear();
+    this->solution.polyhedraVertices.clear();
+    this->solution.isSolved = false;
+    this->onReset();
 }
 
 template <typename dd_Type>
