@@ -1,6 +1,25 @@
 #pragma once
 
+enum EquationType {
+    LESS_EQUAL_THAN = 0,
+    GREATER_EQUAL_THAN = 1,
+    EQUAL_TO = 2
+};
+// const char* getEquationType(EquationType equationType) {
+//     switch (equationType)
+//     {
+//     case EquationType::LESS_EQUAL_THAN: return "<=";
+//     case EquationType::GREATER_EQUAL_THAN: return ">=";
+//     case EquationType::EQUAL_TO: return "=";
+//     }
+//     return "";
+// }
 class LinearProgrammingProblem {
+    private:
+    struct Equation {
+        glm::vec4 equationCoefficients;
+        EquationType type;
+    };
     struct Solution
     {
         bool isSolved = false;
@@ -16,7 +35,7 @@ class LinearProgrammingProblem {
 
     protected:
     std::vector<int> pointlessEquations; // Basically all zeroes
-    std::vector<glm::vec4> planeEquations;
+    std::vector<Equation> planeEquations;
     Solution solution;
 
     void collectPointless();
@@ -36,8 +55,12 @@ class LinearProgrammingProblem {
     int getEquationCount();
 
     int addLimitPlane(glm::vec4 constraints);
-    glm::vec4 getLimitPlane(int planeIndex);
+    int addLimitPlane(glm::vec4 constraints, EquationType equationType);
+    int addLimitPlane(Equation equation);
+    Equation getLimitPlane(int planeIndex);
     void editLimitPlane(int planeIndex, glm::vec4 constraints);
+    void editLimitPlane(int planeIndex, glm::vec4 constraints, EquationType equationType);
+    void editLimitPlane(Equation equation);
     void removeLimitPlane();
     void removeLimitPlane(int planeIndex);
     void reset();

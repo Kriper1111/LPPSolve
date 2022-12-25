@@ -123,7 +123,7 @@ void LinearProgrammingProblem::collectPointless() {
 //  public:
 
 LinearProgrammingProblem::LinearProgrammingProblem() {
-    this->planeEquations = std::vector<glm::vec4>();
+    this->planeEquations = std::vector<Equation>();
     this->pointlessEquations = std::vector<int>();
 };
 LinearProgrammingProblem::~LinearProgrammingProblem() {
@@ -135,21 +135,28 @@ int LinearProgrammingProblem::getEquationCount() {
     this->collectPointless();
     return planeEquations.size();
 }
-
 int LinearProgrammingProblem::addLimitPlane(glm::vec4 constraints) {
+    return addLimitPlane(constraints, EquationType::LESS_EQUAL_THAN);
+}
+int LinearProgrammingProblem::addLimitPlane(glm::vec4 constraints, EquationType equationType) {
     if (constraints.x != 0 || constraints.y != 0 || constraints.z != 0 || constraints.w != 0) {
-        planeEquations.push_back(constraints);
-        // recalculatePlane(planeEquations.size() - 1);
+        planeEquations.push_back(Equation{constraints, equationType});
         onPlaneAdded(planeEquations.size() - 1);
     }
     return planeEquations.size();
 }
 
 // @throws: std::out_of_range
-glm::vec4 LinearProgrammingProblem::getLimitPlane(int planeIndex) { return planeEquations.at(planeIndex); }
+LinearProgrammingProblem::Equation LinearProgrammingProblem::getLimitPlane(int planeIndex) {
+    return planeEquations.at(planeIndex);
+}
 
 void LinearProgrammingProblem::editLimitPlane(int planeIndex, glm::vec4 constraints) {
-    planeEquations[planeIndex] = constraints;
+    editLimitPlane(planeIndex, constraints, EquationType::LESS_EQUAL_THAN);
+}
+void LinearProgrammingProblem::editLimitPlane(int planeIndex, glm::vec4 constraints, EquationType equationType) {
+    planeEquations[planeIndex].equationCoefficients = constraints;
+    planeEquations[planeIndex].type = equationType;
     onPlaneUpdated(planeIndex);
     // recalculatePlane(planeIndex);
     if (constraints.x == 0 && constraints.y == 0 && constraints.z == 0 && constraints.w == 0)
@@ -219,15 +226,36 @@ void LinearProgrammingProblem::solve() {
          * it expects the form of:
          * B A1 A2 A3 >= 0
          * but we collect them in form of
-         * A1 A2 A3 <= B
-         * so we have to multiply A's (planeEquation.xyz) by -1
-         * And shift B (planeEquation.w) to the first column.
+         * A1 A2 A3 {Equation.type} B
+         * so we have to either:
+         * a) multiply A's (planeEquation.xyz) by -1
+         *    and shift B (planeEquation.w) to the first column.
+         *    if {Equation.type} is LESS_EQUAL_THAN (<=)
+         * b) multiply B (planeEquation.w) by -1, shift it to the first column
+         *    and leave rest intact
+         *    if {Equation.type} is GREATER_EQUAL_THAN (>=)
+         * c) do the same as a) but add current equation index + 1 to the "linset"
+         *    set of the matrix because of course that's a thing that expands them to equality automatically.
          */
         const auto planeEquation = planeEquations.at(row);
-        dd_set_d(constraintMatrix->matrix[row][0],  planeEquation.w);
-        dd_set_d(constraintMatrix->matrix[row][1], -planeEquation.x);
-        dd_set_d(constraintMatrix->matrix[row][2], -planeEquation.y);
-        dd_set_d(constraintMatrix->matrix[row][3], -planeEquation.z);
+        glm::vec4 coeff = planeEquation.equationCoefficients;
+        switch (planeEquation.type) {
+            case EquationType::EQUAL_TO: {
+                set_addelem(constraintMatrix.get()->linset, row + 1);
+            }
+            case EquationType::LESS_EQUAL_THAN: {
+                coeff = coeff * glm::vec4({ -1, -1, -1,  1 });
+                break;
+            }
+            case EquationType::GREATER_EQUAL_THAN: {
+                coeff = coeff * glm::vec4({  1,  1,  1, -1 });
+                break;
+            }
+        }
+        dd_set_d(constraintMatrix->matrix[row][0], coeff.w);
+        dd_set_d(constraintMatrix->matrix[row][1], coeff.x);
+        dd_set_d(constraintMatrix->matrix[row][2], coeff.y);
+        dd_set_d(constraintMatrix->matrix[row][3], coeff.z);
     }
     for (int diag = 0; diag < 3; diag++) {
         // -This way we set the x1, x2, x3 >= 0 condition

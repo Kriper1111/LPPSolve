@@ -335,18 +335,51 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
 
     // TODO: Make into a scrollbox
     for (int planeIndex = 0; planeIndex < SceneData::lppshow->getEquationCount(); planeIndex++) {
-        glm::vec4 planeEquationOrigin = SceneData::lppshow->getLimitPlane(planeIndex);
+        auto planeEquationOrigin = SceneData::lppshow->getLimitPlane(planeIndex);
         ImGui::PushID(planeIndex);
+        if (ImGui::Button("x")) {
+            SceneData::lppshow->editLimitPlane(planeIndex, {0, 0, 0, 0});
+        }
+        ImGui::SameLine();
+        ImGui::PushItemWidth(150.0f);
+        bool coeffChanged = ImGui::InputFloat3("##vec", &planeEquationOrigin.equationCoefficients[0]);
+        ImGui::PopItemWidth();
+        ImGui::SameLine();
+        ImGui::PushItemWidth(25.0f);
+        auto equationType = planeEquationOrigin.type;
+        if (ImGui::BeginCombo("##type", "??", ImGuiComboFlags_NoArrowButton)) {
+            if (ImGui::Selectable("<=", planeEquationOrigin.type == EquationType::LESS_EQUAL_THAN)) {
+                equationType = EquationType::LESS_EQUAL_THAN;
+            }
+            if (ImGui::Selectable(">=", planeEquationOrigin.type == EquationType::GREATER_EQUAL_THAN)) {
+                equationType = EquationType::GREATER_EQUAL_THAN;
+            }
+            if (ImGui::Selectable("=", planeEquationOrigin.type == EquationType::EQUAL_TO)) {
+                equationType = EquationType::EQUAL_TO;
+            }
+            ImGui::EndCombo();
+        }
+        bool typeChanged = equationType != planeEquationOrigin.type;
+        ImGui::SameLine();
+        ImGui::PopItemWidth();
+        ImGui::PushItemWidth(50.0f);
+        bool constChanged = ImGui::InputFloat("##const", &planeEquationOrigin.equationCoefficients[3]);
+        if(coeffChanged || constChanged || typeChanged) {
+            SceneData::lppshow->editLimitPlane(planeIndex, planeEquationOrigin.equationCoefficients, equationType);
+        }
+        ImGui::SameLine();
+        ImGui::PopItemWidth();
         // XXX: Do we want to use std::vector<bool> optimization or fall back to Plane objects?
         bool isVisible = SceneData::lppshow->visibleEquations[planeIndex];
-        if(ImGui::Checkbox("##vis", &isVisible))
+        if(ImGui::Checkbox("##vis", &isVisible)) {
             SceneData::lppshow->visibleEquations[planeIndex] = isVisible;
-        ImGui::SameLine(); ImGui::Text("Plane:"); ImGui::SameLine();
-        if (ImGui::InputFloat4("##vec", &planeEquationOrigin[0])) {
-            SceneData::lppshow->editLimitPlane(planeIndex, planeEquationOrigin);
         }
         ImGui::PopID();
     }
+    if (ImGui::Button("+") && SceneData::lppshow->getEquationCount() < 256) {
+        SceneData::lppshow->addLimitPlane({0, 0, 1, 0});
+    }
+    ImGui::SameLine(); ImGui::Text(l10nc("Add plane"));
 
     if (ImGui::Button(l10nc("Solve"))) {
         try {

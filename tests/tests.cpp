@@ -23,9 +23,9 @@ bool solver_sanity_check() {
     std::unique_ptr<LinearProgrammingProblem> solver = std::make_unique<LinearProgrammingProblem>();
     solver->addLimitPlane({1, 1, 1, 0});
     if (solver->getEquationCount() != 1) return false;
-    if (solver->getLimitPlane(0) != trialVector) return false;
+    if (solver->getLimitPlane(0).equationCoefficients != trialVector) return false;
     solver->editLimitPlane(0, glm::vec4({1, 2, 1, 2}));
-    if (solver->getLimitPlane(0) != editedVector) return false;
+    if (solver->getLimitPlane(0).equationCoefficients != editedVector) return false;
     solver->removeLimitPlane();
     if (solver->getEquationCount() != 0) return false;
     return true;
@@ -69,16 +69,32 @@ bool solver_2d_solution_min() {
     const glm::vec4 objectiveFunction = {  3, 4, 0, 0 }; // 3x + 4y -> min
     const glm::vec4 constraintOne    =  {  1, 0, 0, 1 }; //  x      <= 1
     const glm::vec4 constraintTwo    =  {  0, 1, 0, 1 }; //       y <= 1
-    const glm::vec4 constraintThree  =  { -1,-2, 0,-1 }; //  x + 2y >= 1
+    const glm::vec4 constraintThree  =  {  1, 2, 0, 1 }; //  x + 2y >= 1
 
     solver->objectiveFunction = objectiveFunction;
     solver->doMinimize = true;
     solver->addLimitPlane(constraintOne);
     solver->addLimitPlane(constraintTwo);
-    solver->addLimitPlane(constraintThree);
+    solver->addLimitPlane(constraintThree, EquationType::GREATER_EQUAL_THAN);
 
     solver->solve();
     return (solver->getSolution()->optimalValue == 2) && (solver->getSolution()->optimalVector == glm::vec3({0, 0.5, 0}));
+}
+
+bool solver_2d_solution_equals() {
+    std::unique_ptr<LinearProgrammingProblem> solver = std::make_unique<LinearProgrammingProblem>();
+
+    const glm::vec4 objectiveFunction = {  2, 2, 0, 0 }; // 3x + 4y -> max
+    const glm::vec4 constraintOne    =  {  1,-3, 0,-7 }; //  x - 3y =  7
+    const glm::vec4 constraintTwo    =  { -3, 1, 0,-7 }; //-3x +  y >= 7
+
+    solver->objectiveFunction = objectiveFunction;
+    solver->doMinimize = false;
+    solver->addLimitPlane(constraintOne, EquationType::EQUAL_TO);
+    solver->addLimitPlane(constraintTwo, EquationType::GREATER_EQUAL_THAN);
+
+    solver->solve();
+    return (solver->getSolution()->optimalValue == 14) && (solver->getSolution()->optimalVector == glm::vec3({3.5, 3.5, 0}));
 }
 
 // XXX: We'll test the default cube for the lack of anything else
@@ -272,6 +288,7 @@ int main() {
     test(solver_invalid_solution, "Solver: With invalid input");
     test(solver_2d_solution_min, "Solver: 2D solution -> min");
     test(solver_2d_solution_max, "Solver: 2D solution -> max");
+    test(solver_2d_solution_equals, "Solver: 2D solution with = and >=");
     test(solver_3d_solution, "Solver: 3D solution");
     test(solver_2d_vertices, "Solver: 2D Extreme points");
     test(solver_3d_vertices, "Solver: 3D Extreme points");

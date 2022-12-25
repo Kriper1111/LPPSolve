@@ -164,7 +164,8 @@ void Display::createShaders() {
 }
 
 void Display::recalculatePlane(int planeIndex) {
-    glm::vec4 planeEquation = planeEquations[planeIndex];
+    glm::vec4 planeEquation = planeEquations[planeIndex].equationCoefficients;
+    EquationType planeEquationType = planeEquations[planeIndex].type;
     glm::vec3 planeNormal = glm::normalize(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z));
 
     // std::cout << "Editing: " << planeIndex << " " << glm::to_string(planeEquation) << std::endl;
@@ -198,7 +199,11 @@ void Display::recalculatePlane(int planeIndex) {
 
         planeTransform[0] = { right, 0 };
         planeTransform[1] = { up, 0 };
-        planeTransform[2] = { planeNormal, 0 };
+        if (planeEquationType == EquationType::GREATER_EQUAL_THAN) { // Flip the normal
+            planeTransform[2] = { -planeNormal, 0 };
+        } else {
+            planeTransform[2] = { planeNormal, 0 };
+        }
     }
 
     planeTransform[3] = { planeNormal * distanceToLine, 1 };
