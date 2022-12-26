@@ -62,7 +62,8 @@ jobs:
   # This one will be ran only on non-snapshot builds, since it's slower and more of a PITA
   build-windows:
     runs-on: windows-latest
-    if: ${{ !endsWith(github.ref_name, 'snapshot') }}
+    if: ${{ false }} # you too, save some free minutes
+    # if: ${{ !endsWith(github.ref_name, 'snapshot') }}
 
     steps:
     - uses: actions/checkout@v3
@@ -96,7 +97,6 @@ jobs:
 
   build-macos:
     runs-on: macos-latest
-    if: ${{ false }} # you too, save some free minutes
     # if: ${{ !endsWith(github.ref_name, 'snapshot') }} # && startsWith(github.ref_name, 'version-') # deeeeeeefinitely not running that
 
     steps:
