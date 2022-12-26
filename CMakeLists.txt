@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.11)
 
+# The following entries are gracefully borrowed
+cmake_policy(SET CMP0042 NEW)
+
 file(STRINGS "version" REAL_VERSION LIMIT_COUNT 1)
 string(REGEX MATCH "([0-9]+.[0-9]+.[0-9]+)" SEMVER ${REAL_VERSION}) # Strips out metadata, but oh well
 project(LPPShow VERSION ${SEMVER})
@@ -95,6 +98,19 @@ if (WIN32)
     endif()
 elseif(UNIX AND NOT APPLE)
     list(APPEND LIBRARIES rt m dl)
+elseif(APPLE)
+    target_link_directories(LPPShow PUBLIC /usr/local/lib)
+    target_link_directories(LPPShow PUBLIC /opt/local/lib)
+    target_link_directories(LPPShow PUBLIC /opt/homebrew/lib)
+
+    target_link_libraries(LPPShow PUBLIC "-framework OpenGL")
+    target_link_libraries(LPPShow PUBLIC "-framework Cocoa")
+    target_link_libraries(LPPShow PUBLIC "-framework IOKit")
+    target_link_libraries(LPPShow PUBLIC "-framework CoreVideo")
+    
+    target_include_directories(LPPShow PUBLIC /usr/local/include)
+    target_include_directories(LPPShow PUBLIC /opt/local/include)
+    target_include_directories(LPPShow PUBLIC /opt/homebrew/include)
 endif()
 
 list(APPEND LIBRARIES ${GLFW_LIBRARY_NAME})
