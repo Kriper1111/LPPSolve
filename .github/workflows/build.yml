@@ -19,7 +19,7 @@ env:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
-    if: false
+    if: ${{ false }}
 
     steps:
     - uses: actions/checkout@v3
@@ -95,13 +95,13 @@ jobs:
           ${{github.workspace}}\build\LPPShow*
 
   build-macos:
-      runs-on: macos-latest
-      if: ${{ !endsWith(github.ref_name, 'snapshot') }} # && startsWith(github.ref_name, 'version-') # deeeeeeefinitely not running that
+    runs-on: macos-latest
+    if: ${{ !endsWith(github.ref_name, 'snapshot') }} # && startsWith(github.ref_name, 'version-') # deeeeeeefinitely not running that
 
-      steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
 
     # ..i don't know how to handle this.
     # ..it's complicated.
