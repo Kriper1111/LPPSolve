@@ -96,7 +96,8 @@ jobs:
 
   build-macos:
     runs-on: macos-latest
-    if: ${{ !endsWith(github.ref_name, 'snapshot') }} # && startsWith(github.ref_name, 'version-') # deeeeeeefinitely not running that
+    if: ${{ false }} # you too, save some free minutes
+    # if: ${{ !endsWith(github.ref_name, 'snapshot') }} # && startsWith(github.ref_name, 'version-') # deeeeeeefinitely not running that
 
     steps:
     - uses: actions/checkout@v3
