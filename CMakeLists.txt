@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.11)
 
 # The following entries are gracefully borrowed
 cmake_policy(SET CMP0042 NEW)
+# cmake_policy(SET CMP0135 NEW)
 
 file(STRINGS "version" REAL_VERSION LIMIT_COUNT 1)
 string(REGEX MATCH "([0-9]+.[0-9]+.[0-9]+)" SEMVER ${REAL_VERSION}) # Strips out metadata, but oh well

@@ -114,18 +114,22 @@ jobs:
     #   id: cache-macos-brew
     #   uses: actions/cache@v3.0.11
     #   with:
-    #     key: brew-glfw-cddlib
+    #     key: brew-glfw-cddlib-glm
     #     path: |
     #       /usr/local/Cellar/cddlib
-    #       /usr/local/Cellar/cdd
+    #       /usr/local/Cellar/glm
     #       /usr/local/Cellar/glfw
 
+    # - if: ${{ steps.cache-macos-brew.outputs.cache-hit != 'true' }}
     - name: Brew - Install uncompileable dependencies
       run: |
         brew install glfw cddlib glm
 
     - name: Brew - Look around # Because why even bother listing files in a package on the website
-      run: brew ls --verbose glfw && brew ls --verbose cddlib
+      run: |
+        brew ls --verbose glfw
+        brew ls --verbose cddlib
+        brew ls --verbose glm
 
     - name: Cache - MacSoS uncompileable dependencies
       id: cache-macos-thirdparty

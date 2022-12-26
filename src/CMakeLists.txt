@@ -9,7 +9,11 @@ endif(WIN32)
 
 # Additionally, if we want to use cddlib, we have to fetch&build it first
 if (USE_CDDLIB)
-    add_dependencies(framework dep_cddlib quickhull)
+    if (NOT APPLE) # R E L Y I N G on macos having sane cddlib, which it probably won't but i do really care
+        add_dependencies(framework dep_cddlib quickhull)
+    else()
+        add_dependencies(framework quickhull)
+    endif(NOT APPLE)
 endif(USE_CDDLIB)
 
 target_link_libraries(framework PUBLIC glad imgui)
