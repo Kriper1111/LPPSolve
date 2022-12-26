@@ -199,10 +199,10 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     }
     auto solution = SceneData::lppshow->getSolution();
     if (solution->isErrored) {
-        ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, "Failed to solve the equation: %s", solution->errorString);
+        ImGui::TextColored({0.918, 0.025, 0.163, 1.0}, "Failed to solve the equation: %s", solution->errorString.c_str());
     } else if (solution->isSolved) {
         ImGui::Text("Optimal value: %.4f", solution->optimalValue);
-        ImGui::Text("Optimal plan: %.3fx1 %.3fx2 %.3fx3 %.3f", solution->optimalVector);
+        ImGui::Text("Optimal plan: %.3fx1 %.3fx2 %.3fx3 %.3f", solution->optimalVector.x, solution->optimalVector.y, solution->optimalVector.z, solution->optimalVector.w);
     } else if (!solution->isErrored && !solution->isSolved && !solution->statusString.empty()) {
         ImGui::Text("Solution status: %s", solution->statusString.c_str());
     }
