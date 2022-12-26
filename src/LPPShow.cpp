@@ -53,6 +53,7 @@ namespace SceneData {
 
 namespace SettingsWindow {
     bool showSettingsWindow = false;
+    int currentTheme = 0;
     const char* editColors = l10nm("Colors");
     const char* editGeneral = l10nm("General");
     const char* editSliders = l10nm("Sliders");
@@ -143,6 +144,10 @@ void show_preferences_window(bool* isOpen) {
         ImGui::End();
         return;
     }
+    const ImVec2 settingsWindowSize = ImVec2(ImGui::GetWindowContentRegionMax().x * 0.5, ImGui::GetWindowContentRegionMax().y * 0.5);
+    const ImVec2 settingsWindowPos = ImVec2(ImGui::GetWindowContentRegionMax().x * 0.1, ImGui::GetWindowContentRegionMax().y * 0.1);
+    ImGui::SetWindowSize(settingsWindowSize, ImGuiCond_FirstUseEver);
+    ImGui::SetWindowPos(settingsWindowPos, ImGuiCond_FirstUseEver);
 
     ImGui::BeginChild("options", ImVec2(ImGui::GetContentRegionAvail().x * 0.25, ImGui::GetContentRegionAvail().y), true);
     // ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.25);
@@ -158,10 +163,10 @@ void show_preferences_window(bool* isOpen) {
     ImGui::SameLine();
     ImGui::BeginChild("settingsPane");
     if (SettingsWindow::selected(SettingsWindow::editGeneral)) {
-        static int currentStyle = 0;
+        // static int currentStyle = 0;
         ImGui::Text(l10nc("Color Theme: ")); ImGui::SameLine();
-        if (ImGui::Combo("###color", &currentStyle, "ImGui Dark\0ImGui Light\0ImGui Classic\0")) {
-            switch (currentStyle) {
+        if (ImGui::Combo("###color", &SettingsWindow::currentTheme, "ImGui Dark\0ImGui Light\0ImGui Classic\0")) {
+            switch (SettingsWindow::currentTheme) {
                 case 0: ImGui::StyleColorsDark(); break;
                 case 1: ImGui::StyleColorsLight(); break;
                 case 2: ImGui::StyleColorsClassic(); break;
@@ -568,6 +573,7 @@ int main() {
     ////////////
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
+    SettingsWindow::currentTheme = 0; // XXX: Must be synched with the call above
 
     ImGui_ImplGlfw_InitForOpenGL(mainWindow, true);
     ImGui_ImplOpenGL3_Init("#version 130");
