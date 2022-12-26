@@ -19,7 +19,6 @@ env:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
-    if: ${{ false }}
 
     steps:
     - uses: actions/checkout@v3
