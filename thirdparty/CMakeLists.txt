@@ -25,6 +25,8 @@ set(IMGUI_SOURCES
 add_library(imgui STATIC ${IMGUI_SOURCES})
 target_include_directories(imgui PUBLIC "")
 target_include_directories(imgui PUBLIC "imgui")
+target_include_directories(imgui PUBLIC "/usr/local/include")
+target_link_directories(imgui PUBLIC "/usr/local/lib")
 
 if (WIN32)
     add_dependencies(imgui dep_glfw) # GLFW is satisfied on Linux by apt
@@ -44,6 +46,7 @@ if(USE_CDDLIB)
     # We could also have probably just set -DBUILD_SHARED_LIBS=off and had
     #   the previous script build static libs just as well.. BuuUUut hey we use
     #   latest version at least.
+    if (NOT APPLE) # R E L Y I N G on brew having a proper and compatible cddlib cask
     ExternalProject_Add(dep_cddlib
         GIT_REPOSITORY https://github.com/Kriper1111/cddlib-cmake
         GIT_TAG master
@@ -51,4 +54,5 @@ if(USE_CDDLIB)
         BUILD_IN_SOURCE on
         CMAKE_ARGS "-DBUILD_BINARIES=off" "-DCMAKE_INSTALL_PREFIX=${UNWANTED_FILES_PREFIX}" "-DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_SOURCE_DIR}/thirdparty" "-DCMAKE_INSTALL_LIBDIR=${CMAKE_SOURCE_DIR}/libraries" "-DCMAKE_INSTALL_DOCDIR=/tmp" "-DCMAKE_INSTALL_BINDIR=/tmp"
     )
+    endif(NOT APPLE)
 endif()

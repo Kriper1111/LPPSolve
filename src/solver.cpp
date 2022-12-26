@@ -9,8 +9,8 @@
 
 #ifdef USE_CDDLIB
 #define REFLECT(var) #var
-#include <cdd/setoper.h>
-#include <cdd/cdd.h>
+#include <cddlib/setoper.h>
+#include <cddlib/cdd.h>
 
 #include <quickhull/QuickHull.hpp>
 #endif

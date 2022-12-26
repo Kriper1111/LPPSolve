@@ -5,6 +5,7 @@ on:
   push:
     branches:
     - "cmake"
+    - "cmake-integration-hell"
     tags:
     - "version-*"
 
@@ -18,6 +19,7 @@ env:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+    if: ${{ false }}
 
     steps:
     - uses: actions/checkout@v3
@@ -60,7 +62,8 @@ jobs:
   # This one will be ran only on non-snapshot builds, since it's slower and more of a PITA
   build-windows:
     runs-on: windows-latest
-    if: ${{ !endsWith(github.ref_name, 'snapshot') }}
+    # if: ${{ false }} # you too, save some free minutes
+    if: ${{ !endsWith(github.ref_name, 'snapshot') && startsWith(github.ref_name, 'version-') }}
 
     steps:
     - uses: actions/checkout@v3
@@ -77,7 +80,7 @@ jobs:
           external_projects/
 
     - name: CMake - Configure
-      run: cmake -B ${{github.workspace}}\build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DUSE_BAKED_SHADERS=on
+      run: cmake -B ${{github.workspace}}\build -G Ninja -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DUSE_BAKED_SHADERS=on
     - name: CMake - Build
       run: cmake --build ${{github.workspace}}\build --config Release
 
@@ -91,3 +94,59 @@ jobs:
         path: |
           ${{github.workspace}}\build\Release
           ${{github.workspace}}\build\LPPShow*
+
+  build-macos:
+    runs-on: macos-latest
+    # deeeeeeefinitely not running that
+    # ..at all, probably. but certainly not every snap
+    if: ${{ !endsWith(github.ref_name, 'snapshot') && startsWith(github.ref_name, 'version-') }}
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    # ..i don't know how to handle this.
+    # ..it's complicated.
+    # ..both with brew and apt.. windows too, to a point.
+    # ..we shooould cache them, but also have something that would regenerate them in a user enviroment.
+    # ..and not to mention stashing away *all* the dependency chain.
+    # ..i don't suppose i could make a sane docker build container.
+    # - name: Cache - Brew formulae
+    #   id: cache-macos-brew
+    #   uses: actions/cache@v3.0.11
+    #   with:
+    #     key: brew-glfw-cddlib-glm
+    #     path: |
+    #       /usr/local/Cellar/cddlib
+    #       /usr/local/Cellar/glm
+    #       /usr/local/Cellar/glfw
+
+    # - if: ${{ steps.cache-macos-brew.outputs.cache-hit != 'true' }}
+    - name: Brew - Install uncompileable dependencies
+      run: |
+        brew install glfw cddlib glm
+
+    - name: Cache - MacSoS uncompileable dependencies
+      id: cache-macos-thirdparty
+      uses: actions/cache@v3.0.11
+      with:
+        key: thirdparty-ep-imgui${{ env.IMGUI_VERSION }}-glm${{ env.GLM_VERSION }}
+        path: |
+          libraries/
+          external_projects/
+
+    - name: CMake - Configure
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.CMAKE_BUILD_TYPE}} -DUSE_BAKED_SHADERS=on
+    - name: CMake - Build
+      run: cmake --build ${{github.workspace}}/build --config Release
+
+    - name: Actions - Prepare artifact
+      run: mkdir ./dist && tar -c -f ./dist/blob-${{github.sha}}.tar ${{github.workspace}}/build/*
+
+    - name: Actions - Emit artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist-macos
+        path: |
+          ${{github.workspace}}/dist/blob-*
