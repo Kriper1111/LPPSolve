@@ -126,12 +126,13 @@ jobs:
         brew install glfw cddlib glm
 
     - name: Brew - Look around # Because why even bother listing files in a package on the website
+      continue-on-error: true
       run: |
-        brew ls --verbose glfw
-        brew ls --verbose cddlib
-        brew ls --verbose glm
+        ls -la /usr/local/include
+        ls -la /usr/local/include/GLFW
 
     - name: Cache - MacSoS uncompileable dependencies
+      # if: success() || failure()
       id: cache-macos-thirdparty
       uses: actions/cache@v3.0.11
       with:

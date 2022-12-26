@@ -25,6 +25,8 @@ set(IMGUI_SOURCES
 add_library(imgui STATIC ${IMGUI_SOURCES})
 target_include_directories(imgui PUBLIC "")
 target_include_directories(imgui PUBLIC "imgui")
+target_include_directories(imgui PUBLIC "/usr/local/include")
+target_include_directories(imgui PUBLIC "/usr/local/lib")
 
 if (WIN32)
     add_dependencies(imgui dep_glfw) # GLFW is satisfied on Linux by apt
