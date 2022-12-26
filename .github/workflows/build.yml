@@ -122,7 +122,7 @@ jobs:
 
     - name: Brew - Install uncompileable dependencies
       run: |
-        brew install glfw cddlib
+        brew install glfw cddlib glm
 
     - name: Brew - Look around # Because why even bother listing files in a package on the website
       run: brew ls --verbose glfw && brew ls --verbose cddlib
