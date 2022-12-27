@@ -2,13 +2,14 @@
 *for when Blender isn't enough*
 
 ## About
-This program aims to visualise three-dimensional linear programming problems: their allowed value ranges, solutions and limiting planes.
+This program aims to visualise three-dimensional linear programming problems: their feasible ranges, optimal plans and limiting planes.
 It *should* work with two-dimensional problems as well.
 
 ## Installation guide
 You should find latest release in the "Releases" section on the right, as well as in recent "Actions" artifacts.
 If you don't trust the runners (and frankly I don't either), you could build it from source.
 
+### Building
 Makefile and CMake workflows are supported now.
 
 Note:
@@ -29,23 +30,29 @@ The CMake recipe will now fetch required libraries from source, if building on W
 Additionally, `OBJ_Loader.h` by [Bly7](https://github.com/Bly7/OBJ-Loader) is required for debug builds<sup>[1]</sup>.
 
 ## User guide
-To enter the linear constraint system, use [Add Plane]
-button and enter its coefficients into the newly added fields. Coefficients are as follows: `a1 a2 a3 b1`, in form of `Ax <= b`.
-The objective function and its direction could be set by the respective field above.
+To add a new linear constraint system, use [Add Plane] or [+] buttons on the left.
+Then, fill out freshly appeared row in the constraint table. Note that coefficients are summed by default, so only include minus sign.
+To change inequality type, click the "<=" field and choose from drop down.
+To remove the (in)equality, use the [x] button in the leftmost column.
+To toggle its visibility, use the checkbox in the rightmost column.
+The objective function and its direction could be set by the respective field on the top.
 
-Use [Solve] button to solve the given system. The result will be automatically visualized, if possible. Upon editing the system, the visualization will get erased.
-
-You can control the visibility of axis guides and grids via corresponding checkboxes.
+Use [Solve] button to solve the given system. The result will be automatically visualized, if possible.
+Note, that by default the optimal plan vector will be occluded by the feasible range. To disable its display (and configure visibility of other elements), open preferences with "File" -> "Preferences" and navigate to "Visibility" tab.
 
 Keyboard controls:
 | key  |  action   |
 |------|-----------|
-|[KeyA]|Orbit left |
-|[KeyD]|Orbit right|
-|[KeyW]|Orbit up   |
-|[KeyS]|Orbit down |
-|[KeyR]|Zoom in<sup>[1]</sup>    |
-|[KeyF]|Zoom out<sup>[1]</sup>   |
+|[KeyLeftArrow]|Orbit left |
+|[KeyRightArrow]|Orbit right|
+|[KeyUpArrow]|Orbit up   |
+|[KeyDownArrow]|Orbit down |
+|[KeyW]|Move forwards without changing height|
+|[KeyS]|Move backwards without changing height|
+|[KeyA]|Move to the left without changing height|
+|[KeyS]|Move to the right without changing height|
+|[KeyR]|Zoom in|
+|[KeyF]|Zoom out|
 
 ## Credits, Licenses, Afterthoughts
 This program uses and relies on other open-source libraries. you can check their respective licenses in their repositories, linked in the dependency list.
@@ -59,7 +66,5 @@ For features pending implementation refer to [`TODO`](./TODO) and probably GitHu
 The `assets.cpp` and `camera.cpp` are borrowed from a not-yet-and-probably-wont-be-ever released GLFW/OpenGL game/wrapper/engine of mine. If I ever to release MCTE, you'll find some similarities there.
 
 <sup>1</sup> - Not really relevant as of writing this README for multiple reasons:
-* While we do have different build configurations, for the time of being the "debug" one is enforced.
-* The solution itself -- the vector and quite possibly the plane aren't rendered just yet. We do print the numbers though.
-* The zooming functionality is not implemented on the input level just yet. You could manually tweak it via a respective slider on the Camera Controls debug menu, but nothing more than that.
-
+* While we do have different build configurations, for the time of being the "debug" one is enforced in Makefile script. Additionally, the runners use "RelWithDebInfo" configuration, which may require some extra libraries.
+Once I'm confident enough, I'll switch those to Release mode. CMake could be configured to use any build configuration.
