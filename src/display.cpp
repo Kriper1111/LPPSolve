@@ -118,11 +118,11 @@ void Display::createObjects() {
         {  1.0, -1.0,  1.0}, // 6
         {  1.0,  1.0,  1.0}, // 7
         /// /// /// /// ///
-        {  0.0,  1.0, -1.0}, // 8
-        {  1.0,  0.0, -1.0}, // 9
-        {  0.0, -1.0, -1.0}, // 10
-        { -1.0,  0.0, -1.0}, // 11
-        {  0.0,  0.0,  1.0}  // 12
+        {  0.0,  1.0, -2.0}, // 8         {  0.0,  1.0, -1.0}, // 8
+        {  1.0,  0.0, -2.0}, // 9         {  1.0,  0.0, -1.0}, // 9
+        {  0.0, -1.0, -2.0}, // 10        {  0.0, -1.0, -1.0}, // 10
+        { -1.0,  0.0, -2.0}, // 11        { -1.0,  0.0, -1.0}, // 11
+        {  0.0,  0.0,  0.0}  // 12        {  0.0,  0.0,  1.0}  // 12
         /// /// /// /// ///
     };
 
@@ -164,6 +164,7 @@ void Display::createShaders() {
 }
 
 void Display::recalculatePlane(int planeIndex) {
+    static glm::vec3 planeScale = glm::vec3(10.0f);
     glm::vec4 planeEquation = planeEquations[planeIndex].equationCoefficients;
     EquationType planeEquationType = planeEquations[planeIndex].type;
     glm::vec3 planeNormal = glm::normalize(glm::vec3(planeEquation.x, planeEquation.y, planeEquation.z));
@@ -208,7 +209,7 @@ void Display::recalculatePlane(int planeIndex) {
 
     planeTransform[3] = { planeNormal * distanceToLine, 1 };
 
-    planeTransform = glm::scale(planeTransform, { 10.0, 10.0, 10.0 });
+    planeTransform = glm::scale(planeTransform, planeScale);
 
     if (planeIndex == planeTransforms.size()) { planeTransforms.push_back(planeTransform); }
     else { planeTransforms[planeIndex] = planeTransform; }
@@ -300,8 +301,6 @@ void Display::render(Camera* camera) {
     // glDrawElementsInstanced(GL_TRIANGLES, planeObject->vertexCount, GL_UNSIGNED_INT, 0, planeTransforms.size());
     if (showPlanesAtAll) {
     this->planeShader->setUniform("globalScale", globalScaleTransform);
-    // glEnable(GL_BLEND);
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     for (int planeIndex = 0; planeIndex < planeTransforms.size(); planeIndex++) {
         if (!visibleEquations[planeIndex]) continue;
         this->planeShader->setUniform("planeTransform", planeTransforms[planeIndex]);
@@ -311,7 +310,6 @@ void Display::render(Camera* camera) {
         this->planeShader->setUniform("negativeColor", glm::vec3(1) - constraintPositiveColors[planeIndex % constraintPositiveColors.size()]);
         planeObject->bindForDraw();
     }
-    // glDisable(GL_BLEND);
     }
 
     if (this->solution.isSolved && this->solutionObject) {
@@ -336,22 +334,26 @@ void Display::render(Camera* camera) {
     if (this->showSolutionVector) {
         this->solutionShader->setUniform("vertexColor", this->solutionVectorColor);
 
-        glm::vec3 vectorBaseScale = {
+        glm::vec3 vectorBaseScale = glm::vec3(
             this->vectorWidth,
             this->vectorWidth,
-            glm::length(this->solution.optimalVector) - this->vectorWidth * this->arrowScale
-        };
-        glm::mat4 vectorBaseTransform = glm::scale(
-            this->optimalPlanTransform,
-            glm::vec3(vectorBaseScale)
+            glm::length(this->solution.optimalVector) - this->vectorWidth * this->arrowScale * 2 - 0.05f
         );
+        glm::vec3 vectorArrowScale = glm::vec3(this->vectorWidth * this->arrowScale);
 
-        this->solutionShader->setUniform("transform", vectorBaseTransform * globalScaleTransform);
+        // XXX: This transform could be made a part of a shader
+        // Say, bind the shader after solving, set optimalPlanTransform uniform there
+        // then compute transformations from (manually formed matrices using) supplied
+        // globalScaleTransform, vectorStartPosition vectorBaseScale
+        glm::mat4 vectorBaseTransform = globalScaleTransform;
+        vectorBaseTransform = glm::translate(vectorBaseTransform, glm::normalize(this->solution.optimalVector) * 0.05f);
+        vectorBaseTransform = vectorBaseTransform * this->optimalPlanTransform;
+        vectorBaseTransform = glm::scale(vectorBaseTransform, vectorBaseScale);
+
+        this->solutionShader->setUniform("transform", vectorBaseTransform);
         vectorDisplay->bindForDrawSlice(0, 36);
 
-        glm::vec3 vectorArrowScale = glm::vec3(this->vectorWidth) * this->arrowScale;
-        glm::mat4 vectorArrowTransform;
-        vectorArrowTransform = glm::mat4(1) * globalScaleTransform; // even before anything, we apply global scale
+        glm::mat4 vectorArrowTransform = globalScaleTransform; // even before anything, we apply global scale
         vectorArrowTransform = glm::translate(vectorArrowTransform, this->solution.optimalVector); // We move first
         vectorArrowTransform = vectorArrowTransform * this->optimalPlanTransform; // Then we reorient it to look in the direction
         vectorArrowTransform = glm::scale(vectorArrowTransform, vectorArrowScale); // And only then we scale

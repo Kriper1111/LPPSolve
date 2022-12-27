@@ -288,7 +288,7 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
             SceneData::lppshow->addLimitPlane({-0.5,  0.5,  0.5, 1.0}); SceneData::lppshow->visibleEquations[3] = false;
             SceneData::lppshow->addLimitPlane({ 1.0,  1.0, -0.5, 0.5}); SceneData::lppshow->visibleEquations[4] = false;
             SceneData::lppshow->addLimitPlane({ 1.0, -1.0, -0.5, 0.5}); // SceneData::lppshow->visibleEquations[5] = false;
-            SceneData::lppshow->addLimitPlane({ 1.0, -1.0, -0.5, 0.5}); SceneData::lppshow->visibleEquations[6] = false;
+            SceneData::lppshow->addLimitPlane({-1.0, -1.0, -0.5, 0.5}); SceneData::lppshow->visibleEquations[6] = false;
             SceneData::lppshow->addLimitPlane({-1.0,  1.0, -0.5, 0.5}); // SceneData::lppshow->visibleEquations[7] = false;
             SceneData::lppshow->objectiveFunction = { 0, 0, 1, 0 };
             SceneData::lppshow->doMinimize = false;
@@ -370,7 +370,6 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     }
     ImGui::Separator();
 
-    // TODO: Make into a scrollbox
     float TEXT_BASE_WIDTH = ImGui::GetTextLineHeightWithSpacing();
     ImVec2 tableSize = ImVec2(0.0f, TEXT_BASE_WIDTH * 8);
     ImGuiTableFlags tableFlags = ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_BordersH | ImGuiTableFlags_ScrollY | ImGuiTableFlags_NoPadInnerX;
@@ -453,10 +452,11 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
         }
         ImGui::EndTable();
     }
-
     ImGui::PopStyleVar();
+
+    static glm::vec4 defaultLimitPlane = glm::vec4(0.0f, 0.0f, 1.0f, 0.0f);
     if (ImGui::Button("+") && SceneData::lppshow->getEquationCount() < 256) {
-        SceneData::lppshow->addLimitPlane({0, 0, 1, 0});
+        SceneData::lppshow->addLimitPlane(defaultLimitPlane);
     }
     ImGui::SameLine(); ImGui::Text(l10nc("Add plane"));
 

@@ -100,10 +100,10 @@ class Display:public LinearProgrammingProblem {
     bool showSolutionVector = true;
     bool showSolutionWireframe = true;
     double globalScale = 1.0;
-    float stripeFrequency = 10.0;
-    float stripeWidth = 0.5;
-    float wireThickness = 1.0;
-    float vectorWidth = 0.1;
+    float stripeFrequency = 15.0;
+    float stripeWidth = 0.20;
+    float wireThickness = 5.0;
+    float vectorWidth = 0.04;
     float arrowScale = 2.5;
 
     std::vector<glm::vec3> constraintPositiveColors = {
