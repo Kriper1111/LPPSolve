@@ -241,19 +241,19 @@ void updateProcessDraw(GLFWwindow* window, Camera* camera, float timeStep) {
     char setExample = 0;
 
     if (ImGui::BeginMainMenuBar()) {
-        if(ImGui::BeginMenu("File")) {
+        if(ImGui::BeginMenu(l10nc("File"))) {
             // ImGui::MenuItem("Open..", "o", &deserialize);
             // ImGui::MenuItem("Save..", "s", &serialize);
-            if (ImGui::BeginMenu("Load example..")) {
-                if (ImGui::MenuItem("Sample cube")) setExample = 1;
-                if (ImGui::MenuItem("Pyramid thing")) setExample = 2;
+            if (ImGui::BeginMenu(l10nc("Load example.."))) {
+                if (ImGui::MenuItem(l10nc("Sample cube"))) setExample = 1;
+                if (ImGui::MenuItem(l10nc("Pyramid thing"))) setExample = 2;
                 // if (ImGui::MenuItem("Abstract")) setExample = 3;
                 ImGui::EndMenu();
             }
             ImGui::Separator();
-            ImGui::MenuItem("Preferences", "p", &SettingsWindow::showSettingsWindow);
+            ImGui::MenuItem(l10nc("Preferences"), "p", &SettingsWindow::showSettingsWindow);
             ImGui::Separator();
-            ImGui::MenuItem("Exit", "e", &shouldExit);
+            ImGui::MenuItem(l10nc("Exit"), "e", &shouldExit);
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
